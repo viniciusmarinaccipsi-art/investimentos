@@ -1240,26 +1240,28 @@ document.getElementById("btn-refresh").addEventListener("click", async () => {
   btn.disabled = true; btn.textContent = "…";
   setStatus("Buscando índices no Banco Central...");
   try {
-    const [selicRes, ipcaRes, cdiRes] = await Promise.allSettled([
-      fetch("https://api.bcb.gov.br/dados/serie/bcdata.sgs.11/dados/ultimos/1?formato=json"),
-      fetch("https://api.bcb.gov.br/dados/serie/bcdata.sgs.433/dados/ultimos/1?formato=json"),
-      fetch("https://api.bcb.gov.br/dados/serie/bcdata.sgs.4391/dados/ultimos/1?formato=json"),
+    // Séries já anualizadas (% a.a.) — sem necessidade de conversão
+    // 4390 = CDI % a.a. | 4189 = Selic meta % a.a. | 13522 = IPCA acum. 12 meses % a.a.
+    const [cdiRes, selicRes, ipcaRes] = await Promise.allSettled([
+      fetch("https://api.bcb.gov.br/dados/serie/bcdata.sgs.4390/dados/ultimos/1?formato=json"),
+      fetch("https://api.bcb.gov.br/dados/serie/bcdata.sgs.4189/dados/ultimos/1?formato=json"),
+      fetch("https://api.bcb.gov.br/dados/serie/bcdata.sgs.13522/dados/ultimos/1?formato=json"),
     ]);
     let { selic, ipca, cdi, igpm } = STATE.indices;
+    if (cdiRes.status==="fulfilled"&&cdiRes.value.ok) {
+      const d=await cdiRes.value.json();
+      const val=parseFloat(d[0]?.valor);
+      if(val && val < 100) cdi=+val.toFixed(2);
+    }
     if (selicRes.status==="fulfilled"&&selicRes.value.ok) {
       const d=await selicRes.value.json();
-      const diaria=parseFloat(d[0]?.valor);
-      if(diaria) selic=+((Math.pow(1+diaria/100,252)-1)*100).toFixed(2);
+      const val=parseFloat(d[0]?.valor);
+      if(val && val < 100) selic=+val.toFixed(2);
     }
     if (ipcaRes.status==="fulfilled"&&ipcaRes.value.ok) {
       const d=await ipcaRes.value.json();
-      const mensal=parseFloat(d[0]?.valor);
-      if(mensal) ipca=+((Math.pow(1+mensal/100,12)-1)*100).toFixed(2);
-    }
-    if (cdiRes.status==="fulfilled"&&cdiRes.value.ok) {
-      const d=await cdiRes.value.json();
-      const diaria=parseFloat(d[0]?.valor);
-      if(diaria) cdi=+((Math.pow(1+diaria/100,252)-1)*100).toFixed(2);
+      const val=parseFloat(d[0]?.valor);
+      if(val && val < 100) ipca=+val.toFixed(2);
     }
     const lastUpdate = new Date().toISOString();
     STATE.indices = { cdi, selic, ipca, igpm, lastUpdate };
