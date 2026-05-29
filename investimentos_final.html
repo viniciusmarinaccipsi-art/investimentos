@@ -539,7 +539,7 @@ const CHART_COLORS = ["#8b9cf7","#6ee7b7","#fcd34d","#f87171","#a78bfa","#34d399
 // ── ESTADO GLOBAL ────────────────────────────────────────────
 let STATE = {
   investments: [],
-  indices: { cdi:14.83, selic:14.75, ipca:4.39, igpm:1.95, lastUpdate:null },
+  indices: { cdi:14.40, selic:14.50, ipca:4.39, igpm:1.95, lastUpdate:null },
   scriptUrl: localStorage.getItem("inv_script_url") || "https://script.google.com/macros/s/AKfycbxb3uJyJvTTSo7XCCvEuX_EGjNO658RU23ehSTIiEiRQJ4VveRoLpJuyLElTQ-woCa00g/exec",
   filtroTipo: "Todos",
   expandedId: null,
@@ -1240,28 +1240,29 @@ document.getElementById("btn-refresh").addEventListener("click", async () => {
   btn.disabled = true; btn.textContent = "…";
   setStatus("Buscando índices no Banco Central...");
   try {
-    // Séries já anualizadas (% a.a.) — sem necessidade de conversão
-    // 4390 = CDI % a.a. | 4189 = Selic meta % a.a. | 13522 = IPCA acum. 12 meses % a.a.
-    const [cdiRes, selicRes, ipcaRes] = await Promise.allSettled([
-      fetch("https://api.bcb.gov.br/dados/serie/bcdata.sgs.4390/dados/ultimos/1?formato=json"),
-      fetch("https://api.bcb.gov.br/dados/serie/bcdata.sgs.4189/dados/ultimos/1?formato=json"),
+    // Séries BCB — fonte: dadosabertos.bcb.gov.br
+    // 1178  = Selic anualizada base 252 (% a.a.) — série oficial para taxa ao ano
+    // 13522 = IPCA acumulado 12 meses (% a.a.) — inflação anualizada
+    // CDI   = Selic - 0.10pp (convenção BCB/Cetip, sempre válida)
+    const [selicRes, ipcaRes] = await Promise.allSettled([
+      fetch("https://api.bcb.gov.br/dados/serie/bcdata.sgs.1178/dados/ultimos/1?formato=json"),
       fetch("https://api.bcb.gov.br/dados/serie/bcdata.sgs.13522/dados/ultimos/1?formato=json"),
     ]);
     let { selic, ipca, cdi, igpm } = STATE.indices;
-    if (cdiRes.status==="fulfilled"&&cdiRes.value.ok) {
-      const d=await cdiRes.value.json();
-      const val=parseFloat(d[0]?.valor);
-      if(val && val < 100) cdi=+val.toFixed(2);
-    }
     if (selicRes.status==="fulfilled"&&selicRes.value.ok) {
       const d=await selicRes.value.json();
       const val=parseFloat(d[0]?.valor);
-      if(val && val < 100) selic=+val.toFixed(2);
+      // Série 1178 retorna % a.a. base 252 — valor esperado entre 5 e 30
+      if(val && val > 1 && val < 50) {
+        selic=+val.toFixed(2);
+        cdi=+(val - 0.10).toFixed(2);
+      }
     }
     if (ipcaRes.status==="fulfilled"&&ipcaRes.value.ok) {
       const d=await ipcaRes.value.json();
       const val=parseFloat(d[0]?.valor);
-      if(val && val < 100) ipca=+val.toFixed(2);
+      // Série 13522 retorna % a.a. — valor esperado entre 1 e 20
+      if(val && val > 0 && val < 30) ipca=+val.toFixed(2);
     }
     const lastUpdate = new Date().toISOString();
     STATE.indices = { cdi, selic, ipca, igpm, lastUpdate };
