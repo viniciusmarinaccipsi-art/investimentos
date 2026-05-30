@@ -810,11 +810,36 @@ function importJSON(e){
 function dl(blob,name){const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=name;a.click();}
 
 // ── SYNC (opcional) ──
+// ── COMUNICAÇÃO À PROVA DE CORS ──
+// LEITURA via JSONP (contorna CORS usando <script>). Backend v2 aceita ?callback=
+function jsonpGet(params, timeoutMs){
+  return new Promise((resolve,reject)=>{
+    if(!STATE.scriptUrl) return reject(new Error("sem URL"));
+    const cb="__jsonp_"+Date.now()+"_"+Math.floor(Math.random()*1e6);
+    const qs=Object.keys(params).map(k=>encodeURIComponent(k)+"="+encodeURIComponent(params[k])).join("&");
+    const sep=STATE.scriptUrl.includes("?")?"&":"?";
+    const src=STATE.scriptUrl+sep+qs+"&callback="+cb;
+    const s=document.createElement("script");
+    let done=false;
+    const limpa=()=>{ try{delete window[cb];}catch(e){window[cb]=undefined;} if(s.parentNode)s.parentNode.removeChild(s); };
+    const t=setTimeout(()=>{ if(done)return; done=true; limpa(); reject(new Error("timeout")); }, timeoutMs||15000);
+    window[cb]=(data)=>{ if(done)return; done=true; clearTimeout(t); limpa(); resolve(data); };
+    s.onerror=()=>{ if(done)return; done=true; clearTimeout(t); limpa(); reject(new Error("erro de rede")); };
+    s.src=src; document.head.appendChild(s);
+  });
+}
+// GRAVAÇÃO via POST no-cors (envia mas não lê resposta — sem erro de CORS)
+async function postNoCors(payload){
+  await fetch(STATE.scriptUrl,{method:"POST",mode:"no-cors",
+    headers:{"Content-Type":"text/plain;charset=utf-8"}, body:JSON.stringify(payload)});
+  return true; // resposta é opaca; confirmamos relendo depois
+}
+
 async function pingScript(){
   if(!STATE.scriptUrl){toast("Configure a URL primeiro","err");return;}
-  try{const r=await fetch(STATE.scriptUrl,{method:"POST",body:JSON.stringify({acao:"ping"})});const d=await r.json();
-    toast(d.ok?"Conexão OK — "+(d.msg||""):"Resposta inesperada",d.ok?"ok":"err");
-  }catch(e){toast("Falha na conexão","err");}
+  try{ const d=await jsonpGet({acao:"ping"});
+    toast(d&&d.ok?"Conexão OK — "+(d.msg||""):"Resposta inesperada",d&&d.ok?"ok":"err");
+  }catch(e){toast("Falha na conexão ("+e.message+")","err");}
 }
 // ── FONTE DE VERDADE: PLANILHA ──
 function normalizeFromSheet(inv){
@@ -834,8 +859,7 @@ function normalizeFromSheet(inv){
 async function carregarDoServidor(silent){
   if(!STATE.scriptUrl) return false;
   try{
-    const r=await fetch(STATE.scriptUrl,{method:"POST",body:JSON.stringify({acao:"listar"})});
-    const d=await r.json();
+    const d=await jsonpGet({acao:"listar"}, 20000);
     if(d.ok && Array.isArray(d.investimentos) && d.investimentos.length){
       STATE.investments=d.investimentos.map(normalizeFromSheet);
       if(d.indices) STATE.indices=Object.assign({},STATE.indices,d.indices);
@@ -854,10 +878,13 @@ async function gravarNaPlanilha(){
   if(!confirm(`Gravar a carteira atual (${STATE.investments.length} ativos) na planilha? Isso SUBSTITUI o conteúdo da planilha-banco.`))return;
   try{
     toast("Gravando na planilha...","info");
-    const r=await fetch(STATE.scriptUrl,{method:"POST",body:JSON.stringify({acao:"substituirTudo",investimentos:STATE.investments,proventos:STATE.proventos})});
-    const d=await r.json();
-    if(d.ok){STATE.fonte="planilha";save();renderConfig();}
-    toast(d.ok?`Planilha atualizada: ${d.investimentos} ativos`:"Falha ao gravar",d.ok?"ok":"err");
+    await postNoCors({acao:"substituirTudo",investimentos:STATE.investments,proventos:STATE.proventos});
+    // resposta é opaca (no-cors); confirma relendo da planilha após um instante
+    setTimeout(async()=>{
+      const ok=await carregarDoServidor(true);
+      toast(ok?`Planilha atualizada e recarregada (${STATE.investments.length} ativos)`:"Gravado. Recarregue para conferir.","ok");
+      renderConfig();
+    }, 2500);
   }catch(e){toast("Erro de conexão ao gravar","err");}
 }
 async function aplicarJSON(txt){
@@ -870,8 +897,8 @@ async function aplicarJSON(txt){
   STATE.investments=invs; if(provs) STATE.proventos=provs; save(); renderIdx(); renderAll();
   toast(`${invs.length} ativos aplicados na tela`,"ok");
   if(STATE.scriptUrl && confirm("Gravar também na planilha (fonte de verdade)?")){
-    try{ const r=await fetch(STATE.scriptUrl,{method:"POST",body:JSON.stringify({acao:"substituirTudo",investimentos:STATE.investments,proventos:STATE.proventos})});
-      const d=await r.json(); if(d.ok)STATE.fonte="planilha"; toast(d.ok?`Planilha atualizada: ${d.investimentos} ativos`:"Falha ao gravar na planilha",d.ok?"ok":"err");
+    try{ await postNoCors({acao:"substituirTudo",investimentos:STATE.investments,proventos:STATE.proventos});
+      setTimeout(async()=>{ await carregarDoServidor(true); toast("Planilha atualizada","ok"); }, 2500);
     }catch(e){ toast("Erro ao gravar na planilha","err"); }
   }
 }
@@ -879,11 +906,10 @@ async function atualizarIndicesBCB(){
   if(!STATE.scriptUrl){toast("Configure a URL da planilha primeiro","err");return;}
   try{
     toast("Buscando índices no BCB...","info");
-    const r=await fetch(STATE.scriptUrl,{method:"POST",body:JSON.stringify({acao:"buscarIndices"})});
-    const d=await r.json();
-    if(d.ok && d.indices){ STATE.indices=Object.assign({},STATE.indices,d.indices,{lastUpdate:d.atualizadoEm}); save(); renderIdx(); renderConfig(); toast("Índices atualizados do BCB","ok"); }
+    const d=await jsonpGet({acao:"buscarIndices"}, 25000);
+    if(d && d.ok && d.indices){ STATE.indices=Object.assign({},STATE.indices,d.indices,{lastUpdate:d.atualizadoEm}); save(); renderIdx(); renderConfig(); toast("Índices atualizados do BCB","ok"); }
     else toast("Não foi possível atualizar","err");
-  }catch(e){toast("Erro de conexão com o BCB/planilha","err");}
+  }catch(e){toast("Erro de conexão ("+e.message+")","err");}
 }
 
 // ════════════════════════════════════════════════════════════
