@@ -876,16 +876,38 @@ async function carregarDoServidor(silent){
 async function gravarNaPlanilha(){
   if(!STATE.scriptUrl){toast("Configure a URL da planilha primeiro","err");return;}
   if(!confirm(`Gravar a carteira atual (${STATE.investments.length} ativos) na planilha? Isso SUBSTITUI o conteúdo da planilha-banco.`))return;
+  await _gravarLotes();
+}
+async function _gravarLotes(){
   try{
-    toast("Gravando na planilha...","info");
-    await postNoCors({acao:"substituirTudo",investimentos:STATE.investments,proventos:STATE.proventos});
-    // resposta é opaca (no-cors); confirma relendo da planilha após um instante
-    setTimeout(async()=>{
-      const ok=await carregarDoServidor(true);
-      toast(ok?`Planilha atualizada e recarregada (${STATE.investments.length} ativos)`:"Gravado. Recarregue para conferir.","ok");
-      renderConfig();
-    }, 2500);
-  }catch(e){toast("Erro de conexão ao gravar","err");}
+    toast("Limpando planilha...","info");
+    const lp=await jsonpGet({acao:"limparInvestimentos"}, 20000);
+    if(!lp||!lp.ok){ toast("Falha ao limpar a planilha","err"); return false; }
+    const lotes=[]; let atual=[], tam=0;
+    for(const inv of STATE.investments){
+      const s=JSON.stringify(enxuto(inv));
+      if(tam+s.length>1200 && atual.length){ lotes.push(atual); atual=[]; tam=0; }
+      atual.push(enxuto(inv)); tam+=s.length+2;
+    }
+    if(atual.length) lotes.push(atual);
+    let enviados=0;
+    for(let i=0;i<lotes.length;i++){
+      toast(`Gravando lote ${i+1}/${lotes.length}...`,"info");
+      const d=await jsonpGet({acao:"addLoteGet", dados:JSON.stringify(lotes[i])}, 20000);
+      if(d&&d.ok){ enviados+=lotes[i].length; } else { toast(`Falha no lote ${i+1}`,"err"); return false; }
+    }
+    toast(`Planilha gravada: ${enviados} ativos. Recarregando...`,"ok");
+    setTimeout(async()=>{ await carregarDoServidor(true); renderConfig(); toast("Pronto — planilha é a fonte agora","ok"); }, 1500);
+    return true;
+  }catch(e){toast("Erro ao gravar ("+e.message+")","err"); return false;}
+}
+// versão compacta do ativo p/ caber na URL (só campos do esquema)
+function enxuto(inv){
+  return {id:inv.id,nome:inv.nome,tipo:inv.tipo,indexador:inv.indexador,taxa:inv.taxa,
+    dataAplicacao:inv.dataAplicacao,vencimento:inv.vencimento,valorInicial:inv.valorInicial,
+    instituicao:inv.instituicao||inv.banco,obs:inv.obs||"",valorBruto:inv.valorBruto,ir:inv.ir,
+    dataReferencia:inv.dataReferencia||"2026-05-29",liquidez:inv.liquidez,grupo:inv.grupo,
+    emissor:inv.emissor,codigo:inv.codigo,taxaLabel:inv.taxaLabel,modoTaxa:inv.modoTaxa};
 }
 async function aplicarJSON(txt){
   let data;
@@ -897,9 +919,7 @@ async function aplicarJSON(txt){
   STATE.investments=invs; if(provs) STATE.proventos=provs; save(); renderIdx(); renderAll();
   toast(`${invs.length} ativos aplicados na tela`,"ok");
   if(STATE.scriptUrl && confirm("Gravar também na planilha (fonte de verdade)?")){
-    try{ await postNoCors({acao:"substituirTudo",investimentos:STATE.investments,proventos:STATE.proventos});
-      setTimeout(async()=>{ await carregarDoServidor(true); toast("Planilha atualizada","ok"); }, 2500);
-    }catch(e){ toast("Erro ao gravar na planilha","err"); }
+    await _gravarLotes();
   }
 }
 async function atualizarIndicesBCB(){
