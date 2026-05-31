@@ -287,7 +287,7 @@ tbody tr.total-row td{font-weight:700; color:var(--txt); border-top:2px solid va
     <div class="modal-b" id="modal-body"></div>
     <div class="modal-f">
       <button class="btn ghost" id="modal-cancel">Cancelar</button>
-      <button class="btn" id="modal-resgatar-btn" style="display:none;background:rgba(245,160,79,.15);color:var(--amber);border:1px solid var(--amber)">📦 Marcar resgate/conclusão</button>
+      <button class="btn" id="modal-resgatar-btn" style="display:none;background:rgba(245,160,79,.15);color:var(--amber);border:1px solid var(--amber)">$ Marcar resgate/conclusão</button>
       <button class="btn primary" id="modal-save">Salvar</button>
     </div>
   </div>
@@ -647,7 +647,7 @@ function normalizeFromSheet(inv){
     if(/^[\d.]+$/.test(s)){
       let v=parseFloat(s);
       if(v<=1) v=v*100;
-      o.taxaLabel=(v%1===0?v.toFixed(0):v.toFixed(2)).replace(".",",")+"%";
+      o.taxaLabel=(v%1===0?v.toFixed(0):v.toFixed(2)).replace(".",",")+"%"+" a.a.";
     }
   }
   if(!o.taxaLabel) o.taxaLabel=String(o.taxa).replace(".",",")+(o.indexador==="Prefixado"?"%":"% CDI");
