@@ -292,50 +292,59 @@ tbody tr.total-row td{font-weight:700; color:var(--txt); border-top:2px solid va
 
 <script>
 // ════════════════════════════════════════════════════════════
-//  DADOS EMBARCADOS
+// CARTEIRA — Frontend v3
+// Planilha = fonte única. localStorage = só cache de leitura.
+// CRUD pontual via JSONP. Sem SEED, sem operação destrutiva.
 // ════════════════════════════════════════════════════════════
-const SEED_ATIVOS = [{"id": "inv_0001", "nome": "CDB Prefixado 4 anos #1", "emissor": "Banco C6", "codigo": "—", "produto": "CDB Prefixado 4 anos", "tipo": "CDB", "indexador": "Prefixado", "taxa": 12.15, "taxaLabel": "12,15%", "modoTaxa": "pre", "dataAplicacao": "2024-02-09", "vencimento": "2028-02-08", "valorInicial": 5000, "valorBruto": 6501.21, "ir": 225.18, "banco": "C6 Bank", "instituicao": "C6 Bank", "liquidez": "No venc.", "grupo": "CDB Prefixado 4 anos", "obs": "12,15% · Emissor: Banco C6"}, {"id": "inv_0002", "nome": "CDB Prefixado 4 anos #2", "emissor": "Banco C6", "codigo": "—", "produto": "CDB Prefixado 4 anos", "tipo": "CDB", "indexador": "Prefixado", "taxa": 12.5, "taxaLabel": "12,50%", "modoTaxa": "pre", "dataAplicacao": "2024-03-19", "vencimento": "2028-03-21", "valorInicial": 2500, "valorBruto": 3235.85, "ir": 110.37, "banco": "C6 Bank", "instituicao": "C6 Bank", "liquidez": "No venc.", "grupo": "CDB Prefixado 4 anos", "obs": "12,50% · Emissor: Banco C6"}, {"id": "inv_0003", "nome": "CDB Prefixado 4 anos #3", "emissor": "Banco C6", "codigo": "—", "produto": "CDB Prefixado 4 anos", "tipo": "CDB", "indexador": "Prefixado", "taxa": 13.25, "taxaLabel": "13,25%", "modoTaxa": "pre", "dataAplicacao": "2024-06-03", "vencimento": "2028-06-02", "valorInicial": 2500, "valorBruto": 3201.64, "ir": 105.24, "banco": "C6 Bank", "instituicao": "C6 Bank", "liquidez": "No venc.", "grupo": "CDB Prefixado 4 anos", "obs": "13,25% · Emissor: Banco C6"}, {"id": "inv_0004", "nome": "CDB Prefixado 4 anos #4", "emissor": "Banco C6", "codigo": "—", "produto": "CDB Prefixado 4 anos", "tipo": "CDB", "indexador": "Prefixado", "taxa": 13.2, "taxaLabel": "13,20%", "modoTaxa": "pre", "dataAplicacao": "2024-09-04", "vencimento": "2028-09-05", "valorInicial": 2500, "valorBruto": 3095.1, "ir": 104.14, "banco": "C6 Bank", "instituicao": "C6 Bank", "liquidez": "No venc.", "grupo": "CDB Prefixado 4 anos", "obs": "13,20% · Emissor: Banco C6"}, {"id": "inv_0005", "nome": "CDB Prefixado 4 anos #5", "emissor": "Banco C6", "codigo": "—", "produto": "CDB Prefixado 4 anos", "tipo": "CDB", "indexador": "Prefixado", "taxa": 13.2, "taxaLabel": "13,20%", "modoTaxa": "pre", "dataAplicacao": "2024-09-04", "vencimento": "2028-09-05", "valorInicial": 5000, "valorBruto": 6190.21, "ir": 208.28, "banco": "C6 Bank", "instituicao": "C6 Bank", "liquidez": "No venc.", "grupo": "CDB Prefixado 4 anos", "obs": "13,20% · Emissor: Banco C6"}, {"id": "inv_0006", "nome": "CDB Prefixado 4 anos #6", "emissor": "Banco C6", "codigo": "—", "produto": "CDB Prefixado 4 anos", "tipo": "CDB", "indexador": "Prefixado", "taxa": 13.1, "taxaLabel": "13,10%", "modoTaxa": "pre", "dataAplicacao": "2024-09-20", "vencimento": "2028-09-19", "valorInicial": 5000, "valorBruto": 6144.67, "ir": 200.31, "banco": "C6 Bank", "instituicao": "C6 Bank", "liquidez": "No venc.", "grupo": "CDB Prefixado 4 anos", "obs": "13,10% · Emissor: Banco C6"}, {"id": "inv_0007", "nome": "CDB Prefixado 4 anos #7", "emissor": "Banco C6", "codigo": "—", "produto": "CDB Prefixado 4 anos", "tipo": "CDB", "indexador": "Prefixado", "taxa": 13.45, "taxaLabel": "13,45%", "modoTaxa": "pre", "dataAplicacao": "2024-10-03", "vencimento": "2028-10-03", "valorInicial": 3000, "valorBruto": 3689.26, "ir": 120.62, "banco": "C6 Bank", "instituicao": "C6 Bank", "liquidez": "No venc.", "grupo": "CDB Prefixado 4 anos", "obs": "13,45% · Emissor: Banco C6"}, {"id": "inv_0008", "nome": "CDB Prefixado 4 anos #8", "emissor": "Banco C6", "codigo": "—", "produto": "CDB Prefixado 4 anos", "tipo": "CDB", "indexador": "Prefixado", "taxa": 13.9, "taxaLabel": "13,90%", "modoTaxa": "pre", "dataAplicacao": "2024-10-17", "vencimento": "2028-10-17", "valorInicial": 500, "valorBruto": 615.69, "ir": 20.24, "banco": "C6 Bank", "instituicao": "C6 Bank", "liquidez": "No venc.", "grupo": "CDB Prefixado 4 anos", "obs": "13,90% · Emissor: Banco C6"}, {"id": "inv_0009", "nome": "CDB Prefixado 4 anos #9", "emissor": "Banco C6", "codigo": "—", "produto": "CDB Prefixado 4 anos", "tipo": "CDB", "indexador": "Prefixado", "taxa": 13.9, "taxaLabel": "13,90%", "modoTaxa": "pre", "dataAplicacao": "2024-10-17", "vencimento": "2028-10-17", "valorInicial": 500, "valorBruto": 615.69, "ir": 20.24, "banco": "C6 Bank", "instituicao": "C6 Bank", "liquidez": "No venc.", "grupo": "CDB Prefixado 4 anos", "obs": "13,90% · Emissor: Banco C6"}, {"id": "inv_0010", "nome": "CDB Prefixado 4 anos #10", "emissor": "Banco C6", "codigo": "—", "produto": "CDB Prefixado 4 anos", "tipo": "CDB", "indexador": "Prefixado", "taxa": 14.0, "taxaLabel": "14,00%", "modoTaxa": "pre", "dataAplicacao": "2024-10-21", "vencimento": "2028-10-20", "valorInicial": 500, "valorBruto": 615.91, "ir": 20.28, "banco": "C6 Bank", "instituicao": "C6 Bank", "liquidez": "No venc.", "grupo": "CDB Prefixado 4 anos", "obs": "14,00% · Emissor: Banco C6"}, {"id": "inv_0011", "nome": "CDB Prefixado 4 anos #11", "emissor": "Banco C6", "codigo": "—", "produto": "CDB Prefixado 4 anos", "tipo": "CDB", "indexador": "Prefixado", "taxa": 13.95, "taxaLabel": "13,95%", "modoTaxa": "pre", "dataAplicacao": "2024-10-23", "vencimento": "2028-10-24", "valorInicial": 500, "valorBruto": 614.84, "ir": 20.09, "banco": "C6 Bank", "instituicao": "C6 Bank", "liquidez": "No venc.", "grupo": "CDB Prefixado 4 anos", "obs": "13,95% · Emissor: Banco C6"}, {"id": "inv_0012", "nome": "CDB Prefixado 4 anos #12", "emissor": "Banco C6", "codigo": "—", "produto": "CDB Prefixado 4 anos", "tipo": "CDB", "indexador": "Prefixado", "taxa": 13.95, "taxaLabel": "13,95%", "modoTaxa": "pre", "dataAplicacao": "2024-10-23", "vencimento": "2028-10-24", "valorInicial": 500, "valorBruto": 614.84, "ir": 20.09, "banco": "C6 Bank", "instituicao": "C6 Bank", "liquidez": "No venc.", "grupo": "CDB Prefixado 4 anos", "obs": "13,95% · Emissor: Banco C6"}, {"id": "inv_0013", "nome": "CDB Prefixado 4 anos #13", "emissor": "Banco C6", "codigo": "—", "produto": "CDB Prefixado 4 anos", "tipo": "CDB", "indexador": "Prefixado", "taxa": 14.1, "taxaLabel": "14,10%", "modoTaxa": "pre", "dataAplicacao": "2024-11-08", "vencimento": "2028-11-07", "valorInicial": 2000, "valorBruto": 2449.08, "ir": 78.59, "banco": "C6 Bank", "instituicao": "C6 Bank", "liquidez": "No venc.", "grupo": "CDB Prefixado 4 anos", "obs": "14,10% · Emissor: Banco C6"}, {"id": "inv_0014", "nome": "CDB Prefixado 4 anos #14", "emissor": "Banco C6", "codigo": "—", "produto": "CDB Prefixado 4 anos", "tipo": "CDB", "indexador": "Prefixado", "taxa": 14.35, "taxaLabel": "14,35%", "modoTaxa": "pre", "dataAplicacao": "2024-11-18", "vencimento": "2028-11-17", "valorInicial": 2500, "valorBruto": 3063.5, "ir": 98.61, "banco": "C6 Bank", "instituicao": "C6 Bank", "liquidez": "No venc.", "grupo": "CDB Prefixado 4 anos", "obs": "14,35% · Emissor: Banco C6"}, {"id": "inv_0015", "nome": "CDB Prefixado 3 anos #1", "emissor": "Banco C6", "codigo": "—", "produto": "CDB Prefixado 3 anos", "tipo": "CDB", "indexador": "Prefixado", "taxa": 13.75, "taxaLabel": "13,75%", "modoTaxa": "pre", "dataAplicacao": "2024-10-16", "vencimento": "2027-10-19", "valorInicial": 2500, "valorBruto": 3073.54, "ir": 100.37, "banco": "C6 Bank", "instituicao": "C6 Bank", "liquidez": "No venc.", "grupo": "CDB Prefixado 3 anos", "obs": "13,75% · Emissor: Banco C6"}, {"id": "inv_0016", "nome": "CDB Prefixado 3 anos #2", "emissor": "Banco C6", "codigo": "—", "produto": "CDB Prefixado 3 anos", "tipo": "CDB", "indexador": "Prefixado", "taxa": 14.0, "taxaLabel": "14,00%", "modoTaxa": "pre", "dataAplicacao": "2024-10-21", "vencimento": "2027-10-21", "valorInicial": 500, "valorBruto": 615.91, "ir": 20.28, "banco": "C6 Bank", "instituicao": "C6 Bank", "liquidez": "No venc.", "grupo": "CDB Prefixado 3 anos", "obs": "14,00% · Emissor: Banco C6"}, {"id": "inv_0017", "nome": "CDB Prefixado 3 anos #3", "emissor": "Banco C6", "codigo": "—", "produto": "CDB Prefixado 3 anos", "tipo": "CDB", "indexador": "Prefixado", "taxa": 13.95, "taxaLabel": "13,95%", "modoTaxa": "pre", "dataAplicacao": "2024-10-23", "vencimento": "2027-10-26", "valorInicial": 500, "valorBruto": 614.84, "ir": 20.09, "banco": "C6 Bank", "instituicao": "C6 Bank", "liquidez": "No venc.", "grupo": "CDB Prefixado 3 anos", "obs": "13,95% · Emissor: Banco C6"}, {"id": "inv_0018", "nome": "CDB Prefixado 3 anos #4", "emissor": "Banco C6", "codigo": "—", "produto": "CDB Prefixado 3 anos", "tipo": "CDB", "indexador": "Prefixado", "taxa": 13.95, "taxaLabel": "13,95%", "modoTaxa": "pre", "dataAplicacao": "2024-10-31", "vencimento": "2027-11-04", "valorInicial": 2000, "valorBruto": 2451.75, "ir": 79.05, "banco": "C6 Bank", "instituicao": "C6 Bank", "liquidez": "No venc.", "grupo": "CDB Prefixado 3 anos", "obs": "13,95% · Emissor: Banco C6"}, {"id": "inv_0019", "nome": "CDB Prefixado 3 anos #5", "emissor": "Banco C6", "codigo": "—", "produto": "CDB Prefixado 3 anos", "tipo": "CDB", "indexador": "Prefixado", "taxa": 14.1, "taxaLabel": "14,10%", "modoTaxa": "pre", "dataAplicacao": "2024-11-08", "vencimento": "2027-11-09", "valorInicial": 3000, "valorBruto": 3673.63, "ir": 117.88, "banco": "C6 Bank", "instituicao": "C6 Bank", "liquidez": "No venc.", "grupo": "CDB Prefixado 3 anos", "obs": "14,10% · Emissor: Banco C6"}, {"id": "inv_0020", "nome": "CDB Prefixado 3 anos #6", "emissor": "Banco C6", "codigo": "—", "produto": "CDB Prefixado 3 anos", "tipo": "CDB", "indexador": "Prefixado", "taxa": 14.3, "taxaLabel": "14,30%", "modoTaxa": "pre", "dataAplicacao": "2024-11-25", "vencimento": "2027-11-25", "valorInicial": 2500, "valorBruto": 3054.98, "ir": 97.12, "banco": "C6 Bank", "instituicao": "C6 Bank", "liquidez": "No venc.", "grupo": "CDB Prefixado 3 anos", "obs": "14,30% · Emissor: Banco C6"}, {"id": "inv_0021", "nome": "CDB Prefixado 3 anos #7", "emissor": "Banco C6", "codigo": "—", "produto": "CDB Prefixado 3 anos", "tipo": "CDB", "indexador": "Prefixado", "taxa": 14.3, "taxaLabel": "14,30%", "modoTaxa": "pre", "dataAplicacao": "2024-11-25", "vencimento": "2027-11-25", "valorInicial": 2500, "valorBruto": 3054.98, "ir": 97.12, "banco": "C6 Bank", "instituicao": "C6 Bank", "liquidez": "No venc.", "grupo": "CDB Prefixado 3 anos", "obs": "14,30% · Emissor: Banco C6"}, {"id": "inv_0022", "nome": "CDB Prefixado 3 anos #8", "emissor": "Banco C6", "codigo": "—", "produto": "CDB Prefixado 3 anos", "tipo": "CDB", "indexador": "Prefixado", "taxa": 16.0, "taxaLabel": "16,00%", "modoTaxa": "pre", "dataAplicacao": "2024-12-16", "vencimento": "2027-12-16", "valorInicial": 2500, "valorBruto": 3095.92, "ir": 104.28, "banco": "C6 Bank", "instituicao": "C6 Bank", "liquidez": "No venc.", "grupo": "CDB Prefixado 3 anos", "obs": "16,00% · Emissor: Banco C6"}, {"id": "inv_0023", "nome": "CDB Prefixado 3 anos #9", "emissor": "Banco C6", "codigo": "—", "produto": "CDB Prefixado 3 anos", "tipo": "CDB", "indexador": "Prefixado", "taxa": 16.0, "taxaLabel": "16,00%", "modoTaxa": "pre", "dataAplicacao": "2025-01-17", "vencimento": "2028-01-18", "valorInicial": 1500, "valorBruto": 1833.64, "ir": 58.38, "banco": "C6 Bank", "instituicao": "C6 Bank", "liquidez": "No venc.", "grupo": "CDB Prefixado 3 anos", "obs": "16,00% · Emissor: Banco C6"}, {"id": "inv_0024", "nome": "CDB Prefixado 3 anos #10", "emissor": "Banco C6", "codigo": "—", "produto": "CDB Prefixado 3 anos", "tipo": "CDB", "indexador": "Prefixado", "taxa": 13.65, "taxaLabel": "13,65%", "modoTaxa": "pre", "dataAplicacao": "2024-10-10", "vencimento": "2027-10-14", "valorInicial": 1500, "valorBruto": 1845.27, "ir": 60.42, "banco": "C6 Bank", "instituicao": "C6 Bank", "liquidez": "No venc.", "grupo": "CDB Prefixado 3 anos", "obs": "13,65% · Emissor: Banco C6"}, {"id": "inv_0025", "nome": "CDB Pós Liq.Diária #1", "emissor": "Banco C6", "codigo": "—", "produto": "CDB Pós-fixado Liq. Diária", "tipo": "CDB", "indexador": "CDI", "taxa": 103.0, "taxaLabel": "103% CDI", "modoTaxa": "cdi_pct", "dataAplicacao": "2024-09-04", "vencimento": "2027-09-09", "valorInicial": 2500, "valorBruto": 3143.36, "ir": 112.58, "banco": "C6 Bank", "instituicao": "C6 Bank", "liquidez": "Diária", "grupo": "CDB Pós-fixado Liq. Diária", "obs": "103% CDI · Emissor: Banco C6"}, {"id": "inv_0026", "nome": "CDB Pós Liq.Diária #2", "emissor": "Banco C6", "codigo": "—", "produto": "CDB Pós-fixado Liq. Diária", "tipo": "CDB", "indexador": "CDI", "taxa": 103.0, "taxaLabel": "103% CDI", "modoTaxa": "cdi_pct", "dataAplicacao": "2024-09-04", "vencimento": "2027-09-09", "valorInicial": 1932, "valorBruto": 2429.19, "ir": 87.0, "banco": "C6 Bank", "instituicao": "C6 Bank", "liquidez": "Diária", "grupo": "CDB Pós-fixado Liq. Diária", "obs": "103% CDI · Emissor: Banco C6"}, {"id": "inv_0027", "nome": "CDB Pós Liq.Diária #3", "emissor": "Banco C6", "codigo": "—", "produto": "CDB Pós-fixado Liq. Diária", "tipo": "CDB", "indexador": "CDI", "taxa": 103.0, "taxaLabel": "103% CDI", "modoTaxa": "cdi_pct", "dataAplicacao": "2024-09-20", "vencimento": "2027-09-21", "valorInicial": 2500, "valorBruto": 3128.11, "ir": 109.92, "banco": "C6 Bank", "instituicao": "C6 Bank", "liquidez": "Diária", "grupo": "CDB Pós-fixado Liq. Diária", "obs": "103% CDI · Emissor: Banco C6"}, {"id": "inv_0028", "nome": "CDB Pós Liq.Diária #4", "emissor": "Banco C6", "codigo": "—", "produto": "CDB Pós-fixado Liq. Diária", "tipo": "CDB", "indexador": "CDI", "taxa": 102.0, "taxaLabel": "102% CDI", "modoTaxa": "cdi_pct", "dataAplicacao": "2025-02-24", "vencimento": "2028-02-24", "valorInicial": 3250, "valorBruto": 3869.14, "ir": 108.35, "banco": "C6 Bank", "instituicao": "C6 Bank", "liquidez": "Diária", "grupo": "CDB Pós-fixado Liq. Diária", "obs": "102% CDI · Emissor: Banco C6"}, {"id": "inv_0029", "nome": "CDB Pós Liq.Diária #5", "emissor": "Banco C6", "codigo": "—", "produto": "CDB Pós-fixado Liq. Diária", "tipo": "CDB", "indexador": "CDI", "taxa": 101.5, "taxaLabel": "101,5% CDI", "modoTaxa": "cdi_pct", "dataAplicacao": "2025-07-16", "vencimento": "2028-07-18", "valorInicial": 2500, "valorBruto": 2824.15, "ir": 64.83, "banco": "C6 Bank", "instituicao": "C6 Bank", "liquidez": "Diária", "grupo": "CDB Pós-fixado Liq. Diária", "obs": "101,5% CDI · Emissor: Banco C6"}, {"id": "inv_0030", "nome": "CDB Pós Liq.Diária #6", "emissor": "Banco C6", "codigo": "—", "produto": "CDB Pós-fixado Liq. Diária", "tipo": "CDB", "indexador": "CDI", "taxa": 102.0, "taxaLabel": "102% CDI", "modoTaxa": "cdi_pct", "dataAplicacao": "2025-10-14", "vencimento": "2028-10-17", "valorInicial": 700, "valorBruto": 763.27, "ir": 12.65, "banco": "C6 Bank", "instituicao": "C6 Bank", "liquidez": "Diária", "grupo": "CDB Pós-fixado Liq. Diária", "obs": "102% CDI · Emissor: Banco C6"}, {"id": "inv_0031", "nome": "CDB Pós Liq.Diária #7", "emissor": "Banco C6", "codigo": "—", "produto": "CDB Pós-fixado Liq. Diária", "tipo": "CDB", "indexador": "CDI", "taxa": 102.0, "taxaLabel": "102% CDI", "modoTaxa": "cdi_pct", "dataAplicacao": "2025-10-15", "vencimento": "2028-10-17", "valorInicial": 800, "valorBruto": 871.82, "ir": 14.36, "banco": "C6 Bank", "instituicao": "C6 Bank", "liquidez": "Diária", "grupo": "CDB Pós-fixado Liq. Diária", "obs": "102% CDI · Emissor: Banco C6"}, {"id": "inv_0032", "nome": "CDB Pós Liq.Diária #8", "emissor": "Banco C6", "codigo": "—", "produto": "CDB Pós-fixado Liq. Diária", "tipo": "CDB", "indexador": "CDI", "taxa": 102.0, "taxaLabel": "102% CDI", "modoTaxa": "cdi_pct", "dataAplicacao": "2025-11-03", "vencimento": "2028-11-07", "valorInicial": 1000, "valorBruto": 1081.84, "ir": 16.36, "banco": "C6 Bank", "instituicao": "C6 Bank", "liquidez": "Diária", "grupo": "CDB Pós-fixado Liq. Diária", "obs": "102% CDI · Emissor: Banco C6"}, {"id": "inv_0033", "nome": "CDB Pós Liq.Diária #9", "emissor": "Banco C6", "codigo": "—", "produto": "CDB Pós-fixado Liq. Diária", "tipo": "CDB", "indexador": "CDI", "taxa": 102.0, "taxaLabel": "102% CDI", "modoTaxa": "cdi_pct", "dataAplicacao": "2025-12-23", "vencimento": "2028-12-22", "valorInicial": 1000, "valorBruto": 1060.76, "ir": 13.67, "banco": "C6 Bank", "instituicao": "C6 Bank", "liquidez": "Diária", "grupo": "CDB Pós-fixado Liq. Diária", "obs": "102% CDI · Emissor: Banco C6"}, {"id": "inv_0034", "nome": "CDB Pós Liq.Diária #10", "emissor": "Banco C6", "codigo": "—", "produto": "CDB Pós-fixado Liq. Diária", "tipo": "CDB", "indexador": "CDI", "taxa": 102.0, "taxaLabel": "102% CDI", "modoTaxa": "cdi_pct", "dataAplicacao": "2026-01-28", "vencimento": "2029-01-30", "valorInicial": 500, "valorBruto": 523.27, "ir": 5.23, "banco": "C6 Bank", "instituicao": "C6 Bank", "liquidez": "Diária", "grupo": "CDB Pós-fixado Liq. Diária", "obs": "102% CDI · Emissor: Banco C6"}, {"id": "inv_0035", "nome": "CDB Pós Liq.Diária #11", "emissor": "Banco C6", "codigo": "—", "produto": "CDB Pós-fixado Liq. Diária", "tipo": "CDB", "indexador": "CDI", "taxa": 102.0, "taxaLabel": "102% CDI", "modoTaxa": "cdi_pct", "dataAplicacao": "2026-02-11", "vencimento": "2029-02-15", "valorInicial": 1000, "valorBruto": 1040.68, "ir": 9.15, "banco": "C6 Bank", "instituicao": "C6 Bank", "liquidez": "Diária", "grupo": "CDB Pós-fixado Liq. Diária", "obs": "102% CDI · Emissor: Banco C6"}, {"id": "inv_0036", "nome": "CDB Pós Liq.Diária #12", "emissor": "Banco C6", "codigo": "—", "produto": "CDB Pós-fixado Liq. Diária", "tipo": "CDB", "indexador": "CDI", "taxa": 102.0, "taxaLabel": "102% CDI", "modoTaxa": "cdi_pct", "dataAplicacao": "2026-02-13", "vencimento": "2029-02-15", "valorInicial": 1000, "valorBruto": 1039.51, "ir": 8.89, "banco": "C6 Bank", "instituicao": "C6 Bank", "liquidez": "Diária", "grupo": "CDB Pós-fixado Liq. Diária", "obs": "102% CDI · Emissor: Banco C6"}, {"id": "inv_0037", "nome": "CDB Pós Liq.Diária #13", "emissor": "Banco C6", "codigo": "—", "produto": "CDB Pós-fixado Liq. Diária", "tipo": "CDB", "indexador": "CDI", "taxa": 102.0, "taxaLabel": "102% CDI", "modoTaxa": "cdi_pct", "dataAplicacao": "2026-02-18", "vencimento": "2029-02-20", "valorInicial": 500, "valorBruto": 519.46, "ir": 4.37, "banco": "C6 Bank", "instituicao": "C6 Bank", "liquidez": "Diária", "grupo": "CDB Pós-fixado Liq. Diária", "obs": "102% CDI · Emissor: Banco C6"}, {"id": "inv_0038", "nome": "CDB Pós Liq.Diária #14", "emissor": "Banco C6", "codigo": "—", "produto": "CDB Pós-fixado Liq. Diária", "tipo": "CDB", "indexador": "CDI", "taxa": 102.0, "taxaLabel": "102% CDI", "modoTaxa": "cdi_pct", "dataAplicacao": "2026-03-11", "vencimento": "2029-03-13", "valorInicial": 1000, "valorBruto": 1030.2, "ir": 6.79, "banco": "C6 Bank", "instituicao": "C6 Bank", "liquidez": "Diária", "grupo": "CDB Pós-fixado Liq. Diária", "obs": "102% CDI · Emissor: Banco C6"}, {"id": "inv_0039", "nome": "CDB Pós Liq.Diária #15", "emissor": "Banco C6", "codigo": "—", "produto": "CDB Pós-fixado Liq. Diária", "tipo": "CDB", "indexador": "CDI", "taxa": 103.0, "taxaLabel": "103% CDI", "modoTaxa": "cdi_pct", "dataAplicacao": "2024-09-04", "vencimento": "2027-09-09", "valorInicial": 2500, "valorBruto": 3143.36, "ir": 112.58, "banco": "C6 Bank", "instituicao": "C6 Bank", "liquidez": "Diária", "grupo": "CDB Pós-fixado Liq. Diária", "obs": "103% CDI · Emissor: Banco C6"}, {"id": "inv_0040", "nome": "CDB C6 Carbon Friday Pré 2a", "emissor": "Banco C6", "codigo": "—", "produto": "CDB Carbon Friday Pré 2 anos", "tipo": "CDB", "indexador": "Prefixado", "taxa": 14.7, "taxaLabel": "14,70%", "modoTaxa": "pre", "dataAplicacao": "2024-11-25", "vencimento": "2026-11-25", "valorInicial": 5000, "valorBruto": 6142.07, "ir": 199.86, "banco": "C6 Bank", "instituicao": "C6 Bank", "liquidez": "No venc.", "grupo": "CDB Carbon Friday Pré 2 anos", "obs": "14,70% · Emissor: Banco C6"}, {"id": "inv_0041", "nome": "CDB C6 Prefixado 2a", "emissor": "Banco C6", "codigo": "—", "produto": "CDB Prefixado 2 anos", "tipo": "CDB", "indexador": "Prefixado", "taxa": 16.3, "taxaLabel": "16,30%", "modoTaxa": "pre", "dataAplicacao": "2025-01-27", "vencimento": "2027-01-27", "valorInicial": 1500, "valorBruto": 1833.45, "ir": 58.35, "banco": "C6 Bank", "instituicao": "C6 Bank", "liquidez": "No venc.", "grupo": "CDB Prefixado 2 anos", "obs": "16,30% · Emissor: Banco C6"}, {"id": "inv_0042", "nome": "CDB C6 Invest Week Pós 1a", "emissor": "Banco C6", "codigo": "—", "produto": "CDB Invest Week Pós 1 ano", "tipo": "CDB", "indexador": "CDI", "taxa": 112.0, "taxaLabel": "112% CDI", "modoTaxa": "cdi_pct", "dataAplicacao": "2026-05-28", "vencimento": "2027-06-01", "valorInicial": 5000, "valorBruto": 5002.99, "ir": 0.02, "banco": "C6 Bank", "instituicao": "C6 Bank", "liquidez": "No venc.", "grupo": "CDB Invest Week Pós 1 ano", "obs": "112% CDI · Emissor: Banco C6"}, {"id": "inv_0043", "nome": "CDB C6 Pós 1a #1", "emissor": "Banco C6", "codigo": "—", "produto": "CDB Pós-fixado 1 ano", "tipo": "CDB", "indexador": "CDI", "taxa": 104.0, "taxaLabel": "104% CDI", "modoTaxa": "cdi_pct", "dataAplicacao": "2025-10-01", "vencimento": "2026-10-01", "valorInicial": 2500, "valorBruto": 2744.73, "ir": 48.94, "banco": "C6 Bank", "instituicao": "C6 Bank", "liquidez": "No venc.", "grupo": "CDB Pós-fixado 1 ano", "obs": "104% CDI · Emissor: Banco C6"}, {"id": "inv_0044", "nome": "CDB C6 Pós 1a #2", "emissor": "Banco C6", "codigo": "—", "produto": "CDB Pós-fixado 1 ano", "tipo": "CDB", "indexador": "CDI", "taxa": 104.0, "taxaLabel": "104% CDI", "modoTaxa": "cdi_pct", "dataAplicacao": "2025-10-01", "vencimento": "2026-10-01", "valorInicial": 1000, "valorBruto": 1097.89, "ir": 19.57, "banco": "C6 Bank", "instituicao": "C6 Bank", "liquidez": "No venc.", "grupo": "CDB Pós-fixado 1 ano", "obs": "104% CDI · Emissor: Banco C6"}, {"id": "inv_0045", "nome": "CDB C6 Pós 3 meses", "emissor": "Banco C6", "codigo": "—", "produto": "CDB Pós-fixado 3 meses", "tipo": "CDB", "indexador": "CDI", "taxa": 102.0, "taxaLabel": "102% CDI", "modoTaxa": "cdi_pct", "dataAplicacao": "2026-04-06", "vencimento": "2026-07-07", "valorInicial": 1000, "valorBruto": 1020.5, "ir": 4.61, "banco": "C6 Bank", "instituicao": "C6 Bank", "liquidez": "No venc.", "grupo": "CDB Pós-fixado 3 meses", "obs": "102% CDI · Emissor: Banco C6"}, {"id": "inv_0046", "nome": "CDB C6 Exclusivo Pré 5a", "emissor": "Banco C6", "codigo": "—", "produto": "CDB Exclusivo Prefixado 5 anos", "tipo": "CDB", "indexador": "Prefixado", "taxa": 15.9, "taxaLabel": "15,90%", "modoTaxa": "pre", "dataAplicacao": "2026-05-21", "vencimento": "2031-05-21", "valorInicial": 15000, "valorBruto": 15052.79, "ir": 3.2, "banco": "C6 Bank", "instituicao": "C6 Bank", "liquidez": "No venc.", "grupo": "CDB Exclusivo Prefixado 5 anos", "obs": "15,90% · Emissor: Banco C6"}, {"id": "inv_0047", "nome": "LCI PRE 720d (25G03976120)", "emissor": "Banco Inter", "codigo": "25G03976120", "produto": "LCI PRE 720 dias", "tipo": "LCI", "indexador": "Prefixado", "taxa": 12.6, "taxaLabel": "12,60%", "modoTaxa": "pre", "dataAplicacao": "2025-07-21", "vencimento": "2027-07-12", "valorInicial": 5000.0, "valorBruto": 5530.67, "ir": 0, "banco": "Inter Invest", "instituicao": "Inter Invest", "liquidez": "No venc.", "grupo": "LCI PRE 720 dias", "obs": "12,60% · Emissor: Banco Inter · Cód: 25G03976120"}, {"id": "inv_0048", "nome": "LCI PRE 720d (25G03973688)", "emissor": "Banco Inter", "codigo": "25G03973688", "produto": "LCI PRE 720 dias", "tipo": "LCI", "indexador": "Prefixado", "taxa": 12.6, "taxaLabel": "12,60%", "modoTaxa": "pre", "dataAplicacao": "2025-07-21", "vencimento": "2027-07-12", "valorInicial": 2500.0, "valorBruto": 2776.79, "ir": 0, "banco": "Inter Invest", "instituicao": "Inter Invest", "liquidez": "No venc.", "grupo": "LCI PRE 720 dias", "obs": "12,60% · Emissor: Banco Inter · Cód: 25G03973688"}, {"id": "inv_0049", "nome": "LCI PRE 720d (25G02502605)", "emissor": "Banco Inter", "codigo": "25G02502605", "produto": "LCI PRE 720 dias", "tipo": "LCI", "indexador": "Prefixado", "taxa": 12.6, "taxaLabel": "12,60%", "modoTaxa": "pre", "dataAplicacao": "2025-07-08", "vencimento": "2027-06-28", "valorInicial": 2500.0, "valorBruto": 2765.33, "ir": 0, "banco": "Inter Invest", "instituicao": "Inter Invest", "liquidez": "No venc.", "grupo": "LCI PRE 720 dias", "obs": "12,60% · Emissor: Banco Inter · Cód: 25G02502605"}, {"id": "inv_0050", "nome": "LCI PRE 180d (26A03931125)", "emissor": "Banco Inter", "codigo": "26A03931125", "produto": "LCI PRE 180 dias", "tipo": "LCI", "indexador": "Prefixado", "taxa": 11.6, "taxaLabel": "11,60%", "modoTaxa": "pre", "dataAplicacao": "2026-01-23", "vencimento": "2026-07-27", "valorInicial": 500.0, "valorBruto": 518.88, "ir": 0, "banco": "Inter Invest", "instituicao": "Inter Invest", "liquidez": "No venc.", "grupo": "LCI PRE 180 dias", "obs": "11,60% · Emissor: Banco Inter · Cód: 26A03931125"}, {"id": "inv_0051", "nome": "LCI PRE 180d (26A04285572)", "emissor": "Banco Inter", "codigo": "26A04285572", "produto": "LCI PRE 180 dias", "tipo": "LCI", "indexador": "Prefixado", "taxa": 11.6, "taxaLabel": "11,60%", "modoTaxa": "pre", "dataAplicacao": "2026-01-26", "vencimento": "2026-07-30", "valorInicial": 500.0, "valorBruto": 518.72, "ir": 0, "banco": "Inter Invest", "instituicao": "Inter Invest", "liquidez": "No venc.", "grupo": "LCI PRE 180 dias", "obs": "11,60% · Emissor: Banco Inter · Cód: 26A04285572"}, {"id": "inv_0052", "nome": "LCI PRE 180d (26B02539043)", "emissor": "Banco Inter", "codigo": "26B02539043", "produto": "LCI PRE 180 dias", "tipo": "LCI", "indexador": "Prefixado", "taxa": 11.3, "taxaLabel": "11,30%", "modoTaxa": "pre", "dataAplicacao": "2026-02-06", "vencimento": "2026-08-10", "valorInicial": 500.0, "valorBruto": 516.33, "ir": 0, "banco": "Inter Invest", "instituicao": "Inter Invest", "liquidez": "No venc.", "grupo": "LCI PRE 180 dias", "obs": "11,30% · Emissor: Banco Inter · Cód: 26B02539043"}, {"id": "inv_0053", "nome": "LCA Sicredi 92% CDI (25F02250176)", "emissor": "Sicredi", "codigo": "25F02250176", "produto": "LCA Sicredi", "tipo": "LCA", "indexador": "CDI", "taxa": 92.0, "taxaLabel": "92% CDI", "modoTaxa": "cdi_pct", "dataAplicacao": "2025-09-30", "vencimento": "2027-06-03", "valorInicial": 999.99, "valorBruto": 1086.66, "ir": 0, "banco": "Inter Invest", "instituicao": "Inter Invest", "liquidez": "No venc.", "grupo": "LCA Sicredi", "obs": "92% CDI · Emissor: Sicredi · Cód: 25F02250176"}, {"id": "inv_0054", "nome": "DEB Alares ALAR13", "emissor": "Alares", "codigo": "ALAR13", "produto": "Debênture Alares", "tipo": "Debênture", "indexador": "Prefixado", "taxa": 16.0, "taxaLabel": "16,00%", "modoTaxa": "pre", "dataAplicacao": "2025-08-11", "vencimento": "2030-05-15", "valorInicial": 2957.04, "valorBruto": 2891.35, "ir": 0, "banco": "Inter Invest", "instituicao": "Inter Invest", "liquidez": "No venc.", "grupo": "DEB Alares ALAR13", "obs": "16,00% · Emissor: Alares · Cód: ALAR13"}, {"id": "inv_0055", "nome": "DEB Alares CONX12 #1", "emissor": "Alares", "codigo": "CONX12", "produto": "Debênture CONX12", "tipo": "Debênture", "indexador": "IPCA+", "taxa": 10.8, "taxaLabel": "IPCA+10,8%", "modoTaxa": "ipca_mais", "dataAplicacao": "2025-08-11", "vencimento": "2029-08-15", "valorInicial": 2229.78, "valorBruto": 2325.77, "ir": 0, "banco": "Inter Invest", "instituicao": "Inter Invest", "liquidez": "No venc.", "grupo": "DEB Alares CONX12", "obs": "IPCA+10,8% · Emissor: Alares · Cód: CONX12"}, {"id": "inv_0056", "nome": "DEB Alares CONX12 #2", "emissor": "Alares", "codigo": "CONX12", "produto": "Debênture CONX12", "tipo": "Debênture", "indexador": "IPCA+", "taxa": 10.8, "taxaLabel": "IPCA+10,8%", "modoTaxa": "ipca_mais", "dataAplicacao": "2025-08-11", "vencimento": "2029-08-15", "valorInicial": 1114.89, "valorBruto": 1162.88, "ir": 0, "banco": "Inter Invest", "instituicao": "Inter Invest", "liquidez": "No venc.", "grupo": "DEB Alares CONX12", "obs": "IPCA+10,8% · Emissor: Alares · Cód: CONX12"}, {"id": "inv_0057", "nome": "DEB Simpar JSMLA5 #1", "emissor": "Simpar", "codigo": "JSMLA5", "produto": "Debênture JSMLA5", "tipo": "Debênture", "indexador": "CDI", "taxa": 5.0, "taxaLabel": "CDI+5%", "modoTaxa": "cdi_mais", "dataAplicacao": "2025-08-11", "vencimento": "2031-01-15", "valorInicial": 967.68, "valorBruto": 1024.07, "ir": 14.0, "banco": "Inter Invest", "instituicao": "Inter Invest", "liquidez": "No venc.", "grupo": "DEB Simpar JSMLA5", "obs": "CDI+5% · Emissor: Simpar · Cód: JSMLA5"}, {"id": "inv_0058", "nome": "DEB Simpar JSMLA5 #2", "emissor": "Simpar", "codigo": "JSMLA5", "produto": "Debênture JSMLA5", "tipo": "Debênture", "indexador": "CDI", "taxa": 5.0, "taxaLabel": "CDI+5%", "modoTaxa": "cdi_mais", "dataAplicacao": "2025-08-11", "vencimento": "2031-01-15", "valorInicial": 967.68, "valorBruto": 1024.07, "ir": 14.0, "banco": "Inter Invest", "instituicao": "Inter Invest", "liquidez": "No venc.", "grupo": "DEB Simpar JSMLA5", "obs": "CDI+5% · Emissor: Simpar · Cód: JSMLA5"}, {"id": "inv_0059", "nome": "CRI BILD E347 S3 (24L0004005)", "emissor": "Opea Securitizadora", "codigo": "24L0004005", "produto": "CRI BILD E347 S3", "tipo": "CRI", "indexador": "Prefixado", "taxa": 15.0, "taxaLabel": "15,00%", "modoTaxa": "pre", "dataAplicacao": "2025-08-11", "vencimento": "2030-01-16", "valorInicial": 1070.08, "valorBruto": 1108.98, "ir": 0, "banco": "Inter Invest", "instituicao": "Inter Invest", "liquidez": "No venc.", "grupo": "CRI BILD E347 S3", "obs": "15,00% · Emissor: Opea Securitizadora · Cód: 24L0004005"}, {"id": "inv_0060", "nome": "CRI DASA E94 S2 (22J0306937)", "emissor": "Vert Securitizadora", "codigo": "22J0306937", "produto": "CRI DASA E94 S2", "tipo": "CRI", "indexador": "IPCA+", "taxa": 10.0, "taxaLabel": "IPCA+10%", "modoTaxa": "ipca_mais", "dataAplicacao": "2025-08-11", "vencimento": "2029-10-15", "valorInicial": 1043.47, "valorBruto": 1090.2, "ir": 0, "banco": "Inter Invest", "instituicao": "Inter Invest", "liquidez": "No venc.", "grupo": "CRI DASA E94 S2", "obs": "IPCA+10% · Emissor: Vert Securitizadora · Cód: 22J0306937"}, {"id": "inv_0061", "nome": "CRA FS Florestal E384 S1 (CRA0250012X)", "emissor": "Eco Securitizadora", "codigo": "CRA0250012X", "produto": "CRA FS Florestal E384 S1", "tipo": "CRA", "indexador": "Prefixado", "taxa": 15.5, "taxaLabel": "15,50%", "modoTaxa": "pre", "dataAplicacao": "2025-08-15", "vencimento": "2030-03-15", "valorInicial": 1067.75, "valorBruto": 1065.54, "ir": 0, "banco": "Inter Invest", "instituicao": "Inter Invest", "liquidez": "No venc.", "grupo": "CRA FS Florestal E384 S1", "obs": "15,50% · Emissor: Eco Securitizadora · Cód: CRA0250012X"}, {"id": "inv_0062", "nome": "CDB Digimais 115% CDI (CDBA250QHKO)", "emissor": "Banco Digimais", "codigo": "CDBA250QHKO", "produto": "CDB Digimais 115% CDI", "tipo": "CDB", "indexador": "CDI", "taxa": 115.0, "taxaLabel": "115% CDI", "modoTaxa": "cdi_pct", "dataAplicacao": "2025-10-01", "vencimento": "2031-09-30", "valorInicial": 1000.0, "valorBruto": 1087.03, "ir": 21.75, "banco": "Inter Invest", "instituicao": "Inter Invest", "liquidez": "No venc.", "grupo": "CDB Digimais 115% CDI", "obs": "115% CDI · Emissor: Banco Digimais · Cód: CDBA250QHKO"}, {"id": "inv_0063", "nome": "CDB Digimais 115% CDI (CDBA256U453)", "emissor": "Banco Digimais", "codigo": "CDBA256U453", "produto": "CDB Digimais 115% CDI", "tipo": "CDB", "indexador": "CDI", "taxa": 115.0, "taxaLabel": "115% CDI", "modoTaxa": "cdi_pct", "dataAplicacao": "2025-10-10", "vencimento": "2031-10-09", "valorInicial": 1000.0, "valorBruto": 1083.1, "ir": 20.77, "banco": "Inter Invest", "instituicao": "Inter Invest", "liquidez": "No venc.", "grupo": "CDB Digimais 115% CDI", "obs": "115% CDI · Emissor: Banco Digimais · Cód: CDBA256U453"}, {"id": "inv_0064", "nome": "CRA VAMOS E233 S1 (CRA023000GP)", "emissor": "Eco Securitizadora", "codigo": "CRA023000GP", "produto": "CRA VAMOS E233 S1", "tipo": "CRA", "indexador": "CDI", "taxa": 3.05, "taxaLabel": "CDI+3,05%", "modoTaxa": "cdi_mais", "dataAplicacao": "2026-05-29", "vencimento": "2028-01-17", "valorInicial": 5117.95, "valorBruto": 5117.95, "ir": 0, "banco": "Inter Invest", "instituicao": "Inter Invest", "liquidez": "No venc.", "grupo": "CRA VAMOS E233 S1", "obs": "CDI+3,05% · Emissor: Eco Securitizadora · Cód: CRA023000GP"}, {"id": "inv_0065", "nome": "CDB C6 Consignado (CDB124661KS)", "emissor": "C6 Consignado", "codigo": "CDB124661KS", "produto": "CDB C6 Consignado 120% CDI", "tipo": "CDB", "indexador": "CDI", "taxa": 120.0, "taxaLabel": "120% CDI", "modoTaxa": "cdi_pct", "dataAplicacao": "2024-01-30", "vencimento": "2027-01-18", "valorInicial": 199.71, "valorBruto": 280.62, "ir": 12.14, "banco": "Nubank", "instituicao": "Nubank", "liquidez": "No venc.", "grupo": "CDB C6 Consignado 120% CDI", "obs": "120% CDI · Emissor: C6 Consignado · Cód: CDB124661KS"}, {"id": "inv_0066", "nome": "CDB C6 Consignado (CDB1244MC5C)", "emissor": "C6 Consignado", "codigo": "CDB1244MC5C", "produto": "CDB C6 Consignado 120% CDI", "tipo": "CDB", "indexador": "CDI", "taxa": 120.0, "taxaLabel": "120% CDI", "modoTaxa": "cdi_pct", "dataAplicacao": "2024-01-30", "vencimento": "2027-01-11", "valorInicial": 200.03, "valorBruto": 281.07, "ir": 12.16, "banco": "Nubank", "instituicao": "Nubank", "liquidez": "No venc.", "grupo": "CDB C6 Consignado 120% CDI", "obs": "120% CDI · Emissor: C6 Consignado · Cód: CDB1244MC5C"}, {"id": "inv_0067", "nome": "CDB C6 Consignado (CDB323UK5IA)", "emissor": "C6 Consignado", "codigo": "CDB323UK5IA", "produto": "CDB C6 Consignado 120% CDI", "tipo": "CDB", "indexador": "CDI", "taxa": 120.0, "taxaLabel": "120% CDI", "modoTaxa": "cdi_pct", "dataAplicacao": "2024-01-30", "vencimento": "2026-09-08", "valorInicial": 207.55, "valorBruto": 291.64, "ir": 12.61, "banco": "Nubank", "instituicao": "Nubank", "liquidez": "No venc.", "grupo": "CDB C6 Consignado 120% CDI", "obs": "120% CDI · Emissor: C6 Consignado · Cód: CDB323UK5IA"}, {"id": "inv_0068", "nome": "CDB C6 Consignado (CDB1241TP6J)", "emissor": "C6 Consignado", "codigo": "CDB1241TP6J", "produto": "CDB C6 Consignado 120% CDI", "tipo": "CDB", "indexador": "CDI", "taxa": 120.0, "taxaLabel": "120% CDI", "modoTaxa": "cdi_pct", "dataAplicacao": "2024-01-30", "vencimento": "2027-01-06", "valorInicial": 248.46, "valorBruto": 349.12, "ir": 15.1, "banco": "Nubank", "instituicao": "Nubank", "liquidez": "No venc.", "grupo": "CDB C6 Consignado 120% CDI", "obs": "120% CDI · Emissor: C6 Consignado · Cód: CDB1241TP6J"}, {"id": "inv_0069", "nome": "CDB C6 Consignado (CDBB2395ML4)", "emissor": "C6 Consignado", "codigo": "CDBB2395ML4", "produto": "CDB C6 Consignado 120% CDI", "tipo": "CDB", "indexador": "CDI", "taxa": 120.0, "taxaLabel": "120% CDI", "modoTaxa": "cdi_pct", "dataAplicacao": "2024-01-30", "vencimento": "2026-11-24", "valorInicial": 302.95, "valorBruto": 425.68, "ir": 18.41, "banco": "Nubank", "instituicao": "Nubank", "liquidez": "No venc.", "grupo": "CDB C6 Consignado 120% CDI", "obs": "120% CDI · Emissor: C6 Consignado · Cód: CDBB2395ML4"}, {"id": "inv_0070", "nome": "CDB C6 Consignado (CDBC230IRDB)", "emissor": "C6 Consignado", "codigo": "CDBC230IRDB", "produto": "CDB C6 Consignado 120% CDI", "tipo": "CDB", "indexador": "CDI", "taxa": 120.0, "taxaLabel": "120% CDI", "modoTaxa": "cdi_pct", "dataAplicacao": "2024-01-30", "vencimento": "2026-12-03", "valorInicial": 320.92, "valorBruto": 450.93, "ir": 19.5, "banco": "Nubank", "instituicao": "Nubank", "liquidez": "No venc.", "grupo": "CDB C6 Consignado 120% CDI", "obs": "120% CDI · Emissor: C6 Consignado · Cód: CDBC230IRDB"}, {"id": "inv_0071", "nome": "CDB C6 Consignado (CDBA234ASCV)", "emissor": "C6 Consignado", "codigo": "CDBA234ASCV", "produto": "CDB C6 Consignado 120% CDI", "tipo": "CDB", "indexador": "CDI", "taxa": 120.0, "taxaLabel": "120% CDI", "modoTaxa": "cdi_pct", "dataAplicacao": "2024-01-30", "vencimento": "2026-10-13", "valorInicial": 369.23, "valorBruto": 518.81, "ir": 22.44, "banco": "Nubank", "instituicao": "Nubank", "liquidez": "No venc.", "grupo": "CDB C6 Consignado 120% CDI", "obs": "120% CDI · Emissor: C6 Consignado · Cód: CDBA234ASCV"}, {"id": "inv_0072", "nome": "CDB C6 Consignado (CDB1247FUBS)", "emissor": "C6 Consignado", "codigo": "CDB1247FUBS", "produto": "CDB C6 Consignado 120% CDI", "tipo": "CDB", "indexador": "CDI", "taxa": 120.0, "taxaLabel": "120% CDI", "modoTaxa": "cdi_pct", "dataAplicacao": "2024-01-30", "vencimento": "2027-01-18", "valorInicial": 498.77, "valorBruto": 700.83, "ir": 30.31, "banco": "Nubank", "instituicao": "Nubank", "liquidez": "No venc.", "grupo": "CDB C6 Consignado 120% CDI", "obs": "120% CDI · Emissor: C6 Consignado · Cód: CDB1247FUBS"}, {"id": "inv_0073", "nome": "CDB Banco Original (CDBC237BGAC)", "emissor": "Banco Original", "codigo": "CDBC237BGAC", "produto": "CDB Banco Original 120% CDI", "tipo": "CDB", "indexador": "CDI", "taxa": 120.0, "taxaLabel": "120% CDI", "modoTaxa": "cdi_pct", "dataAplicacao": "2024-01-30", "vencimento": "2026-11-30", "valorInicial": 200.27, "valorBruto": 281.4, "ir": 12.17, "banco": "Nubank", "instituicao": "Nubank", "liquidez": "No venc.", "grupo": "CDB Banco Original 120% CDI", "obs": "120% CDI · Emissor: Banco Original · Cód: CDBC237BGAC"}, {"id": "inv_0074", "nome": "CDB Banco Original (CDB7242R9N3)", "emissor": "Banco Original", "codigo": "CDB7242R9N3", "produto": "CDB Banco Original 14,07% Pré", "tipo": "CDB", "indexador": "Prefixado", "taxa": 14.07, "taxaLabel": "14,07% Pré", "modoTaxa": "pre", "dataAplicacao": "2024-07-04", "vencimento": "2027-06-21", "valorInicial": 2500.0, "valorBruto": 3209.11, "ir": 124.09, "banco": "Nubank", "instituicao": "Nubank", "liquidez": "No venc.", "grupo": "CDB Banco Original 14,07% Pré", "obs": "14,07% Pré · Emissor: Banco Original · Cód: CDB7242R9N3"}, {"id": "inv_0075", "nome": "CDB Banco Digimais (CDB5245S4EL)", "emissor": "Banco Digimais", "codigo": "CDB5245S4EL", "produto": "CDB Banco Digimais 124% CDI", "tipo": "CDB", "indexador": "CDI", "taxa": 124.0, "taxaLabel": "124% CDI", "modoTaxa": "cdi_pct", "dataAplicacao": "2024-05-09", "vencimento": "2028-07-03", "valorInicial": 2500.0, "valorBruto": 3367.17, "ir": 130.08, "banco": "Nubank", "instituicao": "Nubank", "liquidez": "No venc.", "grupo": "CDB Banco Digimais 124% CDI", "obs": "124% CDI · Emissor: Banco Digimais · Cód: CDB5245S4EL"}, {"id": "inv_0076", "nome": "CDB Banco Digimais (CDB7242RBXO)", "emissor": "Banco Digimais", "codigo": "CDB7242RBXO", "produto": "CDB Banco Digimais 124% CDI", "tipo": "CDB", "indexador": "CDI", "taxa": 124.0, "taxaLabel": "124% CDI", "modoTaxa": "cdi_pct", "dataAplicacao": "2024-07-04", "vencimento": "2028-05-08", "valorInicial": 2500.0, "valorBruto": 3431.71, "ir": 163.05, "banco": "Nubank", "instituicao": "Nubank", "liquidez": "No venc.", "grupo": "CDB Banco Digimais 124% CDI", "obs": "124% CDI · Emissor: Banco Digimais · Cód: CDB7242RBXO"}, {"id": "inv_0077", "nome": "RDB Cartão #1", "emissor": "Nu Financeira", "codigo": "—", "produto": "RDB Cartão 100% CDI", "tipo": "RDB", "indexador": "CDI", "taxa": 100.0, "taxaLabel": "100% CDI", "modoTaxa": "cdi_pct", "dataAplicacao": "2025-10-19", "vencimento": "2027-10-19", "valorInicial": 3051.69, "valorBruto": 3314.58, "ir": 52.57, "banco": "Nubank", "instituicao": "Nubank", "liquidez": "Diária", "grupo": "RDB Cartão 100% CDI", "obs": "100% CDI · Emissor: Nu Financeira"}, {"id": "inv_0078", "nome": "RDB Cartão #2", "emissor": "Nu Financeira", "codigo": "—", "produto": "RDB Cartão 100% CDI", "tipo": "RDB", "indexador": "CDI", "taxa": 100.0, "taxaLabel": "100% CDI", "modoTaxa": "cdi_pct", "dataAplicacao": "2025-10-19", "vencimento": "2027-10-19", "valorInicial": 3051.69, "valorBruto": 3314.58, "ir": 52.57, "banco": "Nubank", "instituicao": "Nubank", "liquidez": "Diária", "grupo": "RDB Cartão 100% CDI", "obs": "100% CDI · Emissor: Nu Financeira"}, {"id": "inv_0079", "nome": "RDB Cartão #3", "emissor": "Nu Financeira", "codigo": "—", "produto": "RDB Cartão 100% CDI", "tipo": "RDB", "indexador": "CDI", "taxa": 100.0, "taxaLabel": "100% CDI", "modoTaxa": "cdi_pct", "dataAplicacao": "2025-11-15", "vencimento": "2027-11-15", "valorInicial": 6181.35, "valorBruto": 6640.25, "ir": 91.78, "banco": "Nubank", "instituicao": "Nubank", "liquidez": "Diária", "grupo": "RDB Cartão 100% CDI", "obs": "100% CDI · Emissor: Nu Financeira"}, {"id": "inv_0080", "nome": "RDB Fevereiro #1", "emissor": "Nu Financeira", "codigo": "—", "produto": "RDB Fevereiro 100% CDI", "tipo": "RDB", "indexador": "CDI", "taxa": 100.0, "taxaLabel": "100% CDI", "modoTaxa": "cdi_pct", "dataAplicacao": "2025-05-27", "vencimento": "2027-05-27", "valorInicial": 2600.0, "valorBruto": 2988.5, "ir": 67.98, "banco": "Nubank", "instituicao": "Nubank", "liquidez": "Diária", "grupo": "RDB Fevereiro 100% CDI", "obs": "100% CDI · Emissor: Nu Financeira"}, {"id": "inv_0081", "nome": "RDB Fevereiro #2", "emissor": "Nu Financeira", "codigo": "—", "produto": "RDB Fevereiro 100% CDI", "tipo": "RDB", "indexador": "CDI", "taxa": 100.0, "taxaLabel": "100% CDI", "modoTaxa": "cdi_pct", "dataAplicacao": "2025-05-30", "vencimento": "2027-05-30", "valorInicial": 150.0, "valorBruto": 172.13, "ir": 3.87, "banco": "Nubank", "instituicao": "Nubank", "liquidez": "Diária", "grupo": "RDB Fevereiro 100% CDI", "obs": "100% CDI · Emissor: Nu Financeira"}, {"id": "inv_0082", "nome": "RDB Nova Caixinha #1", "emissor": "Nu Financeira", "codigo": "—", "produto": "RDB Nova Caixinha 113% CDI", "tipo": "RDB", "indexador": "CDI", "taxa": 113.0, "taxaLabel": "113% CDI", "modoTaxa": "cdi_pct", "dataAplicacao": "2025-10-10", "vencimento": "2027-10-10", "valorInicial": 2500.0, "valorBruto": 2754.96, "ir": 50.99, "banco": "Nubank", "instituicao": "Nubank", "liquidez": "No venc.", "grupo": "RDB Nova Caixinha 113% CDI", "obs": "113% CDI · Emissor: Nu Financeira"}, {"id": "inv_0083", "nome": "RDB Nova Caixinha #2", "emissor": "Nu Financeira", "codigo": "—", "produto": "RDB Nova Caixinha 113% CDI", "tipo": "RDB", "indexador": "CDI", "taxa": 113.0, "taxaLabel": "113% CDI", "modoTaxa": "cdi_pct", "dataAplicacao": "2025-10-14", "vencimento": "2027-10-14", "valorInicial": 1500.0, "valorBruto": 1650.92, "ir": 30.18, "banco": "Nubank", "instituicao": "Nubank", "liquidez": "No venc.", "grupo": "RDB Nova Caixinha 113% CDI", "obs": "113% CDI · Emissor: Nu Financeira"}, {"id": "inv_0084", "nome": "RDB Nova Caixinha #3", "emissor": "Nu Financeira", "codigo": "—", "produto": "RDB Nova Caixinha 113% CDI", "tipo": "RDB", "indexador": "CDI", "taxa": 113.0, "taxaLabel": "113% CDI", "modoTaxa": "cdi_pct", "dataAplicacao": "2025-10-25", "vencimento": "2027-10-25", "valorInicial": 1500.0, "valorBruto": 1641.69, "ir": 28.33, "banco": "Nubank", "instituicao": "Nubank", "liquidez": "No venc.", "grupo": "RDB Nova Caixinha 113% CDI", "obs": "113% CDI · Emissor: Nu Financeira"}, {"id": "inv_0085", "nome": "RDB Nova Caixinha #4", "emissor": "Nu Financeira", "codigo": "—", "produto": "RDB Nova Caixinha 113% CDI", "tipo": "RDB", "indexador": "CDI", "taxa": 113.0, "taxaLabel": "113% CDI", "modoTaxa": "cdi_pct", "dataAplicacao": "2025-10-13", "vencimento": "2027-10-13", "valorInicial": 500.0, "valorBruto": 550.65, "ir": 10.13, "banco": "Nubank", "instituicao": "Nubank", "liquidez": "No venc.", "grupo": "RDB Nova Caixinha 113% CDI", "obs": "113% CDI · Emissor: Nu Financeira"}, {"id": "inv_0086", "nome": "RDB Nova Caixinha #5", "emissor": "Nu Financeira", "codigo": "—", "produto": "RDB Nova Caixinha 113% CDI", "tipo": "RDB", "indexador": "CDI", "taxa": 113.0, "taxaLabel": "113% CDI", "modoTaxa": "cdi_pct", "dataAplicacao": "2026-02-13", "vencimento": "2028-02-13", "valorInicial": 500.0, "valorBruto": 521.93, "ir": 4.93, "banco": "Nubank", "instituicao": "Nubank", "liquidez": "No venc.", "grupo": "RDB Nova Caixinha 113% CDI", "obs": "113% CDI · Emissor: Nu Financeira"}, {"id": "inv_0087", "nome": "RDB Nova Caixinha 1 #1", "emissor": "Nu Financeira", "codigo": "—", "produto": "RDB Nova Caixinha 113% CDI", "tipo": "RDB", "indexador": "CDI", "taxa": 113.0, "taxaLabel": "113% CDI", "modoTaxa": "cdi_pct", "dataAplicacao": "2026-01-16", "vencimento": "2028-01-16", "valorInicial": 1000.0, "valorBruto": 1056.95, "ir": 12.81, "banco": "Nubank", "instituicao": "Nubank", "liquidez": "No venc.", "grupo": "RDB Nova Caixinha 113% CDI", "obs": "113% CDI · Emissor: Nu Financeira"}, {"id": "inv_0088", "nome": "RDB Nova Caixinha 1 #2", "emissor": "Nu Financeira", "codigo": "—", "produto": "RDB Nova Caixinha 113% CDI", "tipo": "RDB", "indexador": "CDI", "taxa": 113.0, "taxaLabel": "113% CDI", "modoTaxa": "cdi_pct", "dataAplicacao": "2026-01-22", "vencimento": "2028-01-22", "valorInicial": 1000.0, "valorBruto": 1054.32, "ir": 12.22, "banco": "Nubank", "instituicao": "Nubank", "liquidez": "No venc.", "grupo": "RDB Nova Caixinha 113% CDI", "obs": "113% CDI · Emissor: Nu Financeira"}, {"id": "inv_0089", "nome": "RDB Nova Caixinha 1 #3", "emissor": "Nu Financeira", "codigo": "—", "produto": "RDB Nova Caixinha 113% CDI", "tipo": "RDB", "indexador": "CDI", "taxa": 113.0, "taxaLabel": "113% CDI", "modoTaxa": "cdi_pct", "dataAplicacao": "2026-02-13", "vencimento": "2028-02-13", "valorInicial": 1000.0, "valorBruto": 1043.87, "ir": 9.87, "banco": "Nubank", "instituicao": "Nubank", "liquidez": "No venc.", "grupo": "RDB Nova Caixinha 113% CDI", "obs": "113% CDI · Emissor: Nu Financeira"}, {"id": "inv_0090", "nome": "RDB Nova Caixinha 1 #4", "emissor": "Nu Financeira", "codigo": "—", "produto": "RDB Nova Caixinha 113% CDI", "tipo": "RDB", "indexador": "CDI", "taxa": 113.0, "taxaLabel": "113% CDI", "modoTaxa": "cdi_pct", "dataAplicacao": "2026-02-14", "vencimento": "2028-02-14", "valorInicial": 500.0, "valorBruto": 521.61, "ir": 4.86, "banco": "Nubank", "instituicao": "Nubank", "liquidez": "No venc.", "grupo": "RDB Nova Caixinha 113% CDI", "obs": "113% CDI · Emissor: Nu Financeira"}, {"id": "inv_0091", "nome": "RDB Turbo Ultravioleta #1", "emissor": "Nu Financeira", "codigo": "—", "produto": "RDB Turbo Ultravioleta 120% CDI", "tipo": "RDB", "indexador": "CDI", "taxa": 120.0, "taxaLabel": "120% CDI", "modoTaxa": "cdi_pct", "dataAplicacao": "2025-06-17", "vencimento": "2027-06-17", "valorInicial": 5000.0, "valorBruto": 5851.95, "ir": 170.39, "banco": "Nubank", "instituicao": "Nubank", "liquidez": "Diária", "grupo": "RDB Turbo Ultravioleta 120% CDI", "obs": "120% CDI · Emissor: Nu Financeira"}, {"id": "inv_0092", "nome": "RDB Turbo Ultravioleta #2", "emissor": "Nu Financeira", "codigo": "—", "produto": "RDB Turbo Ultravioleta 120% CDI", "tipo": "RDB", "indexador": "CDI", "taxa": 120.0, "taxaLabel": "120% CDI", "modoTaxa": "cdi_pct", "dataAplicacao": "2025-07-03", "vencimento": "2027-07-03", "valorInicial": 2500.0, "valorBruto": 2904.83, "ir": 80.96, "banco": "Nubank", "instituicao": "Nubank", "liquidez": "Diária", "grupo": "RDB Turbo Ultravioleta 120% CDI", "obs": "120% CDI · Emissor: Nu Financeira"}, {"id": "inv_0093", "nome": "RDB Turbo Ultravioleta #3", "emissor": "Nu Financeira", "codigo": "—", "produto": "RDB Turbo Ultravioleta 120% CDI", "tipo": "RDB", "indexador": "CDI", "taxa": 120.0, "taxaLabel": "120% CDI", "modoTaxa": "cdi_pct", "dataAplicacao": "2025-07-08", "vencimento": "2027-07-08", "valorInicial": 2500.0, "valorBruto": 2899.07, "ir": 79.81, "banco": "Nubank", "instituicao": "Nubank", "liquidez": "Diária", "grupo": "RDB Turbo Ultravioleta 120% CDI", "obs": "120% CDI · Emissor: Nu Financeira"}, {"id": "inv_0094", "nome": "CDB Planejado 120% CDI #1", "emissor": "Banco Neon", "codigo": "—", "produto": "CDB Planejado 120% CDI", "tipo": "CDB", "indexador": "CDI", "taxa": 120.0, "taxaLabel": "120% CDI", "modoTaxa": "cdi_pct", "dataAplicacao": "2026-02-21", "vencimento": "2028-02-14", "valorInicial": 1500.0, "valorBruto": 1565.81, "ir": 14.81, "banco": "Neon", "instituicao": "Neon", "liquidez": "No venc.", "grupo": "CDB Planejado 120% CDI", "obs": "120% CDI · Emissor: Banco Neon"}, {"id": "inv_0095", "nome": "CDB Planejado 120% CDI #2", "emissor": "Banco Neon", "codigo": "—", "produto": "CDB Planejado 120% CDI", "tipo": "CDB", "indexador": "CDI", "taxa": 120.0, "taxaLabel": "120% CDI", "modoTaxa": "cdi_pct", "dataAplicacao": "2026-02-21", "vencimento": "2028-02-18", "valorInicial": 1500.0, "valorBruto": 1561.68, "ir": 13.88, "banco": "Neon", "instituicao": "Neon", "liquidez": "No venc.", "grupo": "CDB Planejado 120% CDI", "obs": "120% CDI · Emissor: Banco Neon"}, {"id": "inv_0096", "nome": "CDB Planejado 120% CDI #3", "emissor": "Banco Neon", "codigo": "—", "produto": "CDB Planejado 120% CDI", "tipo": "CDB", "indexador": "CDI", "taxa": 120.0, "taxaLabel": "120% CDI", "modoTaxa": "cdi_pct", "dataAplicacao": "2026-02-21", "vencimento": "2028-03-01", "valorInicial": 1500.0, "valorBruto": 1554.46, "ir": 12.25, "banco": "Neon", "instituicao": "Neon", "liquidez": "No venc.", "grupo": "CDB Planejado 120% CDI", "obs": "120% CDI · Emissor: Banco Neon"}, {"id": "inv_0097", "nome": "CDB Planejado 120% CDI #4", "emissor": "Banco Neon", "codigo": "—", "produto": "CDB Planejado 120% CDI", "tipo": "CDB", "indexador": "CDI", "taxa": 120.0, "taxaLabel": "120% CDI", "modoTaxa": "cdi_pct", "dataAplicacao": "2026-02-21", "vencimento": "2028-03-02", "valorInicial": 1500.0, "valorBruto": 1552.41, "ir": 11.79, "banco": "Neon", "instituicao": "Neon", "liquidez": "No venc.", "grupo": "CDB Planejado 120% CDI", "obs": "120% CDI · Emissor: Banco Neon"}, {"id": "inv_0098", "nome": "CDB Planejado 120% CDI #5", "emissor": "Banco Neon", "codigo": "—", "produto": "CDB Planejado 120% CDI", "tipo": "CDB", "indexador": "CDI", "taxa": 120.0, "taxaLabel": "120% CDI", "modoTaxa": "cdi_pct", "dataAplicacao": "2026-02-21", "vencimento": "2028-03-06", "valorInicial": 1500.0, "valorBruto": 1550.36, "ir": 11.33, "banco": "Neon", "instituicao": "Neon", "liquidez": "No venc.", "grupo": "CDB Planejado 120% CDI", "obs": "120% CDI · Emissor: Banco Neon"}, {"id": "inv_0099", "nome": "CDB Planejado 120% CDI #6", "emissor": "Banco Neon", "codigo": "—", "produto": "CDB Planejado 120% CDI", "tipo": "CDB", "indexador": "CDI", "taxa": 120.0, "taxaLabel": "120% CDI", "modoTaxa": "cdi_pct", "dataAplicacao": "2026-02-21", "vencimento": "2028-03-08", "valorInicial": 1500.0, "valorBruto": 1548.31, "ir": 10.87, "banco": "Neon", "instituicao": "Neon", "liquidez": "No venc.", "grupo": "CDB Planejado 120% CDI", "obs": "120% CDI · Emissor: Banco Neon"}, {"id": "inv_0100", "nome": "CDB Planejado 120% CDI #7", "emissor": "Banco Neon", "codigo": "—", "produto": "CDB Planejado 120% CDI", "tipo": "CDB", "indexador": "CDI", "taxa": 120.0, "taxaLabel": "120% CDI", "modoTaxa": "cdi_pct", "dataAplicacao": "2026-02-21", "vencimento": "2028-03-23", "valorInicial": 1500.0, "valorBruto": 1537.24, "ir": 8.38, "banco": "Neon", "instituicao": "Neon", "liquidez": "No venc.", "grupo": "CDB Planejado 120% CDI", "obs": "120% CDI · Emissor: Banco Neon"}, {"id": "inv_0101", "nome": "CDB Planejado 120% CDI #8", "emissor": "Banco Neon", "codigo": "—", "produto": "CDB Planejado 120% CDI", "tipo": "CDB", "indexador": "CDI", "taxa": 120.0, "taxaLabel": "120% CDI", "modoTaxa": "cdi_pct", "dataAplicacao": "2026-02-21", "vencimento": "2028-04-04", "valorInicial": 1500.0, "valorBruto": 1530.26, "ir": 6.81, "banco": "Neon", "instituicao": "Neon", "liquidez": "No venc.", "grupo": "CDB Planejado 120% CDI", "obs": "120% CDI · Emissor: Banco Neon"}, {"id": "inv_0102", "nome": "CDB Planejado 120% CDI #9", "emissor": "Banco Neon", "codigo": "—", "produto": "CDB Planejado 120% CDI", "tipo": "CDB", "indexador": "CDI", "taxa": 120.0, "taxaLabel": "120% CDI", "modoTaxa": "cdi_pct", "dataAplicacao": "2026-02-21", "vencimento": "2028-04-06", "valorInicial": 1500.0, "valorBruto": 1528.26, "ir": 6.36, "banco": "Neon", "instituicao": "Neon", "liquidez": "No venc.", "grupo": "CDB Planejado 120% CDI", "obs": "120% CDI · Emissor: Banco Neon"}, {"id": "inv_0103", "nome": "CDB Planejado 120% CDI #10", "emissor": "Banco Neon", "codigo": "—", "produto": "CDB Planejado 120% CDI", "tipo": "CDB", "indexador": "CDI", "taxa": 120.0, "taxaLabel": "120% CDI", "modoTaxa": "cdi_pct", "dataAplicacao": "2026-02-21", "vencimento": "2028-04-06", "valorInicial": 1500.0, "valorBruto": 1528.26, "ir": 6.36, "banco": "Neon", "instituicao": "Neon", "liquidez": "No venc.", "grupo": "CDB Planejado 120% CDI", "obs": "120% CDI · Emissor: Banco Neon"}];
-const SEED_PROVENTOS = [{"ativo": "CRA FS Florestal E384 S1", "codigo": "CRA0250012X", "taxa": "15,5% Pré", "periodicidade": "Mensal", "data": "2025-09-15", "valor": 13.78, "pago": true}, {"ativo": "CRA FS Florestal E384 S1", "codigo": "CRA0250012X", "taxa": "15,5% Pré", "periodicidade": "Mensal", "data": "2025-10-15", "valor": 14.44, "pago": true}, {"ativo": "CRA FS Florestal E384 S1", "codigo": "CRA0250012X", "taxa": "15,5% Pré", "periodicidade": "Mensal", "data": "2025-11-17", "valor": 15.1, "pago": true}, {"ativo": "CRA FS Florestal E384 S1", "codigo": "CRA0250012X", "taxa": "15,5% Pré", "periodicidade": "Mensal", "data": "2025-12-15", "valor": 12.46, "pago": true}, {"ativo": "CRA FS Florestal E384 S1", "codigo": "CRA0250012X", "taxa": "15,5% Pré", "periodicidade": "Mensal", "data": "2026-01-15", "valor": 13.78, "pago": true}, {"ativo": "CRA FS Florestal E384 S1", "codigo": "CRA0250012X", "taxa": "15,5% Pré", "periodicidade": "Mensal", "data": "2026-02-18", "valor": 14.44, "pago": true}, {"ativo": "CRA FS Florestal E384 S1", "codigo": "CRA0250012X", "taxa": "15,5% Pré", "periodicidade": "Mensal", "data": "2026-03-16", "valor": 11.8, "pago": true}, {"ativo": "CRA FS Florestal E384 S1", "codigo": "CRA0250012X", "taxa": "15,5% Pré", "periodicidade": "Mensal", "data": "2026-04-15", "valor": 13.78, "pago": true}, {"ativo": "CRA FS Florestal E384 S1", "codigo": "CRA0250012X", "taxa": "15,5% Pré", "periodicidade": "Mensal", "data": "2026-05-15", "valor": 13.12, "pago": true}, {"ativo": "CRA FS Florestal E384 S1", "codigo": "CRA0250012X", "taxa": "15,5% Pré", "periodicidade": "Mensal", "data": "2026-06-15", "valor": 13.12, "pago": false}, {"ativo": "CRA FS Florestal E384 S1", "codigo": "CRA0250012X", "taxa": "15,5% Pré", "periodicidade": "Mensal", "data": "2026-07-15", "valor": 13.12, "pago": false}, {"ativo": "CRA FS Florestal E384 S1", "codigo": "CRA0250012X", "taxa": "15,5% Pré", "periodicidade": "Mensal", "data": "2026-08-17", "valor": 13.12, "pago": false}, {"ativo": "CRI DASA E94 S2", "codigo": "22J0306937", "taxa": "IPCA+10%", "periodicidade": "Trimestral", "data": "2025-10-15", "valor": 37.61, "pago": true}, {"ativo": "CRI DASA E94 S2", "codigo": "22J0306937", "taxa": "IPCA+10%", "periodicidade": "Trimestral", "data": "2026-04-15", "valor": 37.64, "pago": true}, {"ativo": "CRI DASA E94 S2", "codigo": "22J0306937", "taxa": "IPCA+10%", "periodicidade": "Trimestral", "data": "2026-07-15", "valor": 37.64, "pago": false}, {"ativo": "CRI DASA E94 S2", "codigo": "22J0306937", "taxa": "IPCA+10%", "periodicidade": "Trimestral", "data": "2026-10-15", "valor": 37.64, "pago": false}, {"ativo": "CRI BILD E347 S3", "codigo": "24L0004005", "taxa": "15% Pré", "periodicidade": "Semestral", "data": "2026-01-15", "valor": 82.99, "pago": true}, {"ativo": "CRI BILD E347 S3", "codigo": "24L0004005", "taxa": "15% Pré", "periodicidade": "Semestral", "data": "2026-07-15", "valor": 82.99, "pago": false}, {"ativo": "DEB Simpar JSMLA5 #1", "codigo": "JSMLA5", "taxa": "CDI+5%", "periodicidade": "Semestral", "data": "2026-01-15", "valor": 74.96, "pago": true}, {"ativo": "DEB Simpar JSMLA5 #1", "codigo": "JSMLA5", "taxa": "CDI+5%", "periodicidade": "Semestral", "data": "2026-07-15", "valor": 74.96, "pago": false}, {"ativo": "DEB Simpar JSMLA5 #2", "codigo": "JSMLA5", "taxa": "CDI+5%", "periodicidade": "Semestral", "data": "2026-01-15", "valor": 74.96, "pago": true}, {"ativo": "DEB Simpar JSMLA5 #2", "codigo": "JSMLA5", "taxa": "CDI+5%", "periodicidade": "Semestral", "data": "2026-07-15", "valor": 74.96, "pago": false}, {"ativo": "DEB Alares ALAR13", "codigo": "ALAR13", "taxa": "16% Pré", "periodicidade": "Semestral", "data": "2025-11-17", "valor": 217.91, "pago": true}, {"ativo": "DEB Alares ALAR13", "codigo": "ALAR13", "taxa": "16% Pré", "periodicidade": "Semestral", "data": "2026-05-15", "valor": 200.73, "pago": true}, {"ativo": "DEB Alares ALAR13", "codigo": "ALAR13", "taxa": "16% Pré", "periodicidade": "Semestral", "data": "2026-11-17", "valor": 200.73, "pago": false}, {"ativo": "DEB Alares CONX12 #1", "codigo": "CONX12", "taxa": "IPCA+10,8%", "periodicidade": "Semestral", "data": "2025-08-15", "valor": 84.3, "pago": true}, {"ativo": "DEB Alares CONX12 #1", "codigo": "CONX12", "taxa": "IPCA+10,8%", "periodicidade": "Semestral", "data": "2026-02-18", "valor": 88.93, "pago": true}, {"ativo": "DEB Alares CONX12 #1", "codigo": "CONX12", "taxa": "IPCA+10,8%", "periodicidade": "Semestral", "data": "2026-08-17", "valor": 88.93, "pago": false}, {"ativo": "DEB Alares CONX12 #2", "codigo": "CONX12", "taxa": "IPCA+10,8%", "periodicidade": "Semestral", "data": "2025-08-15", "valor": 42.15, "pago": true}, {"ativo": "DEB Alares CONX12 #2", "codigo": "CONX12", "taxa": "IPCA+10,8%", "periodicidade": "Semestral", "data": "2026-02-18", "valor": 44.46, "pago": true}, {"ativo": "DEB Alares CONX12 #2", "codigo": "CONX12", "taxa": "IPCA+10,8%", "periodicidade": "Semestral", "data": "2026-08-17", "valor": 44.46, "pago": false}, {"ativo": "CRA VAMOS E233 S1", "codigo": "CRA023000GP", "taxa": "CDI+3,05%", "periodicidade": "Semestral", "data": "2026-06-15", "valor": 0.0, "pago": false}];
-const META = {"geradoEm": "2026-05-30", "referencia": "2026-05-29", "indices": {"cdi": 14.83, "selic": 14.75, "ipca": 4.39, "igpm": 1.95}, "scriptUrl": "https://script.google.com/macros/s/AKfycbwVRDJTUuTMqSG0aNuU1xzVkvSbUxG-Tf_dHq87YaHXGL0ow_WrWwIuF0yeG9nPpRSCUA/exec"};
-const LS_KEY = "vmc_carteira_v1";
+const APP_VERSION = "3.0";
+const LS_KEY      = "vmc_carteira_v3";
+const ISENTOS     = ["LCI","LCA","CRI","CRA"];
+const DATA_REF    = "2026-05-29"; // foto dos valores bruto/IR
 
-const ISENTOS = ["LCI","LCA","CRI","CRA"];
-// Data de referência dos VALORES (bruto/IR são uma foto de 29/05/2026).
-// As DATAS (prazos, alertas, IOF) usam o dia real de acesso — calendário vivo.
-const DATA_REF = "2026-05-29";
-function hojeISO(){ const d=new Date(); const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,"0"),dd=String(d.getDate()).padStart(2,"0"); return `${y}-${m}-${dd}`; }
+function hojeISO(){
+  const d=new Date();
+  return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+}
 const HOJE_ISO = hojeISO();
-const HOJE = new Date(HOJE_ISO+"T12:00:00");
+const HOJE     = new Date(HOJE_ISO+"T12:00:00");
 
-// ── STATE ──
-let STATE = { investments:[], proventos:[], indices:{}, scriptUrl:"", activeTab:"overview",
-              filtros:{banco:"",tipo:"",busca:""}, editId:null, fonte:"local" };
-function setStatus(m){ /* reservado p/ status discreto */ }
+// ── STATE ──────────────────────────────────────────────────
+const STATE = {
+  investments: [],
+  proventos:   [],
+  indices:     { cdi:14.83, selic:14.75, ipca:4.39, igpm:1.95, lastUpdate:null },
+  scriptUrl:   "",
+  token:       "",
+  fonte:       "vazio",     // "planilha" | "cache" | "vazio"
+  ultimaCarga: null,        // ISO string
+  editId:      null,
+  editProvId:  null,
+  activeTab:   "overview",
+  filtros:     { banco:"", tipo:"", busca:"" }
+};
 
-function load(){
-  let saved=null;
-  try{ saved=JSON.parse(localStorage.getItem(LS_KEY)); }catch(e){}
-  if(saved && saved.investments && saved.investments.length){
-    STATE.investments=saved.investments;
-    STATE.indices=saved.indices||{...META.indices};
-    STATE.scriptUrl=saved.scriptUrl||"";
-    STATE.proventos=saved.proventos||JSON.parse(JSON.stringify(SEED_PROVENTOS));
-  }else{
-    STATE.investments=JSON.parse(JSON.stringify(SEED_ATIVOS));
-    STATE.proventos=JSON.parse(JSON.stringify(SEED_PROVENTOS));
-    STATE.indices={...META.indices};
-    STATE.scriptUrl=META.scriptUrl||"";
-    save();
-  }
+// ── LOCAL STORAGE (só cache) ───────────────────────────────
+function lsLoad(){
+  try{
+    const raw = localStorage.getItem(LS_KEY);
+    if(!raw) return null;
+    return JSON.parse(raw);
+  }catch(e){ return null; }
 }
-function save(){
-  try{ localStorage.setItem(LS_KEY, JSON.stringify({
-    investments:STATE.investments, indices:STATE.indices,
-    scriptUrl:STATE.scriptUrl, proventos:STATE.proventos
-  })); }catch(e){ console.warn("LS fail",e); }
+function lsSave(){
+  try{
+    localStorage.setItem(LS_KEY, JSON.stringify({
+      investments: STATE.investments,
+      proventos:   STATE.proventos,
+      indices:     STATE.indices,
+      scriptUrl:   STATE.scriptUrl,
+      token:       STATE.token,
+      ultimaCarga: STATE.ultimaCarga
+    }));
+  }catch(e){ console.warn("LS fail",e); }
 }
 
-// ── HELPERS ──
+// ── HELPERS DE FORMATAÇÃO ──────────────────────────────────
 const BRL = v => new Intl.NumberFormat("pt-BR",{style:"currency",currency:"BRL"}).format(v||0);
 const PCT = (v,d=1) => `${(v||0).toFixed(d).replace(".",",")}%`;
 const pDate = s => s? new Date(s+"T12:00:00") : null;
@@ -343,29 +352,28 @@ const fDate = s => s? pDate(s).toLocaleDateString("pt-BR") : "—";
 const days = (a,b) => Math.round((pDate(b)-pDate(a))/86400000);
 const esc = s => String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 
+// ── CÁLCULOS ───────────────────────────────────────────────
 function calc(inv){
   const ap=inv.valorInicial||0, br=inv.valorBruto!=null?inv.valorBruto:ap, ir=inv.ir||0;
   const liq=br-ir, rend=br-ap, pct=ap>0?rend/ap*100:0;
   return {ap,br,ir,liq,rend,pct};
 }
 function taxaAnual(inv){
-  const t=(inv.taxa||0)/100, ix=STATE.indices;
+  const t=(parseFloat(inv.taxa)||0)/100, ix=STATE.indices;
   switch(inv.modoTaxa){
-    case "pre": return t;
-    case "cdi_pct": return t*(ix.cdi/100);
-    case "cdi_mais": return (1+ix.cdi/100)*(1+t)-1;
+    case "pre":       return t;
+    case "cdi_pct":   return t*(ix.cdi/100);
+    case "cdi_mais":  return (1+ix.cdi/100)*(1+t)-1;
     case "ipca_mais": return (1+ix.ipca/100)*(1+t)-1;
-    default: return t;
+    default:          return t;
   }
 }
-// Um ativo "tem cupom" se há proventos lançados com o mesmo código.
 function temCupom(inv){
   if(!inv.codigo || inv.codigo==="—") return false;
   return (STATE.proventos||[]).some(p=>p.codigo && p.codigo===inv.codigo);
 }
-// Projeção do valor no vencimento: ancora no BRUTO ATUAL (real) e capitaliza
-// pela taxa contratada apenas pelo prazo RESTANTE. Para papéis com cupom é
-// estimativa parcial (parte do retorno já saiu como provento) — sinalizado na tela.
+// Projeção do bruto no vencimento (estimativa simplificada — usa
+// dias corridos / 365. Será revisado p/ dias úteis B3 / 252 em fase futura).
 function projVenc(inv){
   const ap=inv.valorInicial||0;
   const br=inv.valorBruto!=null?inv.valorBruto:ap;
@@ -377,65 +385,224 @@ function projVenc(inv){
 function statusOf(inv){
   const dv=days(HOJE_ISO,inv.vencimento);
   const da=days(inv.dataAplicacao,HOJE_ISO);
-  if(da<30){ const lib=new Date(pDate(inv.dataAplicacao).getTime()+30*86400000);
-    return {cls:"lock",txt:`🔒 IOF→${lib.toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"})}`}; }
-  if(dv<=45) return {cls:"crit",txt:`🔴 ${dv}d`};
+  if(da<30){
+    const lib=new Date(pDate(inv.dataAplicacao).getTime()+30*86400000);
+    return {cls:"lock",txt:`🔒 IOF→${lib.toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"})}`};
+  }
+  if(dv<=45)  return {cls:"crit",txt:`🔴 ${dv}d`};
   if(dv<=180) return {cls:"warn",txt:`🟡 ${dv}d`};
   return {cls:"ok",txt:"🟢 OK"};
 }
 
-// agregações
 const BANCOS=["C6 Bank","Inter Invest","Nubank","Neon"];
-const COR_BANCO={"C6 Bank":["#5aa9e6","#3d7fc0"],"Inter Invest":["#f5a04f","#d97e2a"],"Nubank":["#a78bfa","#8b5cf6"],"Neon":["#34d399","#10b981"]};
+const COR_BANCO={
+  "C6 Bank":["#5aa9e6","#3d7fc0"],"Inter Invest":["#f5a04f","#d97e2a"],
+  "Nubank":["#a78bfa","#8b5cf6"],"Neon":["#34d399","#10b981"]
+};
 function totais(list){
   return list.reduce((a,inv)=>{const c=calc(inv); a.ap+=c.ap;a.br+=c.br;a.ir+=c.ir;a.liq+=c.liq;a.rend+=c.rend;a.n++;return a;},
     {ap:0,br:0,ir:0,liq:0,rend:0,n:0});
 }
 function agrupar(list,campo){
-  const m={};
-  list.forEach(inv=>{const k=inv[campo]; (m[k]=m[k]||[]).push(inv);});
+  const m={}; list.forEach(inv=>{const k=inv[campo]; (m[k]=m[k]||[]).push(inv);});
   return m;
 }
 
 // ════════════════════════════════════════════════════════════
-//  RENDER: ÍNDICES
+//  COMUNICAÇÃO COM O BACKEND (JSONP — à prova de CORS)
+// ════════════════════════════════════════════════════════════
+function jsonpGet(params, timeoutMs){
+  return new Promise((resolve,reject)=>{
+    if(!STATE.scriptUrl) return reject(new Error("URL não configurada"));
+    const cb="__jsonp_"+Date.now()+"_"+Math.floor(Math.random()*1e6);
+    const qs=Object.keys(params).map(k=>encodeURIComponent(k)+"="+encodeURIComponent(params[k])).join("&");
+    const sep=STATE.scriptUrl.includes("?")?"&":"?";
+    const src=STATE.scriptUrl+sep+qs+"&callback="+cb;
+    const s=document.createElement("script");
+    let done=false;
+    const limpa=()=>{ try{delete window[cb];}catch(e){window[cb]=undefined;} if(s.parentNode)s.parentNode.removeChild(s); };
+    const t=setTimeout(()=>{ if(done)return; done=true; limpa(); reject(new Error("timeout")); }, timeoutMs||20000);
+    window[cb]=(data)=>{ if(done)return; done=true; clearTimeout(t); limpa(); resolve(data); };
+    s.onerror=()=>{ if(done)return; done=true; clearTimeout(t); limpa(); reject(new Error("erro de rede")); };
+    s.src=src; document.head.appendChild(s);
+  });
+}
+
+// Wrapper que injeta o token em ações de escrita
+function api(acao, params){
+  const ACOES_LEITURA = ["ping","listar","buscarIndices"];
+  const p = Object.assign({acao}, params||{});
+  if(!ACOES_LEITURA.includes(acao)){
+    if(!STATE.token) return Promise.reject(new Error("Token não configurado"));
+    p.token = STATE.token;
+  }
+  return jsonpGet(p);
+}
+
+async function pingScript(){
+  if(!STATE.scriptUrl){ toast("Configure a URL primeiro","err"); return; }
+  try{
+    const d = await api("ping");
+    toast(d&&d.ok?"Conexão OK — "+(d.msg||""):"Resposta inesperada", d&&d.ok?"ok":"err");
+  }catch(e){ toast("Falha na conexão ("+e.message+")","err"); }
+}
+
+function normalizeFromSheet(inv){
+  const o=Object.assign({},inv);
+  ["taxa","valorInicial","valorBruto","ir"].forEach(k=>{o[k]=parseFloat(o[k])||0;});
+  if((inv.valorBruto===""||inv.valorBruto==null) && o.valorInicial>0) o.valorBruto=o.valorInicial;
+  if(!o.taxaLabel) o.taxaLabel=String(o.taxa).replace(".",",")+(o.indexador==="Prefixado"?"%":"% CDI");
+  if(!o.modoTaxa){
+    const L=(o.taxaLabel||"").toUpperCase();
+    o.modoTaxa=L.includes("IPCA+")?"ipca_mais":L.includes("CDI+")?"cdi_mais":(L.includes("CDI")||o.indexador==="CDI")?"cdi_pct":"pre";
+  }
+  if(!o.liquidez) o.liquidez="No venc.";
+  if(!o.banco)    o.banco = o.instituicao || "—";
+  if(!o.emissor)  o.emissor = "—";
+  if(!o.codigo)   o.codigo  = "—";
+  if(!o.grupo)    o.grupo   = o.produto || o.nome;
+  return o;
+}
+
+async function carregarDaPlanilha(silencioso){
+  if(!STATE.scriptUrl){
+    STATE.fonte = STATE.investments.length ? "cache" : "vazio";
+    return false;
+  }
+  try{
+    const d = await api("listar");
+    if(d && d.ok && Array.isArray(d.investimentos)){
+      STATE.investments = d.investimentos.map(normalizeFromSheet);
+      STATE.proventos   = Array.isArray(d.proventos) ? d.proventos : [];
+      if(d.indices) STATE.indices = Object.assign({}, STATE.indices, d.indices);
+      STATE.fonte       = "planilha";
+      STATE.ultimaCarga = new Date().toISOString();
+      lsSave();
+      if(!silencioso) toast(`Carregado da planilha — ${STATE.investments.length} ativos`,"ok");
+      return true;
+    }
+    if(!silencioso) toast("Planilha respondeu, mas sem dados","info");
+    return false;
+  }catch(e){
+    STATE.fonte = STATE.investments.length ? "cache" : "vazio";
+    if(!silencioso) toast("Sem conexão — usando "+(STATE.fonte==="cache"?"cópia local":"vazio"),"info");
+    return false;
+  }
+}
+
+// ── OPERAÇÕES CRUD QUE GRAVAM NA PLANILHA ──────────────────
+async function criarAtivo(obj){
+  if(!STATE.scriptUrl || !STATE.token){
+    toast("Configure URL e Token primeiro","err"); return false;
+  }
+  try{
+    const d = await api("addInv", obj);
+    if(d && d.ok){
+      toast("Ativo criado · recarregando...","ok");
+      await carregarDaPlanilha(true); renderAll();
+      return true;
+    }
+    toast("Erro: "+(d&&d.erro||"desconhecido"),"err"); return false;
+  }catch(e){ toast("Erro: "+e.message,"err"); return false; }
+}
+async function editarAtivo(id, obj){
+  if(!STATE.scriptUrl || !STATE.token){
+    toast("Configure URL e Token primeiro","err"); return false;
+  }
+  try{
+    const d = await api("editInv", Object.assign({id}, obj));
+    if(d && d.ok){
+      toast("Ativo atualizado · recarregando...","ok");
+      await carregarDaPlanilha(true); renderAll();
+      return true;
+    }
+    toast("Erro: "+(d&&d.erro||"desconhecido"),"err"); return false;
+  }catch(e){ toast("Erro: "+e.message,"err"); return false; }
+}
+async function excluirAtivo(id){
+  if(!STATE.scriptUrl || !STATE.token){
+    toast("Configure URL e Token primeiro","err"); return false;
+  }
+  try{
+    const d = await api("delInv", {id});
+    if(d && d.ok){
+      toast("Ativo excluído · recarregando...","ok");
+      await carregarDaPlanilha(true); renderAll();
+      return true;
+    }
+    toast("Erro: "+(d&&d.erro||"desconhecido"),"err"); return false;
+  }catch(e){ toast("Erro: "+e.message,"err"); return false; }
+}
+async function marcarProventoPago(id, dataPago, valorPago){
+  if(!STATE.scriptUrl || !STATE.token){
+    toast("Configure URL e Token primeiro","err"); return false;
+  }
+  try{
+    const d = await api("editProv", {id, pago:true, dataPago, valorPago});
+    if(d && d.ok){
+      toast("Provento marcado como recebido","ok");
+      await carregarDaPlanilha(true); renderAll();
+      return true;
+    }
+    toast("Erro: "+(d&&d.erro||"desconhecido"),"err"); return false;
+  }catch(e){ toast("Erro: "+e.message,"err"); return false; }
+}
+async function atualizarIndicesBCB(){
+  if(!STATE.scriptUrl){ toast("Configure a URL primeiro","err"); return; }
+  try{
+    toast("Buscando índices no BCB...","info");
+    const d = await api("buscarIndices");
+    if(d && d.ok && d.indices){
+      STATE.indices = Object.assign({}, STATE.indices, d.indices, {lastUpdate:d.atualizadoEm});
+      lsSave(); renderIdx(); renderConfig();
+      toast("Índices atualizados do BCB","ok");
+    } else toast("Não foi possível atualizar","err");
+  }catch(e){ toast("Erro: "+e.message,"err"); }
+}
+
+// ════════════════════════════════════════════════════════════
+//  RENDERS
 // ════════════════════════════════════════════════════════════
 function renderIdx(){
   const ix=STATE.indices;
   document.getElementById("idx-row").innerHTML=[
-    ["CDI","cdi",""],["SELIC","selic","selic"],["IPCA","ipca","ipca"],["IGP-M","igpm","igpm"]
+    ["CDI","cdi","cdi"],["SELIC","selic","selic"],["IPCA","ipca","ipca"],["IGP-M","igpm","igpm"]
   ].map(([k,key,cls])=>`<div class="chip ${cls}"><span class="k">${k}</span><span class="v num">${PCT(ix[key],2)}</span></div>`).join("");
-  document.getElementById("upd").textContent=`Hoje ${HOJE.toLocaleDateString("pt-BR")} · valores ref. 29/05/2026`;
+  const fonteTag = STATE.fonte==="planilha" ? '<span style="color:var(--emer)">planilha ✓</span>'
+                  : STATE.fonte==="cache"   ? '<span style="color:var(--amber)">cache (offline)</span>'
+                  : '<span style="color:var(--red)">não configurado</span>';
+  document.getElementById("upd").innerHTML=
+    `Hoje ${HOJE.toLocaleDateString("pt-BR")} · valores ref. 29/05/2026 · fonte: ${fonteTag}`;
 }
 
-// ════════════════════════════════════════════════════════════
-//  RENDER: VISÃO GERAL
-// ════════════════════════════════════════════════════════════
 function renderOverview(){
   const L=STATE.investments, t=totais(L);
   const el=document.getElementById("panel-overview");
+  if(!L.length){
+    el.innerHTML=`<div class="empty"><div class="ic">∅</div>
+      <div style="font-size:15px;margin-bottom:8px"><b>Sem dados</b></div>
+      <div style="margin-bottom:18px">Configure a URL do Apps Script e o Token na aba Configurações.</div>
+      <button class="btn primary" onclick="setTab('config')">⚙ Ir para Configurações</button></div>`;
+    return;
+  }
 
-  // KPIs
   let h=`<div class="kpis">
-    <div class="kpi aplic"><div class="lab">Total Aplicado</div><div class="val num">${BRL(t.ap)}</div><div class="meta">${t.n} ativos · 4 instituições</div></div>
+    <div class="kpi aplic"><div class="lab">Total Aplicado</div><div class="val num">${BRL(t.ap)}</div><div class="meta">${t.n} ativos · ${BANCOS.filter(b=>L.some(x=>x.banco===b)).length} instituições</div></div>
     <div class="kpi bruto"><div class="lab">Valor Bruto</div><div class="val num">${BRL(t.br)}</div><div class="meta">Lucro de ${BRL(t.rend)}</div></div>
     <div class="kpi liq"><div class="lab">Valor Líquido</div><div class="val num">${BRL(t.liq)}</div><div class="meta">IR estimado ${BRL(t.ir)}</div></div>
     <div class="kpi rent"><div class="lab">Rentabilidade Bruta</div><div class="val num">+${PCT(t.ap>0?t.rend/t.ap*100:0,2)}</div><div class="meta">sobre o capital aplicado</div></div>
   </div>`;
 
-  // breakdown por banco (bars)
   const porBanco=agrupar(L,"banco");
   const maxBanco=Math.max(...BANCOS.map(b=>porBanco[b]?totais(porBanco[b]).br:0));
   h+=`<div class="sec-h"><span class="bar"></span>Distribuição da Carteira</div>`;
   h+=`<div class="grid2">`;
-  // card banco
   h+=`<div class="card"><div class="card-h"><span class="ic">🏦</span>Por Instituição</div><div class="bars">`;
   BANCOS.forEach(b=>{
     if(!porBanco[b])return; const tb=totais(porBanco[b]); const c=COR_BANCO[b];
     h+=barRow(b,tb.n,tb.br,t.br,maxBanco,c[0],c[1]);
   });
   h+=`</div></div>`;
-  // card tipo
   const porTipo=agrupar(L,"tipo");
   const tipos=Object.keys(porTipo).sort((a,b)=>totais(porTipo[b]).br-totais(porTipo[a]).br);
   const maxTipo=Math.max(...tipos.map(tp=>totais(porTipo[tp]).br));
@@ -444,9 +611,7 @@ function renderOverview(){
   h+=`</div></div>`;
   h+=`</div>`;
 
-  // indexador + liquidez
   h+=`<div class="grid2" style="margin-top:14px">`;
-  // indexador
   const porIdx=agrupar(L,"indexador");
   const idxs=Object.keys(porIdx).sort((a,b)=>totais(porIdx[b]).br-totais(porIdx[a]).br);
   const maxIdx=Math.max(...idxs.map(i=>totais(porIdx[i]).br));
@@ -454,7 +619,6 @@ function renderOverview(){
   h+=`<div class="card"><div class="card-h"><span class="ic">📈</span>Por Indexador</div><div class="bars">`;
   idxs.forEach(i=>{const ti=totais(porIdx[i]); const c=CIDX[i]||["#34d399","#10b981"]; h+=barRow(i,ti.n,ti.br,t.br,maxIdx,c[0],c[1]);});
   h+=`</div></div>`;
-  // liquidez split
   const liqD=L.filter(x=>x.liquidez==="Diária"), liqN=L.filter(x=>x.liquidez!=="Diária");
   const tD=totais(liqD), tN=totais(liqN);
   h+=`<div class="card"><div class="card-h"><span class="ic">💧</span>Liquidez · Disponível vs. Travado</div><div class="split">
@@ -463,7 +627,6 @@ function renderOverview(){
   </div></div>`;
   h+=`</div>`;
 
-  // isenção
   const isent=L.filter(x=>ISENTOS.includes(x.tipo)), trib=L.filter(x=>!ISENTOS.includes(x.tipo));
   const tIs=totais(isent), tTr=totais(trib);
   h+=`<div class="grid2" style="margin-top:14px">`;
@@ -471,35 +634,42 @@ function renderOverview(){
     ${splitItem("🔓 Isentos (LCI/LCA/CRI/CRA)",tIs.br,t.br,tIs.n,"#34d399","var(--emer)")}
     ${splitItem("💰 Tributáveis (CDB/RDB/Deb.)",tTr.br,t.br,tTr.n,"#f5b53f","var(--amber)")}
   </div></div>`;
-  // proventos resumo card
   const recP=STATE.proventos.filter(p=>p.pago).reduce((s,p)=>s+p.valor,0);
-  const futP=STATE.proventos.filter(p=>!p.pago && pDate(p.data).getFullYear()===2026).reduce((s,p)=>s+p.valor,0);
-  h+=`<div class="card"><div class="card-h"><span class="ic">◷</span>Proventos (Inter)</div>
+  const futP=STATE.proventos.filter(p=>!p.pago && pDate(p.data) && pDate(p.data).getFullYear()===2026).reduce((s,p)=>s+p.valor,0);
+  h+=`<div class="card"><div class="card-h"><span class="ic">◷</span>Proventos</div>
     <div class="split">
-      <div class="split-item"><div class="split-top"><span class="lbl">✓ Já recebido</span><span class="amt num pos">${BRL(recP)}</span></div><div class="mini">${STATE.proventos.filter(p=>p.pago).length} cupons confirmados no extrato</div></div>
-      <div class="split-item"><div class="split-top"><span class="lbl">📅 Previsto (resto 2026)</span><span class="amt num" style="color:var(--blue)">${BRL(futP)}</span></div><div class="mini">${STATE.proventos.filter(p=>!p.pago&&pDate(p.data).getFullYear()===2026).length} cupons estimados</div></div>
+      <div class="split-item"><div class="split-top"><span class="lbl">✓ Já recebido</span><span class="amt num pos">${BRL(recP)}</span></div><div class="mini">${STATE.proventos.filter(p=>p.pago).length} cupons confirmados</div></div>
+      <div class="split-item"><div class="split-top"><span class="lbl">📅 Previsto (resto 2026)</span><span class="amt num" style="color:var(--blue)">${BRL(futP)}</span></div><div class="mini">${STATE.proventos.filter(p=>!p.pago&&pDate(p.data)&&pDate(p.data).getFullYear()===2026).length} cupons estimados</div></div>
     </div></div>`;
   h+=`</div>`;
 
-  // alertas
+  // ── ALERTAS ──
   const al=[];
   L.forEach(inv=>{
     const dv=days(HOJE_ISO,inv.vencimento), da=days(inv.dataAplicacao,HOJE_ISO);
-    if(da<30){const lib=new Date(pDate(inv.dataAplicacao).getTime()+30*86400000);
-      al.push({k:2,cls:"lock",ic:"🔒",t:`${inv.banco} · ${inv.nome}`,d:`IOF isento a partir de ${lib.toLocaleDateString("pt-BR")} — evite resgatar antes`,v:""});}
-    else if(dv<=45) al.push({k:0,cls:"crit",ic:"🔴",t:`${inv.banco} · ${inv.nome}`,d:`Vence em ${dv} dias (${fDate(inv.vencimento)})`,v:BRL(calc(inv).br)});
+    if(da<30){
+      const lib=new Date(pDate(inv.dataAplicacao).getTime()+30*86400000);
+      al.push({k:2,cls:"lock",ic:"🔒",t:`${inv.banco} · ${inv.nome}`,d:`IOF isento a partir de ${lib.toLocaleDateString("pt-BR")} — evite resgatar antes`,v:""});
+    } else if(dv<=45) al.push({k:0,cls:"crit",ic:"🔴",t:`${inv.banco} · ${inv.nome}`,d:`Vence em ${dv} dias (${fDate(inv.vencimento)})`,v:BRL(calc(inv).br)});
     else if(dv<=120) al.push({k:1,cls:"warn",ic:"🟡",t:`${inv.banco} · ${inv.nome}`,d:`Vence em ${dv} dias (${fDate(inv.vencimento)})`,v:BRL(calc(inv).br)});
+  });
+  // Cupons esperados não confirmados (data passou e pago=false)
+  STATE.proventos.forEach(p=>{
+    if(!p.pago && p.data){
+      const dDias = days(p.data, HOJE_ISO);
+      if(dDias>0 && dDias<=60){
+        al.push({k:0,cls:"warn",ic:"⚠",t:`Cupom não confirmado · ${p.ativo}`,d:`Esperado em ${fDate(p.data)} (${dDias}d atrás)`,v:p.valor?BRL(p.valor):""});
+      }
+    }
   });
   al.sort((a,b)=>a.k-b.k);
   if(al.length){
     h+=`<div class="sec-h"><span class="bar" style="background:var(--amber)"></span>Alertas <span class="ct">${al.length}</span></div>`;
     h+=`<div class="alerts">`;
-    al.slice(0,8).forEach(a=>{h+=`<div class="alert ${a.cls}"><span class="ic">${a.ic}</span><div class="tx"><div class="t">${esc(a.t)}</div><div class="d">${esc(a.d)}</div></div><div class="vl num">${a.v}</div></div>`;});
+    al.slice(0,12).forEach(a=>{h+=`<div class="alert ${a.cls}"><span class="ic">${a.ic}</span><div class="tx"><div class="t">${esc(a.t)}</div><div class="d">${esc(a.d)}</div></div><div class="vl num">${a.v}</div></div>`;});
     h+=`</div>`;
   }
-
   el.innerHTML=h;
-  // animate bars
   requestAnimationFrame(()=>el.querySelectorAll(".bar-fill,[data-w]").forEach(b=>{if(b.dataset.w)b.style.width=b.dataset.w;}));
 }
 function barRow(nm,q,val,tot,max,c1,c2){
@@ -514,20 +684,17 @@ function splitItem(lbl,val,tot,q,c1,ctxt){
     <div class="split-bar"><i data-w="${pc.toFixed(1)}%" style="background:${c1};width:0"></i></div></div>`;
 }
 
-// ════════════════════════════════════════════════════════════
-//  RENDER: CARTEIRA
-// ════════════════════════════════════════════════════════════
 function renderCarteira(){
   const el=document.getElementById("panel-carteira");
   const f=STATE.filtros;
   let L=STATE.investments.slice();
   if(f.banco) L=L.filter(x=>x.banco===f.banco);
-  if(f.tipo) L=L.filter(x=>x.tipo===f.tipo);
-  if(f.busca){const q=f.busca.toLowerCase(); L=L.filter(x=>(x.nome+x.emissor+x.produto+x.grupo).toLowerCase().includes(q));}
+  if(f.tipo)  L=L.filter(x=>x.tipo===f.tipo);
+  if(f.busca){const q=f.busca.toLowerCase(); L=L.filter(x=>((x.nome||"")+(x.emissor||"")+(x.grupo||"")).toLowerCase().includes(q));}
 
   const tipos=[...new Set(STATE.investments.map(x=>x.tipo))];
   let h=`<div class="fbar">
-    <input class="search" id="f-busca" placeholder="🔍 Buscar por nome, emissor, produto..." value="${esc(f.busca)}">
+    <input class="search" id="f-busca" placeholder="🔍 Buscar por nome, emissor, grupo..." value="${esc(f.busca)}">
     <select id="f-banco"><option value="">Todos os bancos</option>${BANCOS.map(b=>`<option ${f.banco===b?"selected":""}>${b}</option>`).join("")}</select>
     <select id="f-tipo"><option value="">Todos os tipos</option>${tipos.map(t=>`<option ${f.tipo===t?"selected":""}>${t}</option>`).join("")}</select>
     <div class="spacer"></div>
@@ -547,14 +714,14 @@ function renderCarteira(){
   }else{
     L.forEach((inv,i)=>{
       const c=calc(inv), st=statusOf(inv);
-      const tcls=inv.tipo.toLowerCase().replace("ê","e");
+      const tcls=(inv.tipo||"").toLowerCase().replace("ê","e");
       h+=`<tr>
         <td class="mini">${i+1}</td>
-        <td><div style="font-weight:600">${esc(inv.nome)}</div><div class="mini">${esc(inv.emissor)}${inv.codigo&&inv.codigo!=="—"?" · "+esc(inv.codigo):""}</div></td>
+        <td><div style="font-weight:600">${esc(inv.nome)}</div><div class="mini">${esc(inv.emissor||"—")}${inv.codigo&&inv.codigo!=="—"?" · "+esc(inv.codigo):""}</div></td>
         <td>${esc(inv.banco)}</td>
         <td><span class="tag ${tcls}">${esc(inv.tipo)}</span></td>
         <td class="mini">${esc(inv.indexador)}</td>
-        <td style="font-weight:600">${esc(inv.taxaLabel)}</td>
+        <td style="font-weight:600">${esc(inv.taxaLabel||"")}</td>
         <td class="c mini num">${fDate(inv.dataAplicacao)}</td>
         <td class="c mini num">${fDate(inv.vencimento)}</td>
         <td class="r num">${BRL(c.ap)}</td>
@@ -562,9 +729,9 @@ function renderCarteira(){
         <td class="r num ir-v">${c.ir>0?BRL(c.ir):"—"}</td>
         <td class="r num">${BRL(c.liq)}</td>
         <td class="r num ${c.rend>=0?"pos":"neg"}">${c.rend>=0?"+":""}${PCT(c.pct)}</td>
-        <td class="c"><span class="liq-b ${inv.liquidez==="Diária"?"d":"n"}">${inv.liquidez}</span></td>
+        <td class="c"><span class="liq-b ${inv.liquidez==="Diária"?"d":"n"}">${esc(inv.liquidez||"")}</span></td>
         <td class="c"><span class="st ${st.cls}">${st.txt}</span></td>
-        <td class="c" style="white-space:nowrap"><button class="btn-ic" onclick="abrirEdit('${inv.id}')" title="Editar">✎</button> <button class="btn-ic del" onclick="deletar('${inv.id}')" title="Excluir">🗑</button></td>
+        <td class="c" style="white-space:nowrap"><button class="btn-ic" onclick="abrirEdit('${inv.id}')" title="Editar">✎</button> <button class="btn-ic del" onclick="confirmarExcluir('${inv.id}')" title="Excluir">🗑</button></td>
       </tr>`;
     });
     h+=`<tr class="total-row">
@@ -579,19 +746,16 @@ function renderCarteira(){
   document.getElementById("f-banco").addEventListener("change",e=>{STATE.filtros.banco=e.target.value; renderCarteira();});
   document.getElementById("f-tipo").addEventListener("change",e=>{STATE.filtros.tipo=e.target.value; renderCarteira();});
   document.getElementById("btn-novo").addEventListener("click",()=>abrirEdit(null));
-  // re-focus search
   const sb=document.getElementById("f-busca"); if(f.busca){sb.focus(); sb.setSelectionRange(sb.value.length,sb.value.length);}
 }
 
-// ════════════════════════════════════════════════════════════
-//  RENDER: CONSOLIDADO
-// ════════════════════════════════════════════════════════════
 function rangeTaxa(items){
   const labels=[...new Set(items.map(x=>x.taxaLabel))];
   if(labels.length===1) return {faixa:labels[0],media:labels[0]};
-  const vals=items.map(x=>({t:x.taxa,ap:x.valorInicial}));
+  const vals=items.map(x=>({t:parseFloat(x.taxa)||0,ap:x.valorInicial||0}));
   const mn=Math.min(...vals.map(v=>v.t)), mx=Math.max(...vals.map(v=>v.t));
-  const pond=vals.reduce((s,v)=>s+v.t*v.ap,0)/vals.reduce((s,v)=>s+v.ap,0);
+  const sumAp=vals.reduce((s,v)=>s+v.ap,0);
+  const pond=sumAp>0?vals.reduce((s,v)=>s+v.t*v.ap,0)/sumAp:0;
   const ex=items[0];
   const suf = ex.modoTaxa==="cdi_pct"?"% CDI" : ex.modoTaxa==="cdi_mais"?" (CDI+)" : ex.modoTaxa==="ipca_mais"?" (IPCA+)" : "%";
   const fmt=x=>x.toFixed(2).replace(/\.?0+$/,"").replace(".",",");
@@ -600,6 +764,7 @@ function rangeTaxa(items){
 function renderConsolidado(){
   const el=document.getElementById("panel-consolidado");
   const L=STATE.investments, tG=totais(L);
+  if(!L.length){ el.innerHTML=""; return; }
   let h=`<div class="sec-h"><span class="bar"></span>Carteira Consolidada <span class="ct">${tG.n} ativos · grupos por produto</span></div>`;
   h+=`<div class="tbl-wrap"><div class="tbl-scroll"><table>
     <thead><tr><th>Banco</th><th>Produto / Grupo</th><th class="c">Qtd</th><th>Tipo</th><th>Indexador</th>
@@ -610,7 +775,7 @@ function renderConsolidado(){
     const grupos=agrupar(doBanco,"grupo");
     Object.keys(grupos).forEach(g=>{
       const items=grupos[g], tg=totais(items), rt=rangeTaxa(items), ex=items[0];
-      const tcls=ex.tipo.toLowerCase().replace("ê","e");
+      const tcls=(ex.tipo||"").toLowerCase().replace("ê","e");
       h+=`<tr>
         <td style="font-weight:700;color:${COR_BANCO[banco][0]}">${esc(banco)}</td>
         <td style="font-weight:600">${esc(g)}</td>
@@ -642,31 +807,31 @@ function renderConsolidado(){
   el.innerHTML=h;
 }
 
-// ════════════════════════════════════════════════════════════
-//  RENDER: PROVENTOS
-// ════════════════════════════════════════════════════════════
 function renderProventos(){
   const el=document.getElementById("panel-proventos");
   const P=STATE.proventos.slice().sort((a,b)=>pDate(a.data)-pDate(b.data));
-  const rec=P.filter(p=>p.pago).reduce((s,p)=>s+p.valor,0);
+  if(!P.length){ el.innerHTML=`<div class="empty"><div class="ic">∅</div>Nenhum provento cadastrado.</div>`; return; }
+  const rec=P.filter(p=>p.pago).reduce((s,p)=>s+(p.valorPago||p.valor),0);
   const fut=P.filter(p=>!p.pago).reduce((s,p)=>s+p.valor,0);
   const nRec=P.filter(p=>p.pago).length, nFut=P.filter(p=>!p.pago).length;
+  const atrasados=P.filter(p=>!p.pago && p.data && pDate(p.data)<HOJE).length;
 
   let h=`<div class="kpis" style="grid-template-columns:repeat(3,1fr)">
     <div class="kpi bruto"><div class="lab">Já Recebido</div><div class="val num pos">${BRL(rec)}</div><div class="meta">${nRec} cupons confirmados</div></div>
-    <div class="kpi aplic"><div class="lab">Previsto (a receber)</div><div class="val num">${BRL(fut)}</div><div class="meta">${nFut} cupons estimados</div></div>
-    <div class="kpi liq"><div class="lab">Total no Período</div><div class="val num">${BRL(rec+fut)}</div><div class="meta">9 ativos pagadores de cupom</div></div>
+    <div class="kpi aplic"><div class="lab">Previsto (a receber)</div><div class="val num">${BRL(fut)}</div><div class="meta">${nFut} cupons estimados${atrasados?` · ${atrasados} pendentes`:""}</div></div>
+    <div class="kpi liq"><div class="lab">Total no Período</div><div class="val num">${BRL(rec+fut)}</div><div class="meta">${new Set(P.map(p=>p.codigo)).size} ativos pagadores de cupom</div></div>
   </div>`;
-  h+=`<div class="proj-note">Calendário cronológico dos cupons. ✓ confirmados no extrato · ⏳ data passou, verificar · ◻ a receber (estimativa). Apenas ativos do Inter que distribuem proventos.</div>`;
+  h+=`<div class="proj-note">Clique em "Marcar recebido" quando o cupom cair na sua conta. ✓ confirmado · ⏳ data passou, verificar · ◻ a receber</div>`;
 
   const MES=["JANEIRO","FEVEREIRO","MARÇO","ABRIL","MAIO","JUNHO","JULHO","AGOSTO","SETEMBRO","OUTUBRO","NOVEMBRO","DEZEMBRO"];
   let curKey=null;
   P.forEach(p=>{
-    const d=pDate(p.data), key=d.getFullYear()+"-"+d.getMonth();
+    const d=pDate(p.data); if(!d) return;
+    const key=d.getFullYear()+"-"+d.getMonth();
     if(key!==curKey){
-      if(curKey!==null) h+=`</div>`;
+      if(curKey!==null) h+=`</div></div>`;
       curKey=key;
-      const mTot=P.filter(x=>{const xd=pDate(x.data);return xd.getFullYear()===d.getFullYear()&&xd.getMonth()===d.getMonth();}).reduce((s,x)=>s+x.valor,0);
+      const mTot=P.filter(x=>{const xd=pDate(x.data);return xd&&xd.getFullYear()===d.getFullYear()&&xd.getMonth()===d.getMonth();}).reduce((s,x)=>s+(x.pago?(x.valorPago||x.valor):x.valor),0);
       const past=d<HOJE;
       h+=`<div class="prov-month"><div class="month-h ${past?"past":""}">${MES[d.getMonth()]} / ${d.getFullYear()}<span class="mtot num">${BRL(mTot)}</span></div><div class="prov-list">`;
     }
@@ -674,25 +839,24 @@ function renderProventos(){
     if(p.pago){stt="✓ Pago";scls="pago";}
     else if(pDate(p.data)<HOJE){stt="⏳ Verificar";scls="chk";}
     else{stt="◻ A receber";scls="fut";}
+    const valorMostrado = p.pago && p.valorPago ? p.valorPago : p.valor;
     h+=`<div class="prov-item">
       <span class="stt ${scls}">${stt}</span>
-      <span class="at">${esc(p.ativo)} <span class="cd">· ${esc(p.codigo)} · ${esc(p.periodicidade)}</span></span>
+      <span class="at">${esc(p.ativo)} <span class="cd">· ${esc(p.codigo||"—")} · ${esc(p.periodicidade||"")}</span>${p.pago&&p.dataPago?'<span class="cd"> · pago em '+fDate(p.dataPago)+'</span>':''}</span>
       <span class="dt num">${fDate(p.data)}</span>
-      <span class="vl num ${p.pago?"pos":""}">${p.valor>0?BRL(p.valor):"a definir"}</span>
+      <span class="vl num ${p.pago?"pos":""}">${valorMostrado>0?BRL(valorMostrado):"a definir"}${!p.pago?` <button class="btn sm" style="margin-left:8px" onclick="abrirMarcarPago('${p.id}', '${esc(p.ativo)}', ${p.valor||0})">Marcar recebido</button>`:""}</span>
     </div>`;
   });
   if(curKey!==null) h+=`</div></div>`;
   el.innerHTML=h;
 }
 
-// ════════════════════════════════════════════════════════════
-//  RENDER: PROJEÇÕES
-// ════════════════════════════════════════════════════════════
 function renderProjecoes(){
   const el=document.getElementById("panel-projecoes");
   const L=STATE.investments.slice().sort((a,b)=>pDate(a.vencimento)-pDate(b.vencimento));
+  if(!L.length){ el.innerHTML=""; return; }
   let totAp=0,totVenc=0,totBr=0;
-  let h=`<div class="proj-note">Projeção do valor <b>no vencimento</b> a partir do <b>valor bruto atual</b>, capitalizado pela taxa contratada até o vencimento (CDI ${PCT(STATE.indices.cdi,2)} · IPCA ${PCT(STATE.indices.ipca,2)}, assumidos constantes — estimativa, não garantia). Ativos marcados <span style="font-size:10px;padding:1px 5px;border-radius:6px;background:rgba(245,160,79,.18);color:var(--amber);font-weight:600">≈ parcial</span> pagam cupons periódicos: parte do retorno já foi distribuída como provento, então o valor no vencimento é uma estimativa parcial (veja a aba Proventos).</div>`;
+  let h=`<div class="proj-note">⚠️ <b>Projeção simplificada</b>: usa dias corridos / 365, não dias úteis B3 / 252 (cálculo bancário oficial). Diferença real fica entre <b>0,5% e 3%</b> dependendo do prazo. <b>Use como referência, não como decisão financeira.</b> CDI ${PCT(STATE.indices.cdi,2)} · IPCA ${PCT(STATE.indices.ipca,2)} (assumidos constantes até o vencimento). Ativos com cupom (≈ parcial): parte do retorno já foi paga como provento.</div>`;
   h+=`<div class="tbl-wrap"><div class="tbl-scroll"><table>
     <thead><tr><th>Ativo</th><th>Banco</th><th>Taxa</th><th class="c">Vencimento</th><th class="c">Dias restantes</th>
     <th class="r">Aplicado</th><th class="r">Bruto hoje</th><th class="r">Bruto no venc. (est.)</th><th class="r">Ganho projetado</th></tr></thead><tbody>`;
@@ -701,11 +865,11 @@ function renderProjecoes(){
     totAp+=c.ap; totVenc+=venc; totBr+=c.br;
     const ganho=venc-c.ap;
     h+=`<tr>
-      <td><div style="font-weight:600">${esc(inv.nome)}${temCupom(inv)?' <span style="font-size:10px;padding:1px 5px;border-radius:6px;background:rgba(245,160,79,.18);color:var(--amber);font-weight:600" title="Paga cupons: projeção é estimativa parcial — parte do retorno já foi distribuída como provento">≈ parcial</span>':''}</div><div class="mini">${esc(inv.tipo)} · ${esc(inv.indexador)}</div></td>
+      <td><div style="font-weight:600">${esc(inv.nome)}${temCupom(inv)?' <span style="font-size:10px;padding:1px 5px;border-radius:6px;background:rgba(245,160,79,.18);color:var(--amber);font-weight:600" title="Paga cupons: projeção é estimativa parcial">≈ parcial</span>':''}</div><div class="mini">${esc(inv.tipo)} · ${esc(inv.indexador)}</div></td>
       <td class="mini">${esc(inv.banco)}</td>
-      <td style="font-weight:600">${esc(inv.taxaLabel)}</td>
+      <td style="font-weight:600">${esc(inv.taxaLabel||"")}</td>
       <td class="c mini num">${fDate(inv.vencimento)}</td>
-      <td class="c num ${dv<=45?"neg":dv<=180?"":""}" style="${dv<=45?"color:var(--red)":dv<=180?"color:var(--amber)":""}">${dv>0?dv+"d":"vencido"}</td>
+      <td class="c num" style="${dv<=45?"color:var(--red)":dv<=180?"color:var(--amber)":""}">${dv>0?dv+"d":"vencido"}</td>
       <td class="r num">${BRL(c.ap)}</td>
       <td class="r num">${BRL(c.br)}</td>
       <td class="r num" style="color:var(--gold)${temCupom(inv)?';opacity:.55;font-style:italic':''}">${BRL(venc)}</td>
@@ -719,237 +883,95 @@ function renderProjecoes(){
   el.innerHTML=h;
 }
 
-// ════════════════════════════════════════════════════════════
-//  RENDER: CONFIG
-// ════════════════════════════════════════════════════════════
 function renderConfig(){
-  const el=document.getElementById("panel-config"), ix=STATE.indices;
-  let h=`<div class="sec-h"><span class="bar"></span>Configurações</div><div class="cfg-grid">`;
-  // índices
+  const el=document.getElementById("panel-config");
+  const ix=STATE.indices;
   const lu = ix.lastUpdate ? new Date(ix.lastUpdate).toLocaleString("pt-BR") : "—";
-  h+=`<div class="cfg-card"><h3>Índices de Mercado</h3><p>Usados nas projeções. Atualize automaticamente do Banco Central ou edite à mão.</p>
-    <div class="idx-edit">
-      <div class="field"><label>CDI (% a.a.)</label><input id="c-cdi" class="num" value="${ix.cdi}"></div>
-      <div class="field"><label>SELIC (% a.a.)</label><input id="c-selic" class="num" value="${ix.selic}"></div>
-      <div class="field"><label>IPCA 12m (%)</label><input id="c-ipca" class="num" value="${ix.ipca}"></div>
-      <div class="field"><label>IGP-M (%)</label><input id="c-igpm" class="num" value="${ix.igpm}"></div>
-    </div>
-    <div style="display:flex;gap:9px;flex-wrap:wrap">
-      <button class="btn primary" id="btn-idx">Salvar manual</button>
-      <button class="btn" id="btn-bcb">🔄 Atualizar do BCB</button>
-    </div>
-    <div class="mini" style="margin-top:10px">Última atualização automática: ${lu}. CDI/SELIC/IPCA vêm do BCB; IGP-M é manual (nenhum ativo usa).</div></div>`;
-  // backup
-  h+=`<div class="cfg-card"><h3>Backup & Dados</h3><p>Exporte sua carteira para um arquivo, ou restaure de um backup. Os dados ficam salvos automaticamente neste navegador.</p>
-    <div class="btn-col">
-      <button class="btn" id="btn-exp-json">⬇ Exportar backup (JSON)</button>
-      <button class="btn" id="btn-exp-csv">⬇ Exportar planilha (CSV)</button>
-      <button class="btn" id="btn-imp-json">⬆ Importar backup (JSON)</button>
-      <input type="file" id="file-json" accept=".json" style="display:none">
-      <button class="btn danger" id="btn-reset">↺ Restaurar carteira original (103 ativos)</button>
-    </div></div>`;
-  // planilha (fonte de verdade)
-  h+=`<div class="cfg-card"><h3>Planilha — Fonte de Verdade</h3>
-    <p>A planilha Google (via Apps Script) é onde os dados vivem. O app lê dela ao abrir e pode gravar nela.</p>
+  const cargaTxt = STATE.ultimaCarga ? new Date(STATE.ultimaCarga).toLocaleString("pt-BR") : "—";
+  let h=`<div class="sec-h"><span class="bar"></span>Configurações</div><div class="cfg-grid">`;
+
+  // Card 1: Planilha (URL + Token)
+  h+=`<div class="cfg-card" style="grid-column:1/-1"><h3>🔌 Conexão com a planilha</h3>
+    <p>A planilha Google é a fonte de verdade. Esses dois valores ficam salvos só neste navegador — em outro aparelho, você precisa colar de novo.</p>
     <div class="field" style="margin-bottom:12px"><label>URL do Apps Script (Web App)</label><input id="c-url" placeholder="https://script.google.com/macros/s/.../exec" value="${esc(STATE.scriptUrl)}"></div>
-    <div class="btn-col">
-      <button class="btn" id="btn-url">Salvar URL</button>
-      <button class="btn" id="btn-ping">Testar conexão</button>
+    <div class="field" style="margin-bottom:12px"><label>Token de escrita</label><input id="c-token" type="password" placeholder="vmc_..." value="${esc(STATE.token)}"></div>
+    <div style="display:flex;gap:9px;flex-wrap:wrap">
+      <button class="btn primary" id="btn-savecfg">💾 Salvar URL + Token</button>
+      <button class="btn" id="btn-ping">🔗 Testar conexão</button>
       <button class="btn" id="btn-reload">⤓ Recarregar da planilha</button>
-      <button class="btn primary" id="btn-gravar">⤒ Gravar carteira atual na planilha</button>
     </div>
-    <div class="mini" style="margin-top:10px">Fonte dos dados em tela agora: <b>${STATE.fonte==="planilha"?"planilha ✓":"cópia local"}</b></div></div>`;
-  // atualizar via JSON (PDF)
-  h+=`<div class="cfg-card" style="grid-column:1/-1"><h3>Atualizar Carteira via JSON <span style="font-size:11px;color:var(--dim);font-weight:600">(ex.: dados extraídos de PDF)</span></h3>
-    <p>Cole o JSON da carteira (gerado a partir dos seus extratos). Ao aplicar, atualiza a tela e oferece gravar na planilha — este é o caminho para refletir mudanças vindas dos bancos.</p>
-    <textarea id="c-json" placeholder='[{&quot;nome&quot;:&quot;...&quot;,&quot;tipo&quot;:&quot;CDB&quot;,...}]  ou  {&quot;investments&quot;:[...],&quot;proventos&quot;:[...]}' style="width:100%;min-height:120px;font-family:var(--mono);font-size:12px;background:var(--ink2);border:1px solid var(--line);color:var(--txt);border-radius:var(--r-sm);padding:12px;outline:none;resize:vertical"></textarea>
-    <div style="display:flex;gap:10px;margin-top:12px"><button class="btn primary" id="btn-json">Aplicar JSON</button><button class="btn ghost" id="btn-json-ex">Ver exemplo do formato</button></div></div>`;
+    <div class="mini" style="margin-top:12px">
+      Fonte agora: <b>${STATE.fonte==="planilha"?'planilha ✓':STATE.fonte==="cache"?"cache (offline)":"não conectado"}</b> · Última carga: ${cargaTxt}
+    </div></div>`;
+
+  // Card 2: Índices
+  h+=`<div class="cfg-card"><h3>📈 Índices de mercado</h3>
+    <p>Usados nas projeções. O BCB fornece CDI/SELIC/IPCA atualizados.</p>
+    <div class="idx-edit">
+      <div class="field"><label>CDI (% a.a.)</label><input id="c-cdi" class="num" value="${ix.cdi}" disabled></div>
+      <div class="field"><label>SELIC (% a.a.)</label><input id="c-selic" class="num" value="${ix.selic}" disabled></div>
+      <div class="field"><label>IPCA 12m (%)</label><input id="c-ipca" class="num" value="${ix.ipca}" disabled></div>
+      <div class="field"><label>IGP-M (%)</label><input id="c-igpm" class="num" value="${ix.igpm}" disabled></div>
+    </div>
+    <button class="btn" id="btn-bcb">🔄 Atualizar do BCB</button>
+    <div class="mini" style="margin-top:10px">Última atualização: ${lu}. O backend já busca automaticamente todo dia às 06h.</div></div>`;
+
+  // Card 3: Backup
+  h+=`<div class="cfg-card"><h3>💾 Backup</h3>
+    <p>Exporta uma cópia local em JSON dos dados atuais. Para restaurar, edite direto na planilha do Google (que mantém histórico de revisões nativo).</p>
+    <button class="btn" id="btn-exp-json">⬇ Exportar backup JSON</button>
+    <div class="mini" style="margin-top:10px">A planilha do Google guarda <b>histórico de versões</b> (Arquivo → Histórico). Em caso de erro, dá pra restaurar versões anteriores direto lá — esse é seu undo real.</div></div>`;
+
   h+=`</div>`;
   el.innerHTML=h;
 
-  document.getElementById("btn-idx").addEventListener("click",()=>{
-    ["cdi","selic","ipca","igpm"].forEach(k=>{const v=parseFloat(document.getElementById("c-"+k).value.replace(",","."));if(!isNaN(v))STATE.indices[k]=v;});
-    save(); renderIdx(); renderAll(); toast("Índices atualizados","ok");
+  document.getElementById("btn-savecfg").addEventListener("click",()=>{
+    STATE.scriptUrl=document.getElementById("c-url").value.trim();
+    STATE.token=document.getElementById("c-token").value.trim();
+    lsSave(); toast("Configuração salva","ok"); renderConfig();
+  });
+  document.getElementById("btn-ping").addEventListener("click",pingScript);
+  document.getElementById("btn-reload").addEventListener("click",async()=>{
+    const ok = await carregarDaPlanilha(false);
+    if(ok) renderAll();
   });
   document.getElementById("btn-bcb").addEventListener("click",atualizarIndicesBCB);
   document.getElementById("btn-exp-json").addEventListener("click",exportJSON);
-  document.getElementById("btn-exp-csv").addEventListener("click",exportCSV);
-  document.getElementById("btn-imp-json").addEventListener("click",()=>document.getElementById("file-json").click());
-  document.getElementById("file-json").addEventListener("change",importJSON);
-  document.getElementById("btn-reset").addEventListener("click",()=>{
-    if(confirm("Restaurar a carteira original com os 103 ativos? Isso substitui os dados atuais neste navegador.")){
-      STATE.investments=JSON.parse(JSON.stringify(SEED_ATIVOS));
-      STATE.proventos=JSON.parse(JSON.stringify(SEED_PROVENTOS));
-      save(); renderAll(); toast("Carteira original restaurada","ok");
-    }
-  });
-  document.getElementById("btn-url").addEventListener("click",()=>{STATE.scriptUrl=document.getElementById("c-url").value.trim();save();toast("URL salva","ok");});
-  document.getElementById("btn-ping").addEventListener("click",pingScript);
-  document.getElementById("btn-reload").addEventListener("click",()=>carregarDoServidor(false));
-  document.getElementById("btn-gravar").addEventListener("click",gravarNaPlanilha);
-  document.getElementById("btn-json").addEventListener("click",()=>aplicarJSON(document.getElementById("c-json").value));
-  document.getElementById("btn-json-ex").addEventListener("click",()=>{document.getElementById("c-json").value=JSON.stringify([{nome:"CDB Exemplo",emissor:"Banco X",codigo:"—",produto:"CDB Exemplo",tipo:"CDB",indexador:"CDI",taxa:103,taxaLabel:"103% CDI",modoTaxa:"cdi_pct",dataAplicacao:"2025-01-10",vencimento:"2027-01-10",valorInicial:1000,valorBruto:1080,ir:12,banco:"C6 Bank",instituicao:"C6 Bank",liquidez:"No venc.",grupo:"CDB Exemplo",obs:""}],null,2);});
 }
 
-// ── EXPORT / IMPORT ──
 function exportJSON(){
-  const blob=new Blob([JSON.stringify({investments:STATE.investments,indices:STATE.indices,proventos:STATE.proventos},null,2)],{type:"application/json"});
-  dl(blob,`carteira_${new Date().toISOString().slice(0,10)}.json`); toast("Backup exportado","ok");
-}
-function exportCSV(){
-  const head=["id","nome","tipo","indexador","taxa","taxaLabel","dataAplicacao","vencimento","valorInicial","valorBruto","ir","instituicao","liquidez","grupo","obs"];
-  const rows=[head.join(",")];
-  STATE.investments.forEach(inv=>{
-    rows.push(head.map(h=>{let v=inv[h]==null?"":inv[h]; v=String(v).replace(/"/g,'""'); return /[",\n]/.test(v)?`"${v}"`:v;}).join(","));
-  });
-  const blob=new Blob(["\ufeff"+rows.join("\n")],{type:"text/csv;charset=utf-8"});
-  dl(blob,`carteira_${new Date().toISOString().slice(0,10)}.csv`); toast("CSV exportado","ok");
-}
-function importJSON(e){
-  const f=e.target.files[0]; if(!f)return;
-  const r=new FileReader();
-  r.onload=ev=>{try{const d=JSON.parse(ev.target.result);
-    if(d.investments){STATE.investments=d.investments;}
-    if(d.indices){STATE.indices=d.indices;}
-    if(d.proventos){STATE.proventos=d.proventos;}
-    save(); renderIdx(); renderAll(); toast("Backup restaurado","ok");
-  }catch(err){toast("Arquivo inválido","err");}};
-  r.readAsText(f); e.target.value="";
-}
-function dl(blob,name){const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=name;a.click();}
-
-// ── SYNC (opcional) ──
-// ── COMUNICAÇÃO À PROVA DE CORS ──
-// LEITURA via JSONP (contorna CORS usando <script>). Backend v2 aceita ?callback=
-function jsonpGet(params, timeoutMs){
-  return new Promise((resolve,reject)=>{
-    if(!STATE.scriptUrl) return reject(new Error("sem URL"));
-    const cb="__jsonp_"+Date.now()+"_"+Math.floor(Math.random()*1e6);
-    const qs=Object.keys(params).map(k=>encodeURIComponent(k)+"="+encodeURIComponent(params[k])).join("&");
-    const sep=STATE.scriptUrl.includes("?")?"&":"?";
-    const src=STATE.scriptUrl+sep+qs+"&callback="+cb;
-    const s=document.createElement("script");
-    let done=false;
-    const limpa=()=>{ try{delete window[cb];}catch(e){window[cb]=undefined;} if(s.parentNode)s.parentNode.removeChild(s); };
-    const t=setTimeout(()=>{ if(done)return; done=true; limpa(); reject(new Error("timeout")); }, timeoutMs||15000);
-    window[cb]=(data)=>{ if(done)return; done=true; clearTimeout(t); limpa(); resolve(data); };
-    s.onerror=()=>{ if(done)return; done=true; clearTimeout(t); limpa(); reject(new Error("erro de rede")); };
-    s.src=src; document.head.appendChild(s);
-  });
-}
-async function pingScript(){
-  if(!STATE.scriptUrl){toast("Configure a URL primeiro","err");return;}
-  try{ const d=await jsonpGet({acao:"ping"});
-    toast(d&&d.ok?"Conexão OK — "+(d.msg||""):"Resposta inesperada",d&&d.ok?"ok":"err");
-  }catch(e){toast("Falha na conexão ("+e.message+")","err");}
-}
-// ── FONTE DE VERDADE: PLANILHA ──
-function normalizeFromSheet(inv){
-  const o=Object.assign({},inv);
-  ["taxa","valorInicial","valorBruto","ir"].forEach(k=>{o[k]=parseFloat(o[k])||0;});
-  if((inv.valorBruto===""||inv.valorBruto==null) && o.valorInicial>0) o.valorBruto=o.valorInicial;
-  if(!o.taxaLabel) o.taxaLabel=String(o.taxa).replace(".",",")+(o.indexador==="Prefixado"?"%":"% CDI");
-  if(!o.modoTaxa){
-    const L=(o.taxaLabel||"").toUpperCase();
-    o.modoTaxa=L.includes("IPCA+")?"ipca_mais":L.includes("CDI+")?"cdi_mais":(L.includes("CDI")||o.indexador==="CDI")?"cdi_pct":"pre";
-  }
-  if(!o.liquidez) o.liquidez="No venc.";
-  if(!o.banco) o.banco=o.instituicao||"—";
-  if(!o.emissor) o.emissor="—"; if(!o.codigo) o.codigo="—"; if(!o.grupo) o.grupo=o.produto||o.nome;
-  return o;
-}
-async function carregarDoServidor(silent){
-  if(!STATE.scriptUrl) return false;
-  try{
-    const d=await jsonpGet({acao:"listar"}, 20000);
-    if(d.ok && Array.isArray(d.investimentos) && d.investimentos.length){
-      STATE.investments=d.investimentos.map(normalizeFromSheet);
-      if(d.indices) STATE.indices=Object.assign({},STATE.indices,d.indices);
-      if(Array.isArray(d.proventos) && d.proventos.length) STATE.proventos=d.proventos;
-      STATE.fonte="planilha"; save(); renderIdx(); renderAll();
-      if(!silent) toast("Carregado da planilha — "+STATE.investments.length+" ativos","ok");
-      return true;
-    }
-    STATE.fonte="local";
-    if(!silent) toast("Planilha vazia — usando carteira local. Use 'Gravar na planilha' para popular.","info");
-    return false;
-  }catch(e){ STATE.fonte="local"; if(!silent) toast("Sem conexão com a planilha — usando cópia local","info"); return false; }
-}
-async function gravarNaPlanilha(){
-  if(!STATE.scriptUrl){toast("Configure a URL da planilha primeiro","err");return;}
-  if(!confirm(`Gravar a carteira atual (${STATE.investments.length} ativos) na planilha? Isso SUBSTITUI o conteúdo da planilha-banco.`))return;
-  await _gravarLotes();
-}
-async function _gravarLotes(){
-  try{
-    toast("Limpando planilha...","info");
-    const lp=await jsonpGet({acao:"limparInvestimentos"}, 20000);
-    if(!lp||!lp.ok){ toast("Falha ao limpar a planilha","err"); return false; }
-    const lotes=[]; let atual=[], tam=0;
-    for(const inv of STATE.investments){
-      const s=JSON.stringify(enxuto(inv));
-      if(tam+s.length>1200 && atual.length){ lotes.push(atual); atual=[]; tam=0; }
-      atual.push(enxuto(inv)); tam+=s.length+2;
-    }
-    if(atual.length) lotes.push(atual);
-    let enviados=0;
-    for(let i=0;i<lotes.length;i++){
-      toast(`Gravando lote ${i+1}/${lotes.length}...`,"info");
-      const d=await jsonpGet({acao:"addLoteGet", dados:JSON.stringify(lotes[i])}, 20000);
-      if(d&&d.ok){ enviados+=lotes[i].length; } else { toast(`Falha no lote ${i+1}`,"err"); return false; }
-    }
-    toast(`Planilha gravada: ${enviados} ativos. Recarregando...`,"ok");
-    setTimeout(async()=>{ await carregarDoServidor(true); renderConfig(); toast("Pronto — planilha é a fonte agora","ok"); }, 1500);
-    return true;
-  }catch(e){toast("Erro ao gravar ("+e.message+")","err"); return false;}
-}
-// versão compacta do ativo p/ caber na URL (só campos do esquema)
-function enxuto(inv){
-  return {id:inv.id,nome:inv.nome,tipo:inv.tipo,indexador:inv.indexador,taxa:inv.taxa,
-    dataAplicacao:inv.dataAplicacao,vencimento:inv.vencimento,valorInicial:inv.valorInicial,
-    instituicao:inv.instituicao||inv.banco,obs:inv.obs||"",valorBruto:inv.valorBruto,ir:inv.ir,
-    dataReferencia:inv.dataReferencia||DATA_REF,liquidez:inv.liquidez,grupo:inv.grupo,
-    emissor:inv.emissor,codigo:inv.codigo,taxaLabel:inv.taxaLabel,modoTaxa:inv.modoTaxa};
-}
-async function aplicarJSON(txt){
-  let data;
-  try{ data=JSON.parse(txt); }catch(e){ toast("JSON inválido","err"); return; }
-  let invs = Array.isArray(data)?data:(data.investments||data.investimentos||[]);
-  let provs = Array.isArray(data)?null:(data.proventos||null);
-  if(!invs.length){ toast("JSON sem ativos reconhecíveis","err"); return; }
-  invs=invs.map(normalizeFromSheet);
-  STATE.investments=invs; if(provs) STATE.proventos=provs; save(); renderIdx(); renderAll();
-  toast(`${invs.length} ativos aplicados na tela`,"ok");
-  if(STATE.scriptUrl && confirm("Gravar também na planilha (fonte de verdade)?")){
-    await _gravarLotes();
-  }
-}
-async function atualizarIndicesBCB(){
-  if(!STATE.scriptUrl){toast("Configure a URL da planilha primeiro","err");return;}
-  try{
-    toast("Buscando índices no BCB...","info");
-    const d=await jsonpGet({acao:"buscarIndices"}, 25000);
-    if(d && d.ok && d.indices){ STATE.indices=Object.assign({},STATE.indices,d.indices,{lastUpdate:d.atualizadoEm}); save(); renderIdx(); renderConfig(); toast("Índices atualizados do BCB","ok"); }
-    else toast("Não foi possível atualizar","err");
-  }catch(e){toast("Erro de conexão ("+e.message+")","err");}
+  const blob=new Blob([JSON.stringify({
+    investments:STATE.investments,
+    proventos:STATE.proventos,
+    indices:STATE.indices,
+    exportadoEm:new Date().toISOString()
+  },null,2)],{type:"application/json"});
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob);
+  a.download=`carteira_${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+  toast("Backup exportado","ok");
 }
 
 // ════════════════════════════════════════════════════════════
-//  MODAL ADD/EDIT
+//  MODAL: ADICIONAR / EDITAR ATIVO
 // ════════════════════════════════════════════════════════════
 const TIPOS=["CDB","RDB","LCI","LCA","CRI","CRA","Debênture","Tesouro Direto","Fundo"];
 const INDEX=["CDI","Prefixado","IPCA+"];
+const LIQ  =["Diária","No venc."];
+
 function abrirEdit(id){
   STATE.editId=id;
+  STATE.editProvId=null;
   const inv=id?STATE.investments.find(x=>x.id===id):{};
   document.getElementById("modal-title").textContent=id?"Editar investimento":"Novo investimento";
-  const F=(lbl,key,type="text",val="",opts=null,full=false)=>{
+  const F=(lbl,key,type,val,opts,full)=>{
     if(opts) return `<div class="field ${full?"full":""}"><label>${lbl}</label><select data-k="${key}">${opts.map(o=>`<option ${val===o?"selected":""}>${o}</option>`).join("")}</select></div>`;
-    return `<div class="field ${full?"full":""}"><label>${lbl}</label><input data-k="${key}" type="${type}" value="${esc(val)}"></div>`;
+    return `<div class="field ${full?"full":""}"><label>${lbl}</label><input data-k="${key}" type="${type||"text"}" value="${esc(val==null?"":val)}"></div>`;
   };
   document.getElementById("modal-body").innerHTML=
     F("Nome do ativo","nome","text",inv.nome||"",null,true)+
-    F("Banco / Instituição","banco","text",inv.banco||"C6 Bank")+
+    F("Banco / Instituição","instituicao","text",inv.banco||inv.instituicao||"C6 Bank")+
     F("Emissor","emissor","text",inv.emissor||"")+
     F("Tipo","tipo",null,inv.tipo||"CDB",TIPOS)+
     F("Indexador","indexador",null,inv.indexador||"CDI",INDEX)+
@@ -960,80 +982,143 @@ function abrirEdit(id){
     F("Valor aplicado (R$)","valorInicial","number",inv.valorInicial||"")+
     F("Valor bruto atual (R$)","valorBruto","number",inv.valorBruto||"")+
     F("IR estimado (R$)","ir","number",inv.ir||"")+
-    F("Liquidez","liquidez",null,inv.liquidez||"No venc.",["Diária","No venc."])+
-    F("Grupo (p/ consolidado)","grupo","text",inv.grupo||"")+
+    F("Liquidez","liquidez",null,inv.liquidez||"No venc.",LIQ)+
+    F("Grupo (consolidado)","grupo","text",inv.grupo||"")+
+    F("Código (CETIP/B3)","codigo","text",(inv.codigo&&inv.codigo!=="—")?inv.codigo:"")+
     F("Observações","obs","text",inv.obs||"",null,true);
   document.getElementById("modal-bg").classList.add("show");
 }
-function fecharModal(){document.getElementById("modal-bg").classList.remove("show");STATE.editId=null;}
-function salvarModal(){
+function fecharModal(){
+  document.getElementById("modal-bg").classList.remove("show");
+  STATE.editId=null; STATE.editProvId=null;
+}
+
+async function salvarModal(){
+  // Provento?
+  if(STATE.editProvId !== null){ return await salvarModalProvento(); }
+
   const body=document.getElementById("modal-body");
   const o={};
   body.querySelectorAll("[data-k]").forEach(el=>{o[el.dataset.k]=el.value;});
-  if(!o.nome.trim()){toast("Informe o nome do ativo","err");return;}
-  // normalizar números
-  o.taxa=parseFloat(String(o.taxa).replace(",","."))||0;
-  o.valorInicial=parseFloat(o.valorInicial)||0;
-  o.valorBruto=parseFloat(o.valorBruto)||o.valorInicial;
-  o.ir=parseFloat(o.ir)||0;
-  o.instituicao=o.banco;
-  // modoTaxa a partir do rótulo/indexador
+  if(!o.nome||!o.nome.trim()){ toast("Informe o nome do ativo","err"); return; }
+
+  // Normalizar
+  o.taxa = parseFloat(String(o.taxa).replace(",","."))||0;
+  o.valorInicial = parseFloat(o.valorInicial)||0;
+  o.valorBruto   = parseFloat(o.valorBruto)||o.valorInicial;
+  o.ir           = parseFloat(o.ir)||0;
+
+  // Derivar modoTaxa
   const lab=(o.taxaLabel||"").toUpperCase();
-  if(lab.includes("IPCA+")||o.indexador==="IPCA+") o.modoTaxa="ipca_mais";
-  else if(lab.includes("CDI+")) o.modoTaxa="cdi_mais";
-  else if(lab.includes("CDI")||o.indexador==="CDI") o.modoTaxa="cdi_pct";
-  else o.modoTaxa="pre";
-  if(!o.taxaLabel) o.taxaLabel = o.modoTaxa==="pre"?`${String(o.taxa).replace(".",",")}%`:`${String(o.taxa).replace(".",",")}% CDI`;
-  if(!o.codigo) o.codigo="—";
-  if(STATE.editId){
-    const i=STATE.investments.findIndex(x=>x.id===STATE.editId);
-    STATE.investments[i]={...STATE.investments[i],...o};
-    toast("Ativo atualizado","ok");
-  }else{
-    o.id="inv_"+Date.now();
-    STATE.investments.push(o);
-    toast("Ativo adicionado","ok");
+  if(lab.includes("IPCA+") || o.indexador==="IPCA+") o.modoTaxa="ipca_mais";
+  else if(lab.includes("CDI+"))                       o.modoTaxa="cdi_mais";
+  else if(lab.includes("CDI") || o.indexador==="CDI") o.modoTaxa="cdi_pct";
+  else                                                o.modoTaxa="pre";
+
+  if(!o.taxaLabel){
+    o.taxaLabel = o.modoTaxa==="pre" ? `${String(o.taxa).replace(".",",")}%`
+                                     : `${String(o.taxa).replace(".",",")}% CDI`;
   }
-  save(); fecharModal(); renderAll();
+  if(!o.codigo) o.codigo="—";
+  if(!o.grupo)  o.grupo=o.nome;
+  o.dataReferencia = inv_isFoto(o) ? DATA_REF : hojeISO();
+
+  let ok;
+  if(STATE.editId){
+    ok = await editarAtivo(STATE.editId, o);
+  }else{
+    o.id = "inv_"+Date.now();
+    ok = await criarAtivo(o);
+  }
+  if(ok) fecharModal();
 }
-function deletar(id){
+// Se for novo ativo, a foto é DATA_REF? Não — pra novo, a data de referência é hoje.
+function inv_isFoto(o){ return false; }
+
+function confirmarExcluir(id){
   const inv=STATE.investments.find(x=>x.id===id);
-  if(confirm(`Excluir "${inv.nome}"? Esta ação não pode ser desfeita.`)){
-    STATE.investments=STATE.investments.filter(x=>x.id!==id);
-    save(); renderAll(); toast("Ativo excluído","ok");
+  if(!inv) return;
+  if(confirm(`Excluir "${inv.nome}"?\n\nEsta ação remove o ativo da planilha.\n(Você pode restaurar pelo histórico de versões do Google Sheets se errar.)`)){
+    excluirAtivo(id);
   }
 }
 
-// ── TOAST ──
+// ════════════════════════════════════════════════════════════
+//  MODAL: MARCAR PROVENTO COMO PAGO
+// ════════════════════════════════════════════════════════════
+function abrirMarcarPago(id, ativo, valorPrevisto){
+  STATE.editProvId = id;
+  STATE.editId = null;
+  document.getElementById("modal-title").textContent="Marcar provento como recebido";
+  document.getElementById("modal-body").innerHTML = `
+    <div class="field full"><label>Ativo</label><input type="text" value="${esc(ativo)}" disabled></div>
+    <div class="field"><label>Data efetiva do crédito</label><input data-k="dataPago" type="date" value="${hojeISO()}"></div>
+    <div class="field"><label>Valor recebido (R$)</label><input data-k="valorPago" type="number" step="0.01" value="${valorPrevisto||""}"></div>
+  `;
+  document.getElementById("modal-bg").classList.add("show");
+}
+async function salvarModalProvento(){
+  const body=document.getElementById("modal-body");
+  const o={};
+  body.querySelectorAll("[data-k]").forEach(el=>{o[el.dataset.k]=el.value;});
+  o.valorPago = parseFloat(o.valorPago)||0;
+  if(!o.dataPago){ toast("Informe a data de recebimento","err"); return; }
+  const ok = await marcarProventoPago(STATE.editProvId, o.dataPago, o.valorPago);
+  if(ok) fecharModal();
+}
+
+// ════════════════════════════════════════════════════════════
+//  TOAST + ROUTER + INIT
+// ════════════════════════════════════════════════════════════
 let toastT;
 function toast(msg,type="ok"){
   const el=document.getElementById("toast");
   el.className="toast show "+type; el.textContent=msg;
-  clearTimeout(toastT); toastT=setTimeout(()=>el.classList.remove("show"),3200);
+  clearTimeout(toastT); toastT=setTimeout(()=>el.classList.remove("show"),3500);
 }
 
-// ── RENDER ALL / ROUTER ──
 function renderAll(){
+  renderIdx();
   renderOverview(); renderCarteira(); renderConsolidado(); renderProventos(); renderProjecoes(); renderConfig();
 }
 function setTab(tab){
   STATE.activeTab=tab;
   document.querySelectorAll(".nav button").forEach(b=>b.classList.toggle("active",b.dataset.tab===tab));
   document.querySelectorAll(".panel").forEach(p=>p.classList.toggle("active",p.id==="panel-"+tab));
-  if(tab==="overview") renderOverview();
 }
 
-// ── INIT ──
-load();
-renderIdx();
-renderAll();
-carregarDoServidor(true);   // planilha é a fonte de verdade; tenta ler dela ao abrir
-document.getElementById("nav").addEventListener("click",e=>{const b=e.target.closest("button");if(b)setTab(b.dataset.tab);});
-document.getElementById("modal-x").addEventListener("click",fecharModal);
-document.getElementById("modal-cancel").addEventListener("click",fecharModal);
-document.getElementById("modal-save").addEventListener("click",salvarModal);
-document.getElementById("modal-bg").addEventListener("click",e=>{if(e.target.id==="modal-bg")fecharModal();});
-window.abrirEdit=abrirEdit; window.deletar=deletar;
+// Carrega cache se existir → renderiza → tenta planilha → re-renderiza se sucesso
+(function init(){
+  const cache = lsLoad();
+  if(cache){
+    STATE.investments = cache.investments || [];
+    STATE.proventos   = cache.proventos   || [];
+    STATE.indices     = Object.assign({}, STATE.indices, cache.indices||{});
+    STATE.scriptUrl   = cache.scriptUrl   || "";
+    STATE.token       = cache.token       || "";
+    STATE.ultimaCarga = cache.ultimaCarga || null;
+    STATE.fonte       = STATE.investments.length ? "cache" : "vazio";
+  }
+  renderAll();
+  // tenta planilha em background
+  if(STATE.scriptUrl){
+    carregarDaPlanilha(true).then(ok=>{ if(ok) renderAll(); });
+  }
+  // listeners
+  document.getElementById("nav").addEventListener("click",e=>{
+    const b=e.target.closest("button"); if(b) setTab(b.dataset.tab);
+  });
+  document.getElementById("modal-x").addEventListener("click",fecharModal);
+  document.getElementById("modal-cancel").addEventListener("click",fecharModal);
+  document.getElementById("modal-save").addEventListener("click",salvarModal);
+  document.getElementById("modal-bg").addEventListener("click",e=>{ if(e.target.id==="modal-bg") fecharModal(); });
+})();
+
+// expor pro inline onclick
+window.abrirEdit         = abrirEdit;
+window.confirmarExcluir  = confirmarExcluir;
+window.abrirMarcarPago   = abrirMarcarPago;
+window.setTab            = setTab;
 </script>
 </body>
 </html>
