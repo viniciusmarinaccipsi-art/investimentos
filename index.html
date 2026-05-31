@@ -362,7 +362,11 @@ const esc = s => String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&l
 
 // ── CÁLCULOS ───────────────────────────────────────────────
 function calc(inv){
-  const ap=inv.valorInicial||0, br=inv.valorBruto!=null?inv.valorBruto:ap, ir=inv.ir||0;
+  const ap=inv.valorInicial||0;
+  // valorBruto: 0 ou null/vazio → cai pro valorInicial (foto inicial do ativo)
+  const vb=parseFloat(inv.valorBruto)||0;
+  const br=vb>0?vb:ap;
+  const ir=inv.ir||0;
   const liq=br-ir, rend=br-ap, pct=ap>0?rend/ap*100:0;
   return {ap,br,ir,liq,rend,pct};
 }
@@ -700,8 +704,22 @@ async function editarAtivo(id, obj){
   try{
     const d = await api("editInv", Object.assign({id}, obj));
     if(d && d.ok){
-      toast("Ativo atualizado · recarregando...","ok");
-      await carregarDaPlanilha(true); renderAll();
+      // Aplica mudanças NO STATE LOCAL imediatamente (não depende de reload)
+      const idx = STATE.investments.findIndex(x=>x.id===id);
+      if(idx >= 0){
+        const merged = Object.assign({}, STATE.investments[idx], obj);
+        STATE.investments[idx] = normalizeFromSheet(merged);
+        lsSave();
+      }
+      // Reload em background, mas re-renderiza JÁ com o STATE local
+      renderAll();
+      const reloadOk = await carregarDaPlanilha(true);
+      if(reloadOk){
+        renderAll();
+        toast("Ativo atualizado · sincronizado","ok");
+      } else {
+        toast("Salvo na planilha · reload falhou (clique 'Recarregar' em Config)","info");
+      }
       return true;
     }
     toast("Erro: "+(d&&d.erro||"desconhecido"),"err"); return false;
@@ -1318,11 +1336,13 @@ async function salvarModal(){
   });
   if(!o.nome||!o.nome.trim()){ toast("Informe o nome do ativo","err"); return; }
 
-  // Normalizar
-  o.taxa = parseFloat(String(o.taxa).replace(",","."))||0;
-  o.valorInicial = parseFloat(o.valorInicial)||0;
-  o.valorBruto   = parseFloat(o.valorBruto)||o.valorInicial;
-  o.ir           = parseFloat(o.ir)||0;
+  // Normalizar — converte vírgula→ponto em TODOS os campos numéricos
+  // (Sheets só aceita ponto como decimal; input pt-BR usa vírgula)
+  const num = v => parseFloat(String(v||"").replace(",","."))||0;
+  o.taxa         = num(o.taxa);
+  o.valorInicial = num(o.valorInicial);
+  o.valorBruto   = num(o.valorBruto) || o.valorInicial;
+  o.ir           = num(o.ir);
 
   // Derivar modoTaxa
   const lab=(o.taxaLabel||"").toUpperCase();
@@ -1417,7 +1437,7 @@ async function salvarModalProvento(){
     if(el.type==="checkbox") o[el.dataset.k] = el.checked ? "true" : "false";
     else o[el.dataset.k]=el.value;
   });
-  o.valorPago = parseFloat(o.valorPago)||0;
+  o.valorPago = parseFloat(String(o.valorPago||"").replace(",","."))||0;
   if(!o.dataPago){ toast("Informe a data de recebimento","err"); return; }
   const ok = await marcarProventoPago(STATE.editProvId, o.dataPago, o.valorPago);
   if(ok) fecharModal();
@@ -1483,7 +1503,7 @@ async function salvarModalResgate(){
   const o = {};
   body.querySelectorAll("[data-k]").forEach(el=>{ o[el.dataset.k] = el.value; });
 
-  const valorRecebido = parseFloat(o.valorRecebido);
+  const valorRecebido = parseFloat(String(o.valorRecebido||"").replace(",","."));
   if(isNaN(valorRecebido) || valorRecebido < 0){
     toast("Valor recebido inválido","err"); return;
   }
