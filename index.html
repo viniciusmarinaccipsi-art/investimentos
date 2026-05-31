@@ -259,6 +259,7 @@ tbody tr.total-row td{font-weight:700; color:var(--txt); border-top:2px solid va
       <button data-tab="consolidado"><span class="ic">▦</span>Consolidado</button>
       <button data-tab="proventos"><span class="ic">◷</span>Proventos</button>
       <button data-tab="projecoes"><span class="ic">↗</span>Projeções</button>
+      <button data-tab="resgatados"><span class="ic">📦</span>Resgatados</button>
       <button data-tab="config"><span class="ic">⚙</span>Configurações</button>
     </nav>
   </div>
@@ -271,6 +272,7 @@ tbody tr.total-row td{font-weight:700; color:var(--txt); border-top:2px solid va
     <section id="panel-consolidado" class="panel"></section>
     <section id="panel-proventos" class="panel"></section>
     <section id="panel-projecoes" class="panel"></section>
+    <section id="panel-resgatados" class="panel"></section>
     <section id="panel-config" class="panel"></section>
     <div class="foot">
       <b>Carteira — Renda Fixa</b> · Planilha como fonte de verdade · Calendário vivo · Valores ref. 29/05/2026
@@ -285,6 +287,7 @@ tbody tr.total-row td{font-weight:700; color:var(--txt); border-top:2px solid va
     <div class="modal-b" id="modal-body"></div>
     <div class="modal-f">
       <button class="btn ghost" id="modal-cancel">Cancelar</button>
+      <button class="btn" id="modal-resgatar-btn" style="display:none;background:rgba(245,160,79,.15);color:var(--amber);border:1px solid var(--amber)">📦 Marcar resgate/conclusão</button>
       <button class="btn primary" id="modal-save">Salvar</button>
     </div>
   </div>
@@ -298,7 +301,7 @@ tbody tr.total-row td{font-weight:700; color:var(--txt); border-top:2px solid va
 // Planilha = fonte única. localStorage = só cache de leitura.
 // CRUD pontual via JSONP. Sem SEED, sem operação destrutiva.
 // ════════════════════════════════════════════════════════════
-const APP_VERSION = "3.0";
+const APP_VERSION = "4.1";
 const LS_KEY      = "vmc_carteira_v3";
 const ISENTOS     = ["LCI","LCA","CRI","CRA"];
 const DATA_REF    = "2026-05-29"; // foto dos valores bruto/IR
@@ -313,6 +316,7 @@ const HOJE     = new Date(HOJE_ISO+"T12:00:00");
 // ── STATE ──────────────────────────────────────────────────
 const STATE = {
   investments: [],
+  resgatados:  [],
   proventos:   [],
   indices:     { cdi:14.83, selic:14.75, ipca:4.39, igpm:1.95, lastUpdate:null },
   scriptUrl:   "",
@@ -321,6 +325,7 @@ const STATE = {
   ultimaCarga: null,        // ISO string
   editId:      null,
   editProvId:  null,
+  resgateId:   null,        // id do ativo em processo de resgate
   activeTab:   "overview",
   filtros:     { banco:"", tipo:"", busca:"" }
 };
@@ -337,6 +342,7 @@ function lsSave(){
   try{
     localStorage.setItem(LS_KEY, JSON.stringify({
       investments: STATE.investments,
+      resgatados:  STATE.resgatados,
       proventos:   STATE.proventos,
       indices:     STATE.indices,
       scriptUrl:   STATE.scriptUrl,
@@ -654,6 +660,7 @@ async function carregarDaPlanilha(silencioso){
     const d = await api("listar");
     if(d && d.ok && Array.isArray(d.investimentos)){
       STATE.investments = d.investimentos.map(normalizeFromSheet);
+      STATE.resgatados  = Array.isArray(d.resgatados) ? d.resgatados.map(normalizeFromSheet) : [];
       STATE.proventos   = Array.isArray(d.proventos) ? d.proventos : [];
       if(d.indices) STATE.indices = Object.assign({}, STATE.indices, d.indices);
       STATE.fonte       = "planilha";
@@ -1106,6 +1113,74 @@ function renderProjecoes(){
   el.innerHTML=h;
 }
 
+// ════════════════════════════════════════════════════════════
+//  RENDER RESGATADOS — Histórico de ativos encerrados (só leitura)
+// ════════════════════════════════════════════════════════════
+function renderResgatados(){
+  const el=document.getElementById("panel-resgatados");
+  const R = (STATE.resgatados||[]).slice().sort((a,b)=>pDate(b.dataResgate||"")-pDate(a.dataResgate||""));
+
+  if(!R.length){
+    el.innerHTML = `<div class="empty"><div class="ic">📦</div>Nenhum título resgatado ainda.
+      <div class="mini" style="margin-top:8px;color:var(--dim)">Quando você marcar um ativo como resgatado/concluído (botão 📦 no modal de editar), ele aparece aqui com data, valor recebido e rendimento.</div></div>`;
+    return;
+  }
+
+  // KPIs agregados
+  const totAp = R.reduce((s,r)=>s+(parseFloat(r.valorInicial)||0),0);
+  const totRec = R.reduce((s,r)=>s+(parseFloat(r.valorRecebido)||0),0);
+  const totRend = totRec - totAp;
+  const pctMedio = totAp>0 ? (totRend/totAp*100) : 0;
+
+  let h = `<div class="kpis" style="grid-template-columns:repeat(4,1fr)">
+    <div class="kpi aplic"><div class="lab">Resgates registrados</div><div class="val num">${R.length}</div><div class="meta">títulos encerrados</div></div>
+    <div class="kpi bruto"><div class="lab">Total aplicado</div><div class="val num">${BRL(totAp)}</div><div class="meta">na entrada</div></div>
+    <div class="kpi"><div class="lab">Total recebido</div><div class="val num">${BRL(totRec)}</div><div class="meta">líquido na saída</div></div>
+    <div class="kpi liq"><div class="lab">Rendimento total</div><div class="val num ${totRend>=0?"pos":"neg"}">${totRend>=0?"+":""}${BRL(totRend)}</div><div class="meta">${totRend>=0?"+":""}${PCT(pctMedio,2)} médio</div></div>
+  </div>`;
+
+  h += `<div class="proj-note">📦 <b>Arquivo de títulos resgatados</b>. Só leitura — para histórico. Os ativos abaixo já saíram da Carteira ativa e não entram em Projeções/Proventos.</div>`;
+
+  h += `<div class="tbl-wrap"><div class="tbl-scroll"><table>
+    <thead><tr>
+      <th>Ativo</th><th>Banco</th><th>Taxa</th>
+      <th class="c">Aplicação</th><th class="c">Encerramento</th>
+      <th>Tipo de saída</th>
+      <th class="r">Aplicado</th><th class="r">Recebido</th>
+      <th class="r">Rendimento</th><th class="r">% Retorno</th>
+    </tr></thead><tbody>`;
+
+  R.forEach(r=>{
+    const ap = parseFloat(r.valorInicial)||0;
+    const rec = parseFloat(r.valorRecebido)||0;
+    const rend = rec - ap;
+    const pct = ap>0 ? (rend/ap*100) : 0;
+    const tipoSaida = String(r.tipoSaida||"Resgate antecipado");
+    const tipoCls = tipoSaida.includes("Vencimento") ? "pos" : "amber";
+    h += `<tr>
+      <td><div style="font-weight:600">${esc(r.nome)}</div><div class="mini">${esc(r.tipo)} · ${esc(r.indexador||"")} · ${esc(r.codigo&&r.codigo!=="—"?r.codigo:"")}</div></td>
+      <td class="mini">${esc(r.banco||r.instituicao||"—")}</td>
+      <td style="font-weight:600">${esc(r.taxaLabel||"")}</td>
+      <td class="c mini num">${fDate(r.dataAplicacao)}</td>
+      <td class="c mini num">${fDate(r.dataResgate)}</td>
+      <td class="mini"><span style="font-size:10px;padding:2px 7px;border-radius:6px;background:rgba(245,160,79,.15);color:var(--amber);font-weight:600">${esc(tipoSaida)}</span></td>
+      <td class="r num">${BRL(ap)}</td>
+      <td class="r num" style="font-weight:600">${BRL(rec)}</td>
+      <td class="r num ${rend>=0?"pos":"neg"}">${rend>=0?"+":""}${BRL(rend)}</td>
+      <td class="r num ${rend>=0?"pos":"neg"}">${rend>=0?"+":""}${PCT(pct,2)}</td>
+    </tr>`;
+  });
+
+  h += `<tr class="total-row"><td>TOTAL</td><td colspan="5"></td>
+    <td class="r num">${BRL(totAp)}</td>
+    <td class="r num">${BRL(totRec)}</td>
+    <td class="r num ${totRend>=0?"pos":"neg"}">${totRend>=0?"+":""}${BRL(totRend)}</td>
+    <td class="r num ${totRend>=0?"pos":"neg"}">${totRend>=0?"+":""}${PCT(pctMedio,2)}</td>
+    </tr>`;
+  h += `</tbody></table></div></div>`;
+  el.innerHTML = h;
+}
+
 function renderConfig(){
   const el=document.getElementById("panel-config");
   const ix=STATE.indices;
@@ -1217,14 +1292,21 @@ function abrirEdit(id){
     F("Código (CETIP/B3)","codigo","text",(inv.codigo&&inv.codigo!=="—")?inv.codigo:"")+
     checkboxHTML+
     F("Observações","obs","text",inv.obs||"",null,true);
+  // Mostrar botão "Marcar resgate" só em edição (não em criação)
+  document.getElementById("modal-resgatar-btn").style.display = id ? "inline-block" : "none";
   document.getElementById("modal-bg").classList.add("show");
 }
 function fecharModal(){
   document.getElementById("modal-bg").classList.remove("show");
-  STATE.editId=null; STATE.editProvId=null;
+  STATE.editId=null; STATE.editProvId=null; STATE.resgateId=null;
+  // Sempre esconde o botão de resgate ao fechar
+  const btnRes = document.getElementById("modal-resgatar-btn");
+  if(btnRes) btnRes.style.display = "none";
 }
 
 async function salvarModal(){
+  // Resgate?
+  if(STATE.resgateId !== null){ return await salvarModalResgate(); }
   // Provento?
   if(STATE.editProvId !== null){ return await salvarModalProvento(); }
 
@@ -1342,6 +1424,118 @@ async function salvarModalProvento(){
 }
 
 // ════════════════════════════════════════════════════════════
+//  MODAL: MARCAR RESGATE / CONCLUSÃO DE ATIVO
+//  Move o ativo de Investimentos → TitulosResgatados na planilha
+// ════════════════════════════════════════════════════════════
+function abrirModalResgate(){
+  // Chamado a partir do modal de edição. STATE.editId tem o ID do ativo.
+  const id = STATE.editId;
+  if(!id){ toast("Nenhum ativo selecionado","err"); return; }
+  const inv = STATE.investments.find(x=>x.id===id);
+  if(!inv){ toast("Ativo não encontrado","err"); return; }
+
+  // Troca contexto: agora é modo resgate
+  STATE.resgateId = id;
+  STATE.editId = null;   // pra salvarModal não cair no fluxo de edição
+  STATE.editProvId = null;
+
+  const aplicado = parseFloat(inv.valorInicial)||0;
+  const brutoAtual = parseFloat(inv.valorBruto)||aplicado;
+  const irAtual = parseFloat(inv.ir)||0;
+  const liqEstimado = brutoAtual - irAtual;
+
+  document.getElementById("modal-title").textContent = "📦 Encerrar ativo: " + inv.nome;
+  document.getElementById("modal-body").innerHTML = `
+    <div class="field full" style="background:rgba(245,160,79,.08);border-left:3px solid var(--amber);padding:10px 14px;border-radius:6px;margin-bottom:4px">
+      <div class="mini" style="color:var(--amber);font-weight:600;margin-bottom:4px">⚠ Atenção</div>
+      <div class="mini" style="color:var(--muted);line-height:1.5">Após confirmar, o ativo <b>${esc(inv.nome)}</b> sai da Carteira ativa, das Projeções e dos Proventos.<br>Vai pra aba <b>📦 Resgatados</b> (só leitura) com data, valor e rendimento. Esta ação não pode ser desfeita pelo app (mas a planilha mantém histórico de versões nativo do Google Sheets).</div>
+    </div>
+
+    <div class="field full"><label>Tipo de saída</label>
+      <select data-k="tipoSaida">
+        <option value="Resgate antecipado">Resgate antecipado (antes do vencimento)</option>
+        <option value="Vencimento natural">Vencimento natural (chegou na data)</option>
+      </select>
+    </div>
+
+    <div class="field"><label>Data efetiva do crédito</label>
+      <input data-k="dataResgate" type="date" value="${hojeISO()}">
+    </div>
+    <div class="field"><label>Valor líquido recebido (R$)</label>
+      <input data-k="valorRecebido" type="number" step="0.01" value="${liqEstimado.toFixed(2)}">
+    </div>
+
+    <div class="field full mini" style="color:var(--dim);background:var(--ink2);padding:10px 14px;border-radius:6px;line-height:1.7">
+      <b>Resumo do ativo:</b><br>
+      Aplicado: <b>${BRL(aplicado)}</b> em ${fDate(inv.dataAplicacao)}<br>
+      Bruto registrado: <b>${BRL(brutoAtual)}</b> · IR estimado: <b>${BRL(irAtual)}</b><br>
+      Líquido estimado: <b>${BRL(liqEstimado)}</b> · Vencimento original: ${fDate(inv.vencimento)}<br>
+      <span style="color:var(--muted)">Ajuste o valor recebido conforme o extrato do banco — pode diferir do estimado.</span>
+    </div>
+  `;
+  // Esconder o botão de resgate (já estamos nele) — só Cancelar e Salvar
+  document.getElementById("modal-resgatar-btn").style.display = "none";
+  document.getElementById("modal-bg").classList.add("show");
+}
+
+async function salvarModalResgate(){
+  const body = document.getElementById("modal-body");
+  const o = {};
+  body.querySelectorAll("[data-k]").forEach(el=>{ o[el.dataset.k] = el.value; });
+
+  const valorRecebido = parseFloat(o.valorRecebido);
+  if(isNaN(valorRecebido) || valorRecebido < 0){
+    toast("Valor recebido inválido","err"); return;
+  }
+  if(!o.dataResgate){
+    toast("Informe a data do resgate","err"); return;
+  }
+  if(!o.tipoSaida){ o.tipoSaida = "Resgate antecipado"; }
+
+  const id = STATE.resgateId;
+  const inv = STATE.investments.find(x=>x.id===id);
+  if(!inv){ toast("Ativo não encontrado","err"); return; }
+
+  const aplicado = parseFloat(inv.valorInicial)||0;
+  const rend = valorRecebido - aplicado;
+  const pct = aplicado>0 ? (rend/aplicado*100).toFixed(2) : "0";
+
+  // Confirmação final
+  const msg = `Confirmar encerramento de "${inv.nome}"?\n\n` +
+              `Tipo: ${o.tipoSaida}\n` +
+              `Data: ${fDate(o.dataResgate)}\n` +
+              `Aplicado: ${BRL(aplicado)}\n` +
+              `Recebido: ${BRL(valorRecebido)}\n` +
+              `Rendimento: ${rend>=0?"+":""}${BRL(rend)} (${rend>=0?"+":""}${pct}%)\n\n` +
+              `O ativo sai da Carteira e vai pra aba Resgatados.`;
+  if(!confirm(msg)) return;
+
+  const ok = await resgatarAtivoAPI(id, o.dataResgate, valorRecebido, o.tipoSaida);
+  if(ok) fecharModal();
+}
+
+async function resgatarAtivoAPI(id, dataResgate, valorRecebido, tipoSaida){
+  if(!STATE.scriptUrl || !STATE.token){
+    toast("Configure URL e Token primeiro","err"); return false;
+  }
+  try{
+    const d = await api("resgatarAtivo", {
+      id: id,
+      dataResgate: dataResgate,
+      valorRecebido: valorRecebido,
+      tipoSaida: tipoSaida
+    });
+    if(d && d.ok){
+      const pct = d.retornoPct ? d.retornoPct.toFixed(2) : "0";
+      toast(`Ativo encerrado · Rend. ${d.rendimentoLiq>=0?"+":""}${BRL(d.rendimentoLiq)} (${pct}%)`,"ok");
+      await carregarDaPlanilha(true); renderAll();
+      return true;
+    }
+    toast("Erro: "+(d&&d.erro||"desconhecido"),"err"); return false;
+  }catch(e){ toast("Erro: "+e.message,"err"); return false; }
+}
+
+// ════════════════════════════════════════════════════════════
 //  TOAST + ROUTER + INIT
 // ════════════════════════════════════════════════════════════
 let toastT;
@@ -1353,7 +1547,7 @@ function toast(msg,type="ok"){
 
 function renderAll(){
   renderIdx();
-  renderOverview(); renderCarteira(); renderConsolidado(); renderProventos(); renderProjecoes(); renderConfig();
+  renderOverview(); renderCarteira(); renderConsolidado(); renderProventos(); renderProjecoes(); renderResgatados(); renderConfig();
 }
 function setTab(tab){
   STATE.activeTab=tab;
@@ -1366,6 +1560,7 @@ function setTab(tab){
   const cache = lsLoad();
   if(cache){
     STATE.investments = cache.investments || [];
+    STATE.resgatados  = cache.resgatados  || [];
     STATE.proventos   = cache.proventos   || [];
     STATE.indices     = Object.assign({}, STATE.indices, cache.indices||{});
     STATE.scriptUrl   = cache.scriptUrl   || "";
@@ -1385,6 +1580,7 @@ function setTab(tab){
   document.getElementById("modal-x").addEventListener("click",fecharModal);
   document.getElementById("modal-cancel").addEventListener("click",fecharModal);
   document.getElementById("modal-save").addEventListener("click",salvarModal);
+  document.getElementById("modal-resgatar-btn").addEventListener("click",abrirModalResgate);
   document.getElementById("modal-bg").addEventListener("click",e=>{ if(e.target.id==="modal-bg") fecharModal(); });
 })();
 
@@ -1394,6 +1590,7 @@ window.confirmarExcluir  = confirmarExcluir;
 window.abrirMarcarPago   = abrirMarcarPago;
 window.abrirEditarProvento       = abrirEditarProvento;
 window.confirmarDesmarcarProvento = confirmarDesmarcarProvento;
+window.abrirModalResgate = abrirModalResgate;
 window.setTab            = setTab;
 </script>
 </body>
