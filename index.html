@@ -358,12 +358,21 @@ function taxaAnual(inv){
     default: return t;
   }
 }
+// Um ativo "tem cupom" se há proventos lançados com o mesmo código.
+function temCupom(inv){
+  if(!inv.codigo || inv.codigo==="—") return false;
+  return (STATE.proventos||[]).some(p=>p.codigo && p.codigo===inv.codigo);
+}
+// Projeção do valor no vencimento: ancora no BRUTO ATUAL (real) e capitaliza
+// pela taxa contratada apenas pelo prazo RESTANTE. Para papéis com cupom é
+// estimativa parcial (parte do retorno já saiu como provento) — sinalizado na tela.
 function projVenc(inv){
   const ap=inv.valorInicial||0;
-  const dt=days(inv.dataAplicacao,inv.vencimento);
-  if(dt<=0) return inv.valorBruto||ap;
+  const br=inv.valorBruto!=null?inv.valorBruto:ap;
+  const dtRest=days(HOJE_ISO,inv.vencimento);
+  if(dtRest<=0) return br;
   const r=taxaAnual(inv);
-  return ap*Math.pow(1+r, dt/365);
+  return br*Math.pow(1+r, dtRest/365);
 }
 function statusOf(inv){
   const dv=days(HOJE_ISO,inv.vencimento);
@@ -683,7 +692,7 @@ function renderProjecoes(){
   const el=document.getElementById("panel-projecoes");
   const L=STATE.investments.slice().sort((a,b)=>pDate(a.vencimento)-pDate(b.vencimento));
   let totAp=0,totVenc=0,totBr=0;
-  let h=`<div class="proj-note">Projeção do valor <b>no vencimento</b> calculada a partir da taxa contratada e dos índices atuais (CDI ${PCT(STATE.indices.cdi,2)} · IPCA ${PCT(STATE.indices.ipca,2)}). Para pós-fixados e IPCA+, assume os índices constantes até o vencimento — é uma estimativa, não garantia.</div>`;
+  let h=`<div class="proj-note">Projeção do valor <b>no vencimento</b> a partir do <b>valor bruto atual</b>, capitalizado pela taxa contratada até o vencimento (CDI ${PCT(STATE.indices.cdi,2)} · IPCA ${PCT(STATE.indices.ipca,2)}, assumidos constantes — estimativa, não garantia). Ativos marcados <span style="font-size:10px;padding:1px 5px;border-radius:6px;background:rgba(245,160,79,.18);color:var(--amber);font-weight:600">≈ parcial</span> pagam cupons periódicos: parte do retorno já foi distribuída como provento, então o valor no vencimento é uma estimativa parcial (veja a aba Proventos).</div>`;
   h+=`<div class="tbl-wrap"><div class="tbl-scroll"><table>
     <thead><tr><th>Ativo</th><th>Banco</th><th>Taxa</th><th class="c">Vencimento</th><th class="c">Dias restantes</th>
     <th class="r">Aplicado</th><th class="r">Bruto hoje</th><th class="r">Bruto no venc. (est.)</th><th class="r">Ganho projetado</th></tr></thead><tbody>`;
@@ -692,14 +701,14 @@ function renderProjecoes(){
     totAp+=c.ap; totVenc+=venc; totBr+=c.br;
     const ganho=venc-c.ap;
     h+=`<tr>
-      <td><div style="font-weight:600">${esc(inv.nome)}</div><div class="mini">${esc(inv.tipo)} · ${esc(inv.indexador)}</div></td>
+      <td><div style="font-weight:600">${esc(inv.nome)}${temCupom(inv)?' <span style="font-size:10px;padding:1px 5px;border-radius:6px;background:rgba(245,160,79,.18);color:var(--amber);font-weight:600" title="Paga cupons: projeção é estimativa parcial — parte do retorno já foi distribuída como provento">≈ parcial</span>':''}</div><div class="mini">${esc(inv.tipo)} · ${esc(inv.indexador)}</div></td>
       <td class="mini">${esc(inv.banco)}</td>
       <td style="font-weight:600">${esc(inv.taxaLabel)}</td>
       <td class="c mini num">${fDate(inv.vencimento)}</td>
       <td class="c num ${dv<=45?"neg":dv<=180?"":""}" style="${dv<=45?"color:var(--red)":dv<=180?"color:var(--amber)":""}">${dv>0?dv+"d":"vencido"}</td>
       <td class="r num">${BRL(c.ap)}</td>
       <td class="r num">${BRL(c.br)}</td>
-      <td class="r num" style="color:var(--gold)">${BRL(venc)}</td>
+      <td class="r num" style="color:var(--gold)${temCupom(inv)?';opacity:.55;font-style:italic':''}">${BRL(venc)}</td>
       <td class="r num pos">+${BRL(ganho)}</td>
     </tr>`;
   });
@@ -828,13 +837,6 @@ function jsonpGet(params, timeoutMs){
     s.src=src; document.head.appendChild(s);
   });
 }
-// GRAVAÇÃO via POST no-cors (envia mas não lê resposta — sem erro de CORS)
-async function postNoCors(payload){
-  await fetch(STATE.scriptUrl,{method:"POST",mode:"no-cors",
-    headers:{"Content-Type":"text/plain;charset=utf-8"}, body:JSON.stringify(payload)});
-  return true; // resposta é opaca; confirmamos relendo depois
-}
-
 async function pingScript(){
   if(!STATE.scriptUrl){toast("Configure a URL primeiro","err");return;}
   try{ const d=await jsonpGet({acao:"ping"});
@@ -906,7 +908,7 @@ function enxuto(inv){
   return {id:inv.id,nome:inv.nome,tipo:inv.tipo,indexador:inv.indexador,taxa:inv.taxa,
     dataAplicacao:inv.dataAplicacao,vencimento:inv.vencimento,valorInicial:inv.valorInicial,
     instituicao:inv.instituicao||inv.banco,obs:inv.obs||"",valorBruto:inv.valorBruto,ir:inv.ir,
-    dataReferencia:inv.dataReferencia||"2026-05-29",liquidez:inv.liquidez,grupo:inv.grupo,
+    dataReferencia:inv.dataReferencia||DATA_REF,liquidez:inv.liquidez,grupo:inv.grupo,
     emissor:inv.emissor,codigo:inv.codigo,taxaLabel:inv.taxaLabel,modoTaxa:inv.modoTaxa};
 }
 async function aplicarJSON(txt){
