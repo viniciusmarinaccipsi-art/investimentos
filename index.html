@@ -259,7 +259,7 @@ tbody tr.total-row td{font-weight:700; color:var(--txt); border-top:2px solid va
       <button data-tab="consolidado"><span class="ic">▦</span>Consolidado</button>
       <button data-tab="proventos"><span class="ic">◷</span>Proventos</button>
       <button data-tab="projecoes"><span class="ic">↗</span>Projeções</button>
-      <button data-tab="resgatados"><span class="ic">📦</span>Resgatados</button>
+      <button data-tab="resgatados"><span class="ic">$</span>Resgatados</button>
       <button data-tab="config"><span class="ic">⚙</span>Configurações</button>
     </nav>
   </div>
@@ -1147,8 +1147,8 @@ function renderResgatados(){
   const R = (STATE.resgatados||[]).slice().sort((a,b)=>pDate(b.dataResgate||"")-pDate(a.dataResgate||""));
 
   if(!R.length){
-    el.innerHTML = `<div class="empty"><div class="ic">📦</div>Nenhum título resgatado ainda.
-      <div class="mini" style="margin-top:8px;color:var(--dim)">Quando você marcar um ativo como resgatado/concluído (botão 📦 no modal de editar), ele aparece aqui com data, valor recebido e rendimento.</div></div>`;
+    el.innerHTML = `<div class="empty"><div class="ic">$</div>Nenhum título resgatado ainda.
+      <div class="mini" style="margin-top:8px;color:var(--dim)">Quando você marcar um ativo como resgatado/concluído (botão $ no modal de editar), ele aparece aqui com data, valor recebido e rendimento.</div></div>`;
     return;
   }
 
@@ -1165,7 +1165,7 @@ function renderResgatados(){
     <div class="kpi liq"><div class="lab">Rendimento total</div><div class="val num ${totRend>=0?"pos":"neg"}">${totRend>=0?"+":""}${BRL(totRend)}</div><div class="meta">${totRend>=0?"+":""}${PCT(pctMedio,2)} médio</div></div>
   </div>`;
 
-  h += `<div class="proj-note">📦 <b>Arquivo de títulos resgatados</b>. Só leitura — para histórico. Os ativos abaixo já saíram da Carteira ativa e não entram em Projeções/Proventos.</div>`;
+  h += `<div class="proj-note">$ <b>Arquivo de títulos resgatados</b>. Só leitura — para histórico. Os ativos abaixo já saíram da Carteira ativa e não entram em Projeções/Proventos.</div>`;
 
   h += `<div class="tbl-wrap"><div class="tbl-scroll"><table>
     <thead><tr>
@@ -1472,11 +1472,11 @@ function abrirModalResgate(){
   const irAtual = parseFloat(inv.ir)||0;
   const liqEstimado = brutoAtual - irAtual;
 
-  document.getElementById("modal-title").textContent = "📦 Encerrar ativo: " + inv.nome;
+  document.getElementById("modal-title").textContent = "$ Encerrar ativo: " + inv.nome;
   document.getElementById("modal-body").innerHTML = `
     <div class="field full" style="background:rgba(245,160,79,.08);border-left:3px solid var(--amber);padding:10px 14px;border-radius:6px;margin-bottom:4px">
       <div class="mini" style="color:var(--amber);font-weight:600;margin-bottom:4px">⚠ Atenção</div>
-      <div class="mini" style="color:var(--muted);line-height:1.5">Após confirmar, o ativo <b>${esc(inv.nome)}</b> sai da Carteira ativa, das Projeções e dos Proventos.<br>Vai pra aba <b>📦 Resgatados</b> (só leitura) com data, valor e rendimento. Esta ação não pode ser desfeita pelo app (mas a planilha mantém histórico de versões nativo do Google Sheets).</div>
+      <div class="mini" style="color:var(--muted);line-height:1.5">Após confirmar, o ativo <b>${esc(inv.nome)}</b> sai da Carteira ativa, das Projeções e dos Proventos.<br>Vai pra aba <b>$ Resgatados</b> (só leitura) com data, valor e rendimento. Esta ação não pode ser desfeita pelo app (mas a planilha mantém histórico de versões nativo do Google Sheets).</div>
     </div>
 
     <div class="field full"><label>Tipo de saída</label>
