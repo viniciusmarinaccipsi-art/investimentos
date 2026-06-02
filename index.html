@@ -318,7 +318,7 @@ const STATE = {
   investments: [],
   resgatados:  [],
   proventos:   [],
-  indices:     { cdi:14.83, selic:14.75, ipca:4.39, igpm:1.95, lastUpdate:null },
+  indices:     { cdi:0, selic:0, ipca:0, igpm:0, lastUpdate:null },
   scriptUrl:   "",
   token:       "",
   fonte:       "vazio",     // "planilha" | "cache" | "vazio"
@@ -781,7 +781,7 @@ function renderIdx(){
   const ix=STATE.indices;
   document.getElementById("idx-row").innerHTML=[
     ["CDI","cdi","cdi"],["SELIC","selic","selic"],["IPCA","ipca","ipca"],["IGP-M","igpm","igpm"]
-  ].map(([k,key,cls])=>`<div class="chip ${cls}"><span class="k">${k}</span><span class="v num">${PCT(ix[key],2)}</span></div>`).join("");
+  ].map(([k,key,cls])=>`<div class="chip ${cls}"><span class="k">${k}</span><span class="v num">${ix[key]>0?PCT(ix[key],2):"—"}</span></div>`).join("");
   const fonteTag = STATE.fonte==="planilha" ? '<span style="color:var(--emer)">planilha ✓</span>'
                   : STATE.fonte==="cache"   ? '<span style="color:var(--amber)">cache (offline)</span>'
                   : '<span style="color:var(--red)">não configurado</span>';
@@ -1232,10 +1232,10 @@ function renderConfig(){
   h+=`<div class="cfg-card"><h3>📈 Índices de mercado</h3>
     <p>Usados nas projeções. O BCB fornece CDI/SELIC/IPCA atualizados.</p>
     <div class="idx-edit">
-      <div class="field"><label>CDI (% a.a.)</label><input id="c-cdi" class="num" value="${ix.cdi}" disabled></div>
-      <div class="field"><label>SELIC (% a.a.)</label><input id="c-selic" class="num" value="${ix.selic}" disabled></div>
-      <div class="field"><label>IPCA 12m (%)</label><input id="c-ipca" class="num" value="${ix.ipca}" disabled></div>
-      <div class="field"><label>IGP-M (%)</label><input id="c-igpm" class="num" value="${ix.igpm}" disabled></div>
+      <div class="field"><label>CDI (% a.a.)</label><input id="c-cdi" class="num" value="${ix.cdi>0?ix.cdi:""}" disabled></div>
+      <div class="field"><label>SELIC (% a.a.)</label><input id="c-selic" class="num" value="${ix.selic>0?ix.selic:""}" disabled></div>
+      <div class="field"><label>IPCA 12m (%)</label><input id="c-ipca" class="num" value="${ix.ipca>0?ix.ipca:""}" disabled></div>
+      <div class="field"><label>IGP-M (%)</label><input id="c-igpm" class="num" value="${ix.igpm>0?ix.igpm:""}" disabled></div>
     </div>
     <button class="btn" id="btn-bcb">🔄 Atualizar do BCB</button>
     <div class="mini" style="margin-top:10px">Última atualização: ${lu}. O backend já busca automaticamente todo dia às 06h.</div></div>`;
