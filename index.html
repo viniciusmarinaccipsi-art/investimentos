@@ -107,7 +107,7 @@ main{padding:28px 0 80px}
 .bar-row .vl .pc{color:var(--dim); font-size:11px; margin-left:6px}
 .donut-wrap{display:flex; align-items:center; gap:18px}
 .donut-svg{width:140px; height:140px; flex-shrink:0}
-.dn-center-v{font-family:var(--mono); font-size:14px; font-weight:700; fill:var(--txt)}
+.dn-center-v{font-family:var(--mono); font-size:12.5px; font-weight:700; fill:var(--txt)}
 .dn-center-l{font-size:8.5px; fill:var(--dim); letter-spacing:1.5px; text-transform:uppercase}
 .dn-legend{flex:1; display:flex; flex-direction:column; gap:9px; min-width:0}
 .dn-leg-row{display:grid; grid-template-columns:auto 1fr auto; gap:9px; align-items:center}
@@ -251,6 +251,46 @@ tbody tr.total-row td{font-weight:700; color:var(--txt); border-top:2px solid va
   .bar-row{grid-template-columns:100px 1fr}
   .bar-row .vl{grid-column:2; text-align:left}
 }
+@media (max-width:768px){
+  .wrap{padding:0 16px}
+  .topbar-in{padding:12px 16px; gap:12px}
+  .nav{flex-wrap:nowrap; overflow-x:auto; gap:2px; scrollbar-width:none; -webkit-overflow-scrolling:touch}
+  .nav::-webkit-scrollbar{display:none}
+  .nav button{padding:9px 13px; font-size:13px; white-space:nowrap; flex:0 0 auto}
+  .kpis{grid-template-columns:1fr 1fr !important; gap:10px}
+  .kpi{padding:15px 14px}
+  .kpi .val{font-size:20px}
+  .kpi .lab{font-size:10px}
+  .sec-h{font-size:18px}
+  .fbar .spacer{display:none}
+  .fbar input.search{flex:1 1 100%; min-width:0}
+  .fbar select{flex:1 1 calc(50% - 4px); min-width:0}
+  .fbar .btn{flex:1 1 100%; justify-content:center}
+  .donut-svg{width:150px; height:150px}
+  .dn-legend{width:100%}
+  .modal-bg{padding:20px 12px}
+  .modal-b{padding:16px}
+  .tbl-wrap{border:none; background:transparent}
+  .tbl-scroll{overflow-x:visible}
+  .tbl-scroll table{display:block; min-width:0; width:100%}
+  .tbl-scroll thead{display:none}
+  .tbl-scroll tbody{display:block}
+  .tbl-scroll tbody tr{display:block; border:1px solid var(--line2); border-radius:var(--r-sm); margin:0 0 10px; padding:8px 12px; background:var(--panel)}
+  .tbl-scroll tbody tr:hover{background:var(--panel)}
+  .tbl-scroll tbody td{display:block; text-align:left !important; padding:4px 0; border:none; border-bottom:1px solid var(--line); white-space:normal}
+  .tbl-scroll tbody td:last-child{border-bottom:none}
+  .tbl-scroll tbody td::before{content:attr(data-label) "  "; color:var(--muted); font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:.4px; margin-right:6px}
+  .tbl-scroll tbody td[data-label="#"]{display:none}
+  .tbl-scroll tbody tr.row-resumo{background:var(--ink2)}
+  .tbl-scroll tbody tr.row-resumo td{text-align:center !important; border-bottom:none; font-weight:700}
+  .tbl-scroll tbody tr.row-resumo td::before{display:none}
+}
+@media (max-width:430px){
+  .kpis{grid-template-columns:1fr !important}
+  .kpi .val{font-size:22px}
+  .brand h1{font-size:21px}
+  .chip{min-width:0; flex:1 1 calc(50% - 5px)}
+}
 </style>
 </head>
 <body>
@@ -313,7 +353,7 @@ tbody tr.total-row td{font-weight:700; color:var(--txt); border-top:2px solid va
 // Planilha = fonte única. localStorage = só cache de leitura.
 // CRUD pontual via JSONP. Sem SEED, sem operação destrutiva.
 // ════════════════════════════════════════════════════════════
-const APP_VERSION = "4.2";
+const APP_VERSION = "4.3";
 const LS_KEY      = "vmc_carteira_v3";
 const ISENTOS     = ["LCI","LCA","CRI","CRA"];
 const DATA_REF    = "2026-05-29"; // foto dos valores bruto/IR
@@ -851,6 +891,54 @@ function renderOverview(){
   h+=`<div class="card"><div class="card-h"><span class="ic">◷</span>Proventos</div><div class="split"><div class="split-item"><div class="split-top"><span class="lbl">✓ Já recebido</span><span class="amt num pos">${BRL(recP)}</span></div><div class="mini">${STATE.proventos.filter(p=>p.pago).length} cupons confirmados</div></div><div class="split-item"><div class="split-top"><span class="lbl">📅 Previsto (resto 2026)</span><span class="amt num" style="color:var(--blue)">${BRL(futP)}</span></div><div class="mini">${STATE.proventos.filter(p=>!p.pago&&pDate(p.data)&&pDate(p.data).getFullYear()===2026).length} cupons estimados</div></div></div></div>`;
   h+=`</div>`;
 
+  // ── COBERTURA FGC ──
+  const FGC_TIPOS=["CDB","RDB","LCI","LCA"];
+  const FGC_LIMITE=250000;
+  const FGC_GRUPO={"Banco C6":"Grupo C6","C6 Consignado":"Grupo C6"};
+  const fgcCob=L.filter(x=>FGC_TIPOS.includes(x.tipo));
+  const fgcNao=L.filter(x=>!FGC_TIPOS.includes(x.tipo));
+  const tCob=totais(fgcCob), tNao=totais(fgcNao);
+  const totalCart=tCob.br+tNao.br;
+  const segFGC=[
+    {label:"Coberto pelo FGC",val:tCob.br,q:tCob.n,color:"#34d399"},
+    {label:"Fora do FGC",val:tNao.br,q:tNao.n,color:"#fb7185"}
+  ];
+  const porGrupo={};
+  fgcCob.forEach(function(inv){
+    const emRaw=inv.emissor||inv.instituicao||"—";
+    const g=FGC_GRUPO[emRaw]||emRaw;
+    if(!porGrupo[g])porGrupo[g]={v:0,n:0};
+    porGrupo[g].v+=calc(inv).br; porGrupo[g].n++;
+  });
+  const grupos=Object.keys(porGrupo).sort(function(a,b){return porGrupo[b].v-porGrupo[a].v;});
+  let emissorRows="";
+  grupos.forEach(function(g){
+    const v=porGrupo[g].v, n=porGrupo[g].n;
+    const pctLim=Math.min(v/FGC_LIMITE*100,100);
+    const excede=v>FGC_LIMITE;
+    const cor=excede?"#e24b4a":"#34d399";
+    emissorRows+=`<div class="bar-row"><div class="nm">${esc(g)} <span class="q">·${n}</span></div>
+      <div class="bar-track"><div class="bar-fill" data-w="${pctLim.toFixed(1)}%" style="--c:${cor};--c2:${cor};width:0"></div></div>
+      <div class="vl num">${BRL(v)}<span class="pc">${excede?"⚠ excede":"folga "+BRL(FGC_LIMITE-v)}</span></div></div>`;
+  });
+  const porTipoFora={};
+  fgcNao.forEach(function(inv){const tp=inv.tipo||"—"; if(!porTipoFora[tp])porTipoFora[tp]={v:0,n:0}; porTipoFora[tp].v+=calc(inv).br; porTipoFora[tp].n++;});
+  const tiposFora=Object.keys(porTipoFora).sort(function(a,b){return porTipoFora[b].v-porTipoFora[a].v;});
+  let foraRows="";
+  tiposFora.forEach(function(tp){
+    const v=porTipoFora[tp].v, n=porTipoFora[tp].n;
+    const pcCart=totalCart>0?(v/totalCart*100):0;
+    foraRows+=`<div class="bar-row"><div class="nm">${esc(tp)} <span class="q">·${n}</span></div>
+      <div class="bar-track"><div class="bar-fill" data-w="${Math.min(pcCart,100).toFixed(1)}%" style="--c:#fb7185;--c2:#e24b4a;width:0"></div></div>
+      <div class="vl num">${BRL(v)}<span class="pc">${PCT(pcCart)}</span></div></div>`;
+  });
+  h+=`<div class="grid2" style="margin-top:14px">`;
+  h+=donut("Cobertura FGC","🛡️",segFGC);
+  h+=`<div class="card"><div class="card-h"><span class="ic">🛡️</span>Cobertos por emissor · teto ${BRL(FGC_LIMITE)}</div><div class="bars">${emissorRows||'<div class="mini" style="color:var(--dim)">sem ativos cobertos</div>'}</div>`;
+  if(foraRows){ h+=`<div class="card-h" style="margin-top:16px;border-top:1px solid var(--line);padding-top:14px"><span class="ic">⚠️</span>Fora do FGC · por tipo</div><div class="bars">${foraRows}</div>`; }
+  h+=`<div class="mini" style="color:var(--dim);margin-top:10px">Teto FGC = R$ 250 mil por CPF por conglomerado (Banco C6 e C6 Consignado somados). Verde = dentro do limite, vermelho = acima. CRI/CRA/Debênture não têm cobertura do FGC — não significa mais risco, só ausência dessa garantia.</div></div>`;
+  h+=`</div>`;
+
   // ── ALERTAS ──
   const al=[];
   L.forEach(inv=>{
@@ -898,7 +986,7 @@ function donut(title,icon,segments){
   const arcs=segments.filter(s=>s.val>0).map(seg=>{
     const frac=seg.val/tot,dash=frac*C,gap=C-dash,offset=-acc*C;
     acc+=frac;
-    return `<circle cx="${cx}" cy="${cy}" r="${R}" fill="none" stroke="${seg.color}" stroke-width="20" stroke-dasharray="${dash.toFixed(2)} ${gap.toFixed(2)}" stroke-dashoffset="${offset.toFixed(2)}" transform="rotate(-90 ${cx} ${cy})"/>`;
+    return `<circle cx="${cx}" cy="${cy}" r="${R}" fill="none" stroke="${seg.color}" stroke-width="16" stroke-dasharray="${dash.toFixed(2)} ${gap.toFixed(2)}" stroke-dashoffset="${offset.toFixed(2)}" transform="rotate(-90 ${cx} ${cy})"/>`;
   }).join("");
   const legend=segments.map(seg=>{
     const pc=tot>0?(seg.val/tot*100):0;
@@ -975,6 +1063,7 @@ function renderCarteira(){
   document.getElementById("f-tipo").addEventListener("change",e=>{STATE.filtros.tipo=e.target.value; renderCarteira();});
   document.getElementById("btn-novo").addEventListener("click",()=>abrirEdit(null));
   const sb=document.getElementById("f-busca"); if(f.busca){sb.focus(); sb.setSelectionRange(sb.value.length,sb.value.length);}
+  aplicarDataLabels();
 }
 
 function rangeTaxa(items){
@@ -1587,9 +1676,21 @@ function toast(msg,type="ok"){
   clearTimeout(toastT); toastT=setTimeout(()=>el.classList.remove("show"),3500);
 }
 
+function aplicarDataLabels(){
+  document.querySelectorAll('.tbl-wrap table').forEach(function(tbl){
+    var heads=[].map.call(tbl.querySelectorAll('thead th'),function(th){return th.textContent.replace(/\s+/g,' ').trim();});
+    [].forEach.call(tbl.querySelectorAll('tbody tr'),function(tr){
+      var cells=[].slice.call(tr.children);
+      var resumo=cells.some(function(td){return td.hasAttribute('colspan');})||tr.classList.contains('total-row')||tr.classList.contains('grp-sub');
+      if(resumo){tr.classList.add('row-resumo');return;}
+      cells.forEach(function(td,i){if(heads[i])td.setAttribute('data-label',heads[i]);});
+    });
+  });
+}
 function renderAll(){
   renderIdx();
   renderOverview(); renderCarteira(); renderConsolidado(); renderProventos(); renderProjecoes(); renderResgatados(); renderConfig();
+  aplicarDataLabels();
 }
 function setTab(tab){
   STATE.activeTab=tab;
