@@ -105,6 +105,18 @@ main{padding:28px 0 80px}
 .bar-fill{height:100%; border-radius:6px; background:linear-gradient(90deg,var(--c,var(--emer)),var(--c2,var(--emer-d))); transition:width .9s cubic-bezier(.2,.8,.2,1); min-width:2px}
 .bar-row .vl{font-size:12.5px; font-weight:600; color:var(--txt); text-align:right; white-space:nowrap}
 .bar-row .vl .pc{color:var(--dim); font-size:11px; margin-left:6px}
+.donut-wrap{display:flex; align-items:center; gap:18px}
+.donut-svg{width:140px; height:140px; flex-shrink:0}
+.dn-center-v{font-family:var(--mono); font-size:12.5px; font-weight:700; fill:var(--txt)}
+.dn-center-l{font-size:8.5px; fill:var(--dim); letter-spacing:1.5px; text-transform:uppercase}
+.dn-legend{flex:1; display:flex; flex-direction:column; gap:9px; min-width:0}
+.dn-leg-row{display:grid; grid-template-columns:auto 1fr auto; gap:9px; align-items:center}
+.dn-dot{width:11px; height:11px; border-radius:3px; flex-shrink:0}
+.dn-leg-nm{font-size:12.5px; color:var(--txt); font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+.dn-q{color:var(--dim); font-weight:500; font-size:11px}
+.dn-leg-vl{font-size:12px; font-weight:600; color:var(--txt); text-align:right; white-space:nowrap}
+.dn-pc{color:var(--dim); font-size:11px; margin-left:5px}
+@media(max-width:980px){.donut-wrap{flex-direction:column; gap:12px}}
 
 /* split bar (liquidez/isenção) */
 .split{display:flex; flex-direction:column; gap:14px}
@@ -301,7 +313,7 @@ tbody tr.total-row td{font-weight:700; color:var(--txt); border-top:2px solid va
 // Planilha = fonte única. localStorage = só cache de leitura.
 // CRUD pontual via JSONP. Sem SEED, sem operação destrutiva.
 // ════════════════════════════════════════════════════════════
-const APP_VERSION = "4.1";
+const APP_VERSION = "4.2";
 const LS_KEY      = "vmc_carteira_v3";
 const ISENTOS     = ["LCI","LCA","CRI","CRA"];
 const DATA_REF    = "2026-05-29"; // foto dos valores bruto/IR
@@ -587,8 +599,8 @@ function statusOf(inv){
 
 const BANCOS=["C6 Bank","Inter Invest","Nubank","Neon"];
 const COR_BANCO={
-  "C6 Bank":["#5aa9e6","#3d7fc0"],"Inter Invest":["#f5a04f","#d97e2a"],
-  "Nubank":["#a78bfa","#8b5cf6"],"Neon":["#34d399","#10b981"]
+  "C6 Bank":["#f5c518","#d9a912"],"Inter Invest":["#f5853f","#d96a24"],
+  "Nubank":["#a78bfa","#8b5cf6"],"Neon":["#5aa9e6","#3d7fc0"]
 };
 function totais(list){
   return list.reduce((a,inv)=>{const c=calc(inv); a.ap+=c.ap;a.br+=c.br;a.ir+=c.ir;a.liq+=c.liq;a.rend+=c.rend;a.n++;return a;},
@@ -807,54 +819,36 @@ function renderOverview(){
     <div class="kpi rent"><div class="lab">Rentabilidade Bruta</div><div class="val num">+${PCT(t.ap>0?t.rend/t.ap*100:0,2)}</div><div class="meta">sobre o capital aplicado</div></div>
   </div>`;
 
-  const porBanco=agrupar(L,"banco");
-  const maxBanco=Math.max(...BANCOS.map(b=>porBanco[b]?totais(porBanco[b]).br:0));
   h+=`<div class="sec-h"><span class="bar"></span>Distribuição da Carteira</div>`;
+  const porBanco=agrupar(L,"banco");
+  const segBanco=BANCOS.filter(b=>porBanco[b]).map(b=>{const tb=totais(porBanco[b]);return {label:b,val:tb.br,q:tb.n,color:COR_BANCO[b][0]};});
   h+=`<div class="grid2">`;
-  h+=`<div class="card"><div class="card-h"><span class="ic">🏦</span>Por Instituição</div><div class="bars">`;
-  BANCOS.forEach(b=>{
-    if(!porBanco[b])return; const tb=totais(porBanco[b]); const c=COR_BANCO[b];
-    h+=barRow(b,tb.n,tb.br,t.br,maxBanco,c[0],c[1]);
-  });
-  h+=`</div></div>`;
+  h+=donut("Por Instituição","🏦",segBanco);
   const porTipo=agrupar(L,"tipo");
   const tipos=Object.keys(porTipo).sort((a,b)=>totais(porTipo[b]).br-totais(porTipo[a]).br);
-  const maxTipo=Math.max(...tipos.map(tp=>totais(porTipo[tp]).br));
   h+=`<div class="card"><div class="card-h"><span class="ic">🏷️</span>Por Tipo de Produto</div><div class="bars">`;
-  tipos.forEach(tp=>{const tt=totais(porTipo[tp]); h+=barRow(tp,tt.n,tt.br,t.br,maxTipo,"#34d399","#10b981");});
+  tipos.forEach(tp=>{const tt=totais(porTipo[tp]); h+=barRow(tp,tt.n,tt.br,t.br,"#34d399","#10b981");});
   h+=`</div></div>`;
   h+=`</div>`;
-
-  h+=`<div class="grid2" style="margin-top:14px">`;
   const porIdx=agrupar(L,"indexador");
   const idxs=Object.keys(porIdx).sort((a,b)=>totais(porIdx[b]).br-totais(porIdx[a]).br);
-  const maxIdx=Math.max(...idxs.map(i=>totais(porIdx[i]).br));
-  const CIDX={"CDI":["#5aa9e6","#3d7fc0"],"Prefixado":["#f5b53f","#d99425"],"IPCA+":["#a78bfa","#8b5cf6"]};
-  h+=`<div class="card"><div class="card-h"><span class="ic">📈</span>Por Indexador</div><div class="bars">`;
-  idxs.forEach(i=>{const ti=totais(porIdx[i]); const c=CIDX[i]||["#34d399","#10b981"]; h+=barRow(i,ti.n,ti.br,t.br,maxIdx,c[0],c[1]);});
-  h+=`</div></div>`;
+  const CIDX={"CDI":"#5aa9e6","Prefixado":"#f5c518","IPCA+":"#a78bfa"};
+  const segIdx=idxs.map(i=>{const ti=totais(porIdx[i]);return {label:i,val:ti.br,q:ti.n,color:CIDX[i]||"#34d399"};});
   const liqD=L.filter(x=>x.liquidez==="Diária"), liqN=L.filter(x=>x.liquidez!=="Diária");
   const tD=totais(liqD), tN=totais(liqN);
-  h+=`<div class="card"><div class="card-h"><span class="ic">💧</span>Liquidez · Disponível vs. Travado</div><div class="split">
-    ${splitItem("💧 Resgate imediato",tD.br,t.br,tD.n,"#34d399","var(--emer)")}
-    ${splitItem("🔒 Travado até vencimento",tN.br,t.br,tN.n,"#5aa9e6","var(--blue)")}
-  </div></div>`;
+  const segLiq=[{label:"Resgate imediato",val:tD.br,q:tD.n,color:"#34d399"},{label:"Travado até venc.",val:tN.br,q:tN.n,color:"#5aa9e6"}];
+  h+=`<div class="grid2" style="margin-top:14px">`;
+  h+=donut("Por Indexador","📈",segIdx);
+  h+=donut("Liquidez · Disponível vs. Travado","💧",segLiq);
   h+=`</div>`;
-
   const isent=L.filter(x=>ISENTOS.includes(x.tipo)), trib=L.filter(x=>!ISENTOS.includes(x.tipo));
   const tIs=totais(isent), tTr=totais(trib);
+  const segIsen=[{label:"Isentos (LCI/LCA/CRI/CRA)",val:tIs.br,q:tIs.n,color:"#34d399"},{label:"Tributáveis (CDB/RDB/Deb.)",val:tTr.br,q:tTr.n,color:"#f5c518"}];
   h+=`<div class="grid2" style="margin-top:14px">`;
-  h+=`<div class="card"><div class="card-h"><span class="ic">🔓</span>Isenção de IR</div><div class="split">
-    ${splitItem("🔓 Isentos (LCI/LCA/CRI/CRA)",tIs.br,t.br,tIs.n,"#34d399","var(--emer)")}
-    ${splitItem("💰 Tributáveis (CDB/RDB/Deb.)",tTr.br,t.br,tTr.n,"#f5b53f","var(--amber)")}
-  </div></div>`;
+  h+=donut("Isenção de IR","🔓",segIsen);
   const recP=STATE.proventos.filter(p=>p.pago).reduce((s,p)=>s+p.valor,0);
   const futP=STATE.proventos.filter(p=>!p.pago && pDate(p.data) && pDate(p.data).getFullYear()===2026).reduce((s,p)=>s+p.valor,0);
-  h+=`<div class="card"><div class="card-h"><span class="ic">◷</span>Proventos</div>
-    <div class="split">
-      <div class="split-item"><div class="split-top"><span class="lbl">✓ Já recebido</span><span class="amt num pos">${BRL(recP)}</span></div><div class="mini">${STATE.proventos.filter(p=>p.pago).length} cupons confirmados</div></div>
-      <div class="split-item"><div class="split-top"><span class="lbl">📅 Previsto (resto 2026)</span><span class="amt num" style="color:var(--blue)">${BRL(futP)}</span></div><div class="mini">${STATE.proventos.filter(p=>!p.pago&&pDate(p.data)&&pDate(p.data).getFullYear()===2026).length} cupons estimados</div></div>
-    </div></div>`;
+  h+=`<div class="card"><div class="card-h"><span class="ic">◷</span>Proventos</div><div class="split"><div class="split-item"><div class="split-top"><span class="lbl">✓ Já recebido</span><span class="amt num pos">${BRL(recP)}</span></div><div class="mini">${STATE.proventos.filter(p=>p.pago).length} cupons confirmados</div></div><div class="split-item"><div class="split-top"><span class="lbl">📅 Previsto (resto 2026)</span><span class="amt num" style="color:var(--blue)">${BRL(futP)}</span></div><div class="mini">${STATE.proventos.filter(p=>!p.pago&&pDate(p.data)&&pDate(p.data).getFullYear()===2026).length} cupons estimados</div></div></div></div>`;
   h+=`</div>`;
 
   // ── ALERTAS ──
@@ -886,11 +880,25 @@ function renderOverview(){
   el.innerHTML=h;
   requestAnimationFrame(()=>el.querySelectorAll(".bar-fill,[data-w]").forEach(b=>{if(b.dataset.w)b.style.width=b.dataset.w;}));
 }
-function barRow(nm,q,val,tot,max,c1,c2){
-  const w=max>0?(val/max*100):0; const pc=tot>0?(val/tot*100):0;
-  return `<div class="bar-row"><div class="nm">${esc(nm)} <span class="q">·${q}</span></div>
-    <div class="bar-track"><div class="bar-fill" data-w="${w.toFixed(1)}%" style="--c:${c1};--c2:${c2};width:0"></div></div>
-    <div class="vl num">${BRL(val)}<span class="pc">${PCT(pc)}</span></div></div>`;
+function barRow(nm,q,val,tot,c1,c2){
+  const pc=tot>0?(val/tot*100):0;
+  return `<div class="bar-row"><div class="nm">${esc(nm)} <span class="q">·${q}</span></div><div class="bar-track"><div class="bar-fill" data-w="${pc.toFixed(1)}%" style="--c:${c1};--c2:${c2};width:0"></div></div><div class="vl num">${BRL(val)}<span class="pc">${PCT(pc)}</span></div></div>`;
+}
+function donut(title,icon,segments){
+  const tot=segments.reduce((s,x)=>s+(x.val||0),0);
+  if(tot<=0) return `<div class="card"><div class="card-h"><span class="ic">${icon}</span>${title}</div><div class="mini" style="color:var(--dim)">sem dados</div></div>`;
+  const R=54,C=2*Math.PI*R,cx=70,cy=70;
+  let acc=0;
+  const arcs=segments.filter(s=>s.val>0).map(seg=>{
+    const frac=seg.val/tot,dash=frac*C,gap=C-dash,offset=-acc*C;
+    acc+=frac;
+    return `<circle cx="${cx}" cy="${cy}" r="${R}" fill="none" stroke="${seg.color}" stroke-width="20" stroke-dasharray="${dash.toFixed(2)} ${gap.toFixed(2)}" stroke-dashoffset="${offset.toFixed(2)}" transform="rotate(-90 ${cx} ${cy})"/>`;
+  }).join("");
+  const legend=segments.map(seg=>{
+    const pc=tot>0?(seg.val/tot*100):0;
+    return `<div class="dn-leg-row"><span class="dn-dot" style="background:${seg.color}"></span><span class="dn-leg-nm">${esc(seg.label)} <span class="dn-q">·${seg.q}</span></span><span class="dn-leg-vl num">${BRL(seg.val)}<span class="dn-pc">${PCT(pc)}</span></span></div>`;
+  }).join("");
+  return `<div class="card"><div class="card-h"><span class="ic">${icon}</span>${title}</div><div class="donut-wrap"><svg viewBox="0 0 140 140" class="donut-svg">${arcs}<text x="70" y="64" text-anchor="middle" class="dn-center-v">${BRL(tot)}</text><text x="70" y="82" text-anchor="middle" class="dn-center-l">total</text></svg><div class="dn-legend">${legend}</div></div></div>`;
 }
 function splitItem(lbl,val,tot,q,c1,ctxt){
   const pc=tot>0?(val/tot*100):0;
