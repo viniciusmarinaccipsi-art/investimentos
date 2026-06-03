@@ -107,7 +107,7 @@ main{padding:28px 0 80px}
 .bar-row .vl .pc{color:var(--dim); font-size:11px; margin-left:6px}
 .donut-wrap{display:flex; align-items:center; gap:18px}
 .donut-svg{width:140px; height:140px; flex-shrink:0}
-.dn-center-v{font-family:var(--mono); font-size:12.5px; font-weight:700; fill:var(--txt)}
+.dn-center-v{font-family:var(--mono); font-size:14px; font-weight:700; fill:var(--txt)}
 .dn-center-l{font-size:8.5px; fill:var(--dim); letter-spacing:1.5px; text-transform:uppercase}
 .dn-legend{flex:1; display:flex; flex-direction:column; gap:9px; min-width:0}
 .dn-leg-row{display:grid; grid-template-columns:auto 1fr auto; gap:9px; align-items:center}
@@ -832,18 +832,18 @@ function renderOverview(){
   h+=`</div>`;
   const porIdx=agrupar(L,"indexador");
   const idxs=Object.keys(porIdx).sort((a,b)=>totais(porIdx[b]).br-totais(porIdx[a]).br);
-  const CIDX={"CDI":"#5aa9e6","Prefixado":"#f5c518","IPCA+":"#a78bfa"};
+  const CIDX={"CDI":"#2dd4bf","Prefixado":"#fb7185","IPCA+":"#94a3b8"};
   const segIdx=idxs.map(i=>{const ti=totais(porIdx[i]);return {label:i,val:ti.br,q:ti.n,color:CIDX[i]||"#34d399"};});
   const liqD=L.filter(x=>x.liquidez==="Diária"), liqN=L.filter(x=>x.liquidez!=="Diária");
   const tD=totais(liqD), tN=totais(liqN);
-  const segLiq=[{label:"Resgate imediato",val:tD.br,q:tD.n,color:"#34d399"},{label:"Travado até venc.",val:tN.br,q:tN.n,color:"#5aa9e6"}];
+  const segLiq=[{label:"Resgate imediato",val:tD.br,q:tD.n,color:"#34d399"},{label:"Travado até venc.",val:tN.br,q:tN.n,color:"#94a3b8"}];
   h+=`<div class="grid2" style="margin-top:14px">`;
   h+=donut("Por Indexador","📈",segIdx);
   h+=donut("Liquidez · Disponível vs. Travado","💧",segLiq);
   h+=`</div>`;
   const isent=L.filter(x=>ISENTOS.includes(x.tipo)), trib=L.filter(x=>!ISENTOS.includes(x.tipo));
   const tIs=totais(isent), tTr=totais(trib);
-  const segIsen=[{label:"Isentos (LCI/LCA/CRI/CRA)",val:tIs.br,q:tIs.n,color:"#34d399"},{label:"Tributáveis (CDB/RDB/Deb.)",val:tTr.br,q:tTr.n,color:"#f5c518"}];
+  const segIsen=[{label:"Isentos (LCI/LCA/CRI/CRA)",val:tIs.br,q:tIs.n,color:"#34d399"},{label:"Tributáveis (CDB/RDB/Deb.)",val:tTr.br,q:tTr.n,color:"#fb7185"}];
   h+=`<div class="grid2" style="margin-top:14px">`;
   h+=donut("Isenção de IR","🔓",segIsen);
   const recP=STATE.proventos.filter(p=>p.pago).reduce((s,p)=>s+p.valor,0);
@@ -884,6 +884,12 @@ function barRow(nm,q,val,tot,c1,c2){
   const pc=tot>0?(val/tot*100):0;
   return `<div class="bar-row"><div class="nm">${esc(nm)} <span class="q">·${q}</span></div><div class="bar-track"><div class="bar-fill" data-w="${pc.toFixed(1)}%" style="--c:${c1};--c2:${c2};width:0"></div></div><div class="vl num">${BRL(val)}<span class="pc">${PCT(pc)}</span></div></div>`;
 }
+function fmtCompact(v){
+  v=v||0;
+  if(v>=1e6) return "R$ "+(v/1e6).toFixed(2).replace(".",",")+" mi";
+  if(v>=1e3) return "R$ "+(v/1e3).toFixed(1).replace(".",",")+" mil";
+  return BRL(v);
+}
 function donut(title,icon,segments){
   const tot=segments.reduce((s,x)=>s+(x.val||0),0);
   if(tot<=0) return `<div class="card"><div class="card-h"><span class="ic">${icon}</span>${title}</div><div class="mini" style="color:var(--dim)">sem dados</div></div>`;
@@ -898,7 +904,7 @@ function donut(title,icon,segments){
     const pc=tot>0?(seg.val/tot*100):0;
     return `<div class="dn-leg-row"><span class="dn-dot" style="background:${seg.color}"></span><span class="dn-leg-nm">${esc(seg.label)} <span class="dn-q">·${seg.q}</span></span><span class="dn-leg-vl num">${BRL(seg.val)}<span class="dn-pc">${PCT(pc)}</span></span></div>`;
   }).join("");
-  return `<div class="card"><div class="card-h"><span class="ic">${icon}</span>${title}</div><div class="donut-wrap"><svg viewBox="0 0 140 140" class="donut-svg">${arcs}<text x="70" y="64" text-anchor="middle" class="dn-center-v">${BRL(tot)}</text><text x="70" y="82" text-anchor="middle" class="dn-center-l">total</text></svg><div class="dn-legend">${legend}</div></div></div>`;
+  return `<div class="card"><div class="card-h"><span class="ic">${icon}</span>${title}</div><div class="donut-wrap"><svg viewBox="0 0 140 140" class="donut-svg">${arcs}<text x="70" y="66" text-anchor="middle" class="dn-center-v">${fmtCompact(tot)}</text><text x="70" y="82" text-anchor="middle" class="dn-center-l">total</text></svg><div class="dn-legend">${legend}</div></div></div>`;
 }
 function splitItem(lbl,val,tot,q,c1,ctxt){
   const pc=tot>0?(val/tot*100):0;
