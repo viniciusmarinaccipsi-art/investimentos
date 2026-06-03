@@ -291,6 +291,13 @@ tbody tr.total-row td{font-weight:700; color:var(--txt); border-top:2px solid va
   .brand h1{font-size:21px}
   .chip{min-width:0; flex:1 1 calc(50% - 5px)}
 }
+.fgc-wrap{display:flex; gap:24px; align-items:center}
+.fgc-left{flex:0 0 220px; display:flex; flex-direction:column; align-items:center; gap:12px}
+.fgc-left .donut-svg{width:150px; height:150px}
+.fgc-left .dn-legend{width:100%}
+.fgc-right{flex:1; min-width:0}
+.fgc-subh{font-size:12.5px; font-weight:700; color:var(--txt); letter-spacing:.5px; text-transform:uppercase; margin-bottom:12px; display:flex; align-items:center; gap:8px}
+@media(max-width:768px){ .fgc-wrap{flex-direction:column; align-items:stretch; gap:16px} .fgc-left{flex:none; width:100%} }
 </style>
 </head>
 <body>
@@ -353,7 +360,7 @@ tbody tr.total-row td{font-weight:700; color:var(--txt); border-top:2px solid va
 // Planilha = fonte única. localStorage = só cache de leitura.
 // CRUD pontual via JSONP. Sem SEED, sem operação destrutiva.
 // ════════════════════════════════════════════════════════════
-const APP_VERSION = "4.3";
+const APP_VERSION = "4.4";
 const LS_KEY      = "vmc_carteira_v3";
 const ISENTOS     = ["LCI","LCA","CRI","CRA"];
 const DATA_REF    = "2026-05-29"; // foto dos valores bruto/IR
@@ -932,12 +939,25 @@ function renderOverview(){
       <div class="bar-track"><div class="bar-fill" data-w="${Math.min(pcCart,100).toFixed(1)}%" style="--c:#fb7185;--c2:#e24b4a;width:0"></div></div>
       <div class="vl num">${BRL(v)}<span class="pc">${PCT(pcCart)}</span></div></div>`;
   });
-  h+=`<div class="grid2" style="margin-top:14px">`;
-  h+=donut("Cobertura FGC","🛡️",segFGC);
-  h+=`<div class="card"><div class="card-h"><span class="ic">🛡️</span>Cobertos por emissor · teto ${BRL(FGC_LIMITE)}</div><div class="bars">${emissorRows||'<div class="mini" style="color:var(--dim)">sem ativos cobertos</div>'}</div>`;
-  if(foraRows){ h+=`<div class="card-h" style="margin-top:16px;border-top:1px solid var(--line);padding-top:14px"><span class="ic">⚠️</span>Fora do FGC · por tipo</div><div class="bars">${foraRows}</div>`; }
-  h+=`<div class="mini" style="color:var(--dim);margin-top:10px">Teto FGC = R$ 250 mil por CPF por conglomerado (Banco C6 e C6 Consignado somados). Verde = dentro do limite, vermelho = acima. CRI/CRA/Debênture não têm cobertura do FGC — não significa mais risco, só ausência dessa garantia.</div></div>`;
-  h+=`</div>`;
+  const Rf=54, Cf=2*Math.PI*Rf; let accF=0;
+  const arcsF=segFGC.filter(function(s){return s.val>0;}).map(function(s){
+    const fr=totalCart>0?s.val/totalCart:0, dash=fr*Cf, gap=Cf-dash, off=-accF*Cf; accF+=fr;
+    return `<circle cx="70" cy="70" r="${Rf}" fill="none" stroke="${s.color}" stroke-width="16" stroke-dasharray="${dash.toFixed(2)} ${gap.toFixed(2)}" stroke-dashoffset="${off.toFixed(2)}" transform="rotate(-90 70 70)"/>`;
+  }).join("");
+  const legF=segFGC.map(function(s){
+    const pc=totalCart>0?(s.val/totalCart*100):0;
+    return `<div class="dn-leg-row"><span class="dn-dot" style="background:${s.color}"></span><span class="dn-leg-nm">${esc(s.label)} <span class="dn-q">·${s.q}</span></span><span class="dn-leg-vl num">${BRL(s.val)}<span class="dn-pc">${PCT(pc)}</span></span></div>`;
+  }).join("");
+  h+=`<div class="card" style="margin-top:14px"><div class="card-h"><span class="ic">🛡️</span>Cobertura FGC</div>
+    <div class="fgc-wrap">
+      <div class="fgc-left"><svg viewBox="0 0 140 140" class="donut-svg">${arcsF}<text x="70" y="66" text-anchor="middle" class="dn-center-v">${fmtCompact(totalCart)}</text><text x="70" y="82" text-anchor="middle" class="dn-center-l">total</text></svg><div class="dn-legend">${legF}</div></div>
+      <div class="fgc-right">
+        <div class="fgc-subh"><span class="ic">🛡️</span>Cobertos por emissor · teto ${BRL(FGC_LIMITE)}</div>
+        <div class="bars">${emissorRows||'<div class="mini" style="color:var(--dim)">sem ativos cobertos</div>'}</div>
+        ${foraRows?`<div class="fgc-subh" style="margin-top:16px;border-top:1px solid var(--line);padding-top:14px"><span class="ic">⚠️</span>Fora do FGC · por tipo</div><div class="bars">${foraRows}</div>`:''}
+        <div class="mini" style="color:var(--dim);margin-top:10px">Teto FGC = R$ 250 mil por CPF por conglomerado (Banco C6 e C6 Consignado somados). Verde = dentro do limite, vermelho = acima. CRI/CRA/Debênture não têm cobertura do FGC — não significa mais risco, só ausência dessa garantia.</div>
+      </div>
+    </div></div>`;
 
   // ── ALERTAS ──
   const al=[];
