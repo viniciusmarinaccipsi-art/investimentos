@@ -105,18 +105,6 @@ main{padding:28px 0 80px}
 .bar-fill{height:100%; border-radius:6px; background:linear-gradient(90deg,var(--c,var(--emer)),var(--c2,var(--emer-d))); transition:width .9s cubic-bezier(.2,.8,.2,1); min-width:2px}
 .bar-row .vl{font-size:12.5px; font-weight:600; color:var(--txt); text-align:right; white-space:nowrap}
 .bar-row .vl .pc{color:var(--dim); font-size:11px; margin-left:6px}
-.donut-wrap{display:flex; align-items:center; gap:18px}
-.donut-svg{width:140px; height:140px; flex-shrink:0}
-.dn-center-v{font-family:var(--mono); font-size:12.5px; font-weight:700; fill:var(--txt)}
-.dn-center-l{font-size:8.5px; fill:var(--dim); letter-spacing:1.5px; text-transform:uppercase}
-.dn-legend{flex:1; display:flex; flex-direction:column; gap:9px; min-width:0}
-.dn-leg-row{display:grid; grid-template-columns:auto 1fr auto; gap:9px; align-items:center}
-.dn-dot{width:11px; height:11px; border-radius:3px; flex-shrink:0}
-.dn-leg-nm{font-size:12.5px; color:var(--txt); font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
-.dn-q{color:var(--dim); font-weight:500; font-size:11px}
-.dn-leg-vl{font-size:12px; font-weight:600; color:var(--txt); text-align:right; white-space:nowrap}
-.dn-pc{color:var(--dim); font-size:11px; margin-left:5px}
-@media(max-width:980px){.donut-wrap{flex-direction:column; gap:12px}}
 
 /* split bar (liquidez/isenção) */
 .split{display:flex; flex-direction:column; gap:14px}
@@ -251,53 +239,6 @@ tbody tr.total-row td{font-weight:700; color:var(--txt); border-top:2px solid va
   .bar-row{grid-template-columns:100px 1fr}
   .bar-row .vl{grid-column:2; text-align:left}
 }
-@media (max-width:768px){
-  .wrap{padding:0 16px}
-  .topbar-in{padding:12px 16px; gap:12px}
-  .nav{flex-wrap:nowrap; overflow-x:auto; gap:2px; scrollbar-width:none; -webkit-overflow-scrolling:touch}
-  .nav::-webkit-scrollbar{display:none}
-  .nav button{padding:9px 13px; font-size:13px; white-space:nowrap; flex:0 0 auto}
-  .kpis{grid-template-columns:1fr 1fr !important; gap:10px}
-  .kpi{padding:15px 14px}
-  .kpi .val{font-size:20px}
-  .kpi .lab{font-size:10px}
-  .sec-h{font-size:18px}
-  .fbar .spacer{display:none}
-  .fbar input.search{flex:1 1 100%; min-width:0}
-  .fbar select{flex:1 1 calc(50% - 4px); min-width:0}
-  .fbar .btn{flex:1 1 100%; justify-content:center}
-  .donut-svg{width:150px; height:150px}
-  .dn-legend{width:100%}
-  .modal-bg{padding:20px 12px}
-  .modal-b{padding:16px}
-  .tbl-wrap{border:none; background:transparent}
-  .tbl-scroll{overflow-x:visible}
-  .tbl-scroll table{display:block; min-width:0; width:100%}
-  .tbl-scroll thead{display:none}
-  .tbl-scroll tbody{display:block}
-  .tbl-scroll tbody tr{display:block; border:1px solid var(--line2); border-radius:var(--r-sm); margin:0 0 10px; padding:8px 12px; background:var(--panel)}
-  .tbl-scroll tbody tr:hover{background:var(--panel)}
-  .tbl-scroll tbody td{display:block; text-align:left !important; padding:4px 0; border:none; border-bottom:1px solid var(--line); white-space:normal}
-  .tbl-scroll tbody td:last-child{border-bottom:none}
-  .tbl-scroll tbody td::before{content:attr(data-label) "  "; color:var(--muted); font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:.4px; margin-right:6px}
-  .tbl-scroll tbody td[data-label="#"]{display:none}
-  .tbl-scroll tbody tr.row-resumo{background:var(--ink2)}
-  .tbl-scroll tbody tr.row-resumo td{text-align:center !important; border-bottom:none; font-weight:700}
-  .tbl-scroll tbody tr.row-resumo td::before{display:none}
-}
-@media (max-width:430px){
-  .kpis{grid-template-columns:1fr !important}
-  .kpi .val{font-size:22px}
-  .brand h1{font-size:21px}
-  .chip{min-width:0; flex:1 1 calc(50% - 5px)}
-}
-.fgc-wrap{display:flex; gap:24px; align-items:center}
-.fgc-left{flex:0 0 220px; display:flex; flex-direction:column; align-items:center; gap:12px}
-.fgc-left .donut-svg{width:150px; height:150px}
-.fgc-left .dn-legend{width:100%}
-.fgc-right{flex:1; min-width:0}
-.fgc-subh{font-size:12.5px; font-weight:700; color:var(--txt); letter-spacing:.5px; text-transform:uppercase; margin-bottom:12px; display:flex; align-items:center; gap:8px}
-@media(max-width:768px){ .fgc-wrap{flex-direction:column; align-items:stretch; gap:16px} .fgc-left{flex:none; width:100%} }
 </style>
 </head>
 <body>
@@ -360,7 +301,7 @@ tbody tr.total-row td{font-weight:700; color:var(--txt); border-top:2px solid va
 // Planilha = fonte única. localStorage = só cache de leitura.
 // CRUD pontual via JSONP. Sem SEED, sem operação destrutiva.
 // ════════════════════════════════════════════════════════════
-const APP_VERSION = "4.4";
+const APP_VERSION = "4.1";
 const LS_KEY      = "vmc_carteira_v3";
 const ISENTOS     = ["LCI","LCA","CRI","CRA"];
 const DATA_REF    = "2026-05-29"; // foto dos valores bruto/IR
@@ -646,8 +587,8 @@ function statusOf(inv){
 
 const BANCOS=["C6 Bank","Inter Invest","Nubank","Neon"];
 const COR_BANCO={
-  "C6 Bank":["#f5c518","#d9a912"],"Inter Invest":["#f5853f","#d96a24"],
-  "Nubank":["#a78bfa","#8b5cf6"],"Neon":["#5aa9e6","#3d7fc0"]
+  "C6 Bank":["#5aa9e6","#3d7fc0"],"Inter Invest":["#f5a04f","#d97e2a"],
+  "Nubank":["#a78bfa","#8b5cf6"],"Neon":["#34d399","#10b981"]
 };
 function totais(list){
   return list.reduce((a,inv)=>{const c=calc(inv); a.ap+=c.ap;a.br+=c.br;a.ir+=c.ir;a.liq+=c.liq;a.rend+=c.rend;a.n++;return a;},
@@ -866,98 +807,55 @@ function renderOverview(){
     <div class="kpi rent"><div class="lab">Rentabilidade Bruta</div><div class="val num">+${PCT(t.ap>0?t.rend/t.ap*100:0,2)}</div><div class="meta">sobre o capital aplicado</div></div>
   </div>`;
 
-  h+=`<div class="sec-h"><span class="bar"></span>Distribuição da Carteira</div>`;
   const porBanco=agrupar(L,"banco");
-  const segBanco=BANCOS.filter(b=>porBanco[b]).map(b=>{const tb=totais(porBanco[b]);return {label:b,val:tb.br,q:tb.n,color:COR_BANCO[b][0]};});
+  const maxBanco=Math.max(...BANCOS.map(b=>porBanco[b]?totais(porBanco[b]).br:0));
+  h+=`<div class="sec-h"><span class="bar"></span>Distribuição da Carteira</div>`;
   h+=`<div class="grid2">`;
-  h+=donut("Por Instituição","🏦",segBanco);
+  h+=`<div class="card"><div class="card-h"><span class="ic">🏦</span>Por Instituição</div><div class="bars">`;
+  BANCOS.forEach(b=>{
+    if(!porBanco[b])return; const tb=totais(porBanco[b]); const c=COR_BANCO[b];
+    h+=barRow(b,tb.n,tb.br,t.br,maxBanco,c[0],c[1]);
+  });
+  h+=`</div></div>`;
   const porTipo=agrupar(L,"tipo");
   const tipos=Object.keys(porTipo).sort((a,b)=>totais(porTipo[b]).br-totais(porTipo[a]).br);
+  const maxTipo=Math.max(...tipos.map(tp=>totais(porTipo[tp]).br));
   h+=`<div class="card"><div class="card-h"><span class="ic">🏷️</span>Por Tipo de Produto</div><div class="bars">`;
-  tipos.forEach(tp=>{const tt=totais(porTipo[tp]); h+=barRow(tp,tt.n,tt.br,t.br,"#34d399","#10b981");});
+  tipos.forEach(tp=>{const tt=totais(porTipo[tp]); h+=barRow(tp,tt.n,tt.br,t.br,maxTipo,"#34d399","#10b981");});
   h+=`</div></div>`;
   h+=`</div>`;
+
+  h+=`<div class="grid2" style="margin-top:14px">`;
   const porIdx=agrupar(L,"indexador");
   const idxs=Object.keys(porIdx).sort((a,b)=>totais(porIdx[b]).br-totais(porIdx[a]).br);
-  const CIDX={"CDI":"#2dd4bf","Prefixado":"#fb7185","IPCA+":"#94a3b8"};
-  const segIdx=idxs.map(i=>{const ti=totais(porIdx[i]);return {label:i,val:ti.br,q:ti.n,color:CIDX[i]||"#34d399"};});
+  const maxIdx=Math.max(...idxs.map(i=>totais(porIdx[i]).br));
+  const CIDX={"CDI":["#5aa9e6","#3d7fc0"],"Prefixado":["#f5b53f","#d99425"],"IPCA+":["#a78bfa","#8b5cf6"]};
+  h+=`<div class="card"><div class="card-h"><span class="ic">📈</span>Por Indexador</div><div class="bars">`;
+  idxs.forEach(i=>{const ti=totais(porIdx[i]); const c=CIDX[i]||["#34d399","#10b981"]; h+=barRow(i,ti.n,ti.br,t.br,maxIdx,c[0],c[1]);});
+  h+=`</div></div>`;
   const liqD=L.filter(x=>x.liquidez==="Diária"), liqN=L.filter(x=>x.liquidez!=="Diária");
   const tD=totais(liqD), tN=totais(liqN);
-  const segLiq=[{label:"Resgate imediato",val:tD.br,q:tD.n,color:"#34d399"},{label:"Travado até venc.",val:tN.br,q:tN.n,color:"#94a3b8"}];
-  h+=`<div class="grid2" style="margin-top:14px">`;
-  h+=donut("Por Indexador","📈",segIdx);
-  h+=donut("Liquidez · Disponível vs. Travado","💧",segLiq);
-  h+=`</div>`;
-  const isent=L.filter(x=>ISENTOS.includes(x.tipo)), trib=L.filter(x=>!ISENTOS.includes(x.tipo));
-  const tIs=totais(isent), tTr=totais(trib);
-  const segIsen=[{label:"Isentos (LCI/LCA/CRI/CRA)",val:tIs.br,q:tIs.n,color:"#34d399"},{label:"Tributáveis (CDB/RDB/Deb.)",val:tTr.br,q:tTr.n,color:"#fb7185"}];
-  h+=`<div class="grid2" style="margin-top:14px">`;
-  h+=donut("Isenção de IR","🔓",segIsen);
-  const recP=STATE.proventos.filter(p=>p.pago).reduce((s,p)=>s+p.valor,0);
-  const futP=STATE.proventos.filter(p=>!p.pago && pDate(p.data) && pDate(p.data).getFullYear()===2026).reduce((s,p)=>s+p.valor,0);
-  h+=`<div class="card"><div class="card-h"><span class="ic">◷</span>Proventos</div><div class="split"><div class="split-item"><div class="split-top"><span class="lbl">✓ Já recebido</span><span class="amt num pos">${BRL(recP)}</span></div><div class="mini">${STATE.proventos.filter(p=>p.pago).length} cupons confirmados</div></div><div class="split-item"><div class="split-top"><span class="lbl">📅 Previsto (resto 2026)</span><span class="amt num" style="color:var(--blue)">${BRL(futP)}</span></div><div class="mini">${STATE.proventos.filter(p=>!p.pago&&pDate(p.data)&&pDate(p.data).getFullYear()===2026).length} cupons estimados</div></div></div></div>`;
+  h+=`<div class="card"><div class="card-h"><span class="ic">💧</span>Liquidez · Disponível vs. Travado</div><div class="split">
+    ${splitItem("💧 Resgate imediato",tD.br,t.br,tD.n,"#34d399","var(--emer)")}
+    ${splitItem("🔒 Travado até vencimento",tN.br,t.br,tN.n,"#5aa9e6","var(--blue)")}
+  </div></div>`;
   h+=`</div>`;
 
-  // ── COBERTURA FGC ──
-  const FGC_TIPOS=["CDB","RDB","LCI","LCA"];
-  const FGC_LIMITE=250000;
-  const FGC_GRUPO={"Banco C6":"Grupo C6","C6 Consignado":"Grupo C6"};
-  const fgcCob=L.filter(x=>FGC_TIPOS.includes(x.tipo));
-  const fgcNao=L.filter(x=>!FGC_TIPOS.includes(x.tipo));
-  const tCob=totais(fgcCob), tNao=totais(fgcNao);
-  const totalCart=tCob.br+tNao.br;
-  const segFGC=[
-    {label:"Coberto pelo FGC",val:tCob.br,q:tCob.n,color:"#34d399"},
-    {label:"Fora do FGC",val:tNao.br,q:tNao.n,color:"#fb7185"}
-  ];
-  const porGrupo={};
-  fgcCob.forEach(function(inv){
-    const emRaw=inv.emissor||inv.instituicao||"—";
-    const g=FGC_GRUPO[emRaw]||emRaw;
-    if(!porGrupo[g])porGrupo[g]={v:0,n:0};
-    porGrupo[g].v+=calc(inv).br; porGrupo[g].n++;
-  });
-  const grupos=Object.keys(porGrupo).sort(function(a,b){return porGrupo[b].v-porGrupo[a].v;});
-  let emissorRows="";
-  grupos.forEach(function(g){
-    const v=porGrupo[g].v, n=porGrupo[g].n;
-    const pctLim=Math.min(v/FGC_LIMITE*100,100);
-    const excede=v>FGC_LIMITE;
-    const cor=excede?"#e24b4a":"#34d399";
-    emissorRows+=`<div class="bar-row"><div class="nm">${esc(g)} <span class="q">·${n}</span></div>
-      <div class="bar-track"><div class="bar-fill" data-w="${pctLim.toFixed(1)}%" style="--c:${cor};--c2:${cor};width:0"></div></div>
-      <div class="vl num">${BRL(v)}<span class="pc">${excede?"⚠ excede":"folga "+BRL(FGC_LIMITE-v)}</span></div></div>`;
-  });
-  const porTipoFora={};
-  fgcNao.forEach(function(inv){const tp=inv.tipo||"—"; if(!porTipoFora[tp])porTipoFora[tp]={v:0,n:0}; porTipoFora[tp].v+=calc(inv).br; porTipoFora[tp].n++;});
-  const tiposFora=Object.keys(porTipoFora).sort(function(a,b){return porTipoFora[b].v-porTipoFora[a].v;});
-  let foraRows="";
-  tiposFora.forEach(function(tp){
-    const v=porTipoFora[tp].v, n=porTipoFora[tp].n;
-    const pcCart=totalCart>0?(v/totalCart*100):0;
-    foraRows+=`<div class="bar-row"><div class="nm">${esc(tp)} <span class="q">·${n}</span></div>
-      <div class="bar-track"><div class="bar-fill" data-w="${Math.min(pcCart,100).toFixed(1)}%" style="--c:#fb7185;--c2:#e24b4a;width:0"></div></div>
-      <div class="vl num">${BRL(v)}<span class="pc">${PCT(pcCart)}</span></div></div>`;
-  });
-  const Rf=54, Cf=2*Math.PI*Rf; let accF=0;
-  const arcsF=segFGC.filter(function(s){return s.val>0;}).map(function(s){
-    const fr=totalCart>0?s.val/totalCart:0, dash=fr*Cf, gap=Cf-dash, off=-accF*Cf; accF+=fr;
-    return `<circle cx="70" cy="70" r="${Rf}" fill="none" stroke="${s.color}" stroke-width="16" stroke-dasharray="${dash.toFixed(2)} ${gap.toFixed(2)}" stroke-dashoffset="${off.toFixed(2)}" transform="rotate(-90 70 70)"/>`;
-  }).join("");
-  const legF=segFGC.map(function(s){
-    const pc=totalCart>0?(s.val/totalCart*100):0;
-    return `<div class="dn-leg-row"><span class="dn-dot" style="background:${s.color}"></span><span class="dn-leg-nm">${esc(s.label)} <span class="dn-q">·${s.q}</span></span><span class="dn-leg-vl num">${BRL(s.val)}<span class="dn-pc">${PCT(pc)}</span></span></div>`;
-  }).join("");
-  h+=`<div class="card" style="margin-top:14px"><div class="card-h"><span class="ic">🛡️</span>Cobertura FGC</div>
-    <div class="fgc-wrap">
-      <div class="fgc-left"><svg viewBox="0 0 140 140" class="donut-svg">${arcsF}<text x="70" y="66" text-anchor="middle" class="dn-center-v">${fmtCompact(totalCart)}</text><text x="70" y="82" text-anchor="middle" class="dn-center-l">total</text></svg><div class="dn-legend">${legF}</div></div>
-      <div class="fgc-right">
-        <div class="fgc-subh"><span class="ic">🛡️</span>Cobertos por emissor · teto ${BRL(FGC_LIMITE)}</div>
-        <div class="bars">${emissorRows||'<div class="mini" style="color:var(--dim)">sem ativos cobertos</div>'}</div>
-        ${foraRows?`<div class="fgc-subh" style="margin-top:16px;border-top:1px solid var(--line);padding-top:14px"><span class="ic">⚠️</span>Fora do FGC · por tipo</div><div class="bars">${foraRows}</div>`:''}
-        <div class="mini" style="color:var(--dim);margin-top:10px">Teto FGC = R$ 250 mil por CPF por conglomerado (Banco C6 e C6 Consignado somados). Verde = dentro do limite, vermelho = acima. CRI/CRA/Debênture não têm cobertura do FGC — não significa mais risco, só ausência dessa garantia.</div>
-      </div>
+  const isent=L.filter(x=>ISENTOS.includes(x.tipo)), trib=L.filter(x=>!ISENTOS.includes(x.tipo));
+  const tIs=totais(isent), tTr=totais(trib);
+  h+=`<div class="grid2" style="margin-top:14px">`;
+  h+=`<div class="card"><div class="card-h"><span class="ic">🔓</span>Isenção de IR</div><div class="split">
+    ${splitItem("🔓 Isentos (LCI/LCA/CRI/CRA)",tIs.br,t.br,tIs.n,"#34d399","var(--emer)")}
+    ${splitItem("💰 Tributáveis (CDB/RDB/Deb.)",tTr.br,t.br,tTr.n,"#f5b53f","var(--amber)")}
+  </div></div>`;
+  const recP=STATE.proventos.filter(p=>p.pago).reduce((s,p)=>s+p.valor,0);
+  const futP=STATE.proventos.filter(p=>!p.pago && pDate(p.data) && pDate(p.data).getFullYear()===2026).reduce((s,p)=>s+p.valor,0);
+  h+=`<div class="card"><div class="card-h"><span class="ic">◷</span>Proventos</div>
+    <div class="split">
+      <div class="split-item"><div class="split-top"><span class="lbl">✓ Já recebido</span><span class="amt num pos">${BRL(recP)}</span></div><div class="mini">${STATE.proventos.filter(p=>p.pago).length} cupons confirmados</div></div>
+      <div class="split-item"><div class="split-top"><span class="lbl">📅 Previsto (resto 2026)</span><span class="amt num" style="color:var(--blue)">${BRL(futP)}</span></div><div class="mini">${STATE.proventos.filter(p=>!p.pago&&pDate(p.data)&&pDate(p.data).getFullYear()===2026).length} cupons estimados</div></div>
     </div></div>`;
+  h+=`</div>`;
 
   // ── ALERTAS ──
   const al=[];
@@ -988,31 +886,11 @@ function renderOverview(){
   el.innerHTML=h;
   requestAnimationFrame(()=>el.querySelectorAll(".bar-fill,[data-w]").forEach(b=>{if(b.dataset.w)b.style.width=b.dataset.w;}));
 }
-function barRow(nm,q,val,tot,c1,c2){
-  const pc=tot>0?(val/tot*100):0;
-  return `<div class="bar-row"><div class="nm">${esc(nm)} <span class="q">·${q}</span></div><div class="bar-track"><div class="bar-fill" data-w="${pc.toFixed(1)}%" style="--c:${c1};--c2:${c2};width:0"></div></div><div class="vl num">${BRL(val)}<span class="pc">${PCT(pc)}</span></div></div>`;
-}
-function fmtCompact(v){
-  v=v||0;
-  if(v>=1e6) return "R$ "+(v/1e6).toFixed(2).replace(".",",")+" mi";
-  if(v>=1e3) return "R$ "+(v/1e3).toFixed(1).replace(".",",")+" mil";
-  return BRL(v);
-}
-function donut(title,icon,segments){
-  const tot=segments.reduce((s,x)=>s+(x.val||0),0);
-  if(tot<=0) return `<div class="card"><div class="card-h"><span class="ic">${icon}</span>${title}</div><div class="mini" style="color:var(--dim)">sem dados</div></div>`;
-  const R=54,C=2*Math.PI*R,cx=70,cy=70;
-  let acc=0;
-  const arcs=segments.filter(s=>s.val>0).map(seg=>{
-    const frac=seg.val/tot,dash=frac*C,gap=C-dash,offset=-acc*C;
-    acc+=frac;
-    return `<circle cx="${cx}" cy="${cy}" r="${R}" fill="none" stroke="${seg.color}" stroke-width="16" stroke-dasharray="${dash.toFixed(2)} ${gap.toFixed(2)}" stroke-dashoffset="${offset.toFixed(2)}" transform="rotate(-90 ${cx} ${cy})"/>`;
-  }).join("");
-  const legend=segments.map(seg=>{
-    const pc=tot>0?(seg.val/tot*100):0;
-    return `<div class="dn-leg-row"><span class="dn-dot" style="background:${seg.color}"></span><span class="dn-leg-nm">${esc(seg.label)} <span class="dn-q">·${seg.q}</span></span><span class="dn-leg-vl num">${BRL(seg.val)}<span class="dn-pc">${PCT(pc)}</span></span></div>`;
-  }).join("");
-  return `<div class="card"><div class="card-h"><span class="ic">${icon}</span>${title}</div><div class="donut-wrap"><svg viewBox="0 0 140 140" class="donut-svg">${arcs}<text x="70" y="66" text-anchor="middle" class="dn-center-v">${fmtCompact(tot)}</text><text x="70" y="82" text-anchor="middle" class="dn-center-l">total</text></svg><div class="dn-legend">${legend}</div></div></div>`;
+function barRow(nm,q,val,tot,max,c1,c2){
+  const w=max>0?(val/max*100):0; const pc=tot>0?(val/tot*100):0;
+  return `<div class="bar-row"><div class="nm">${esc(nm)} <span class="q">·${q}</span></div>
+    <div class="bar-track"><div class="bar-fill" data-w="${w.toFixed(1)}%" style="--c:${c1};--c2:${c2};width:0"></div></div>
+    <div class="vl num">${BRL(val)}<span class="pc">${PCT(pc)}</span></div></div>`;
 }
 function splitItem(lbl,val,tot,q,c1,ctxt){
   const pc=tot>0?(val/tot*100):0;
@@ -1020,19 +898,43 @@ function splitItem(lbl,val,tot,q,c1,ctxt){
     <div class="split-bar"><i data-w="${pc.toFixed(1)}%" style="background:${c1};width:0"></i></div></div>`;
 }
 
+function ordenarLista(L, ordem){
+  const s = L.slice();
+  switch(ordem){
+    case "aplic_asc":  return s.sort((a,b)=> (a.dataAplicacao||"").localeCompare(b.dataAplicacao||""));
+    case "aplic_desc": return s.sort((a,b)=> (b.dataAplicacao||"").localeCompare(a.dataAplicacao||""));
+    case "venc_asc":   return s.sort((a,b)=> (a.vencimento||"").localeCompare(b.vencimento||""));
+    case "venc_desc":  return s.sort((a,b)=> (b.vencimento||"").localeCompare(a.vencimento||""));
+    case "valor_asc":  return s.sort((a,b)=> (calc(a).br)-(calc(b).br));
+    case "valor_desc": return s.sort((a,b)=> (calc(b).br)-(calc(a).br));
+    default:           return s;
+  }
+}
+
 function renderCarteira(){
   const el=document.getElementById("panel-carteira");
   const f=STATE.filtros;
+  if(!f.ordem) f.ordem="aplic_desc";
   let L=STATE.investments.slice();
   if(f.banco) L=L.filter(x=>x.banco===f.banco);
   if(f.tipo)  L=L.filter(x=>x.tipo===f.tipo);
   if(f.busca){const q=f.busca.toLowerCase(); L=L.filter(x=>((x.nome||"")+(x.emissor||"")+(x.grupo||"")).toLowerCase().includes(q));}
+  L=ordenarLista(L, f.ordem);
 
   const tipos=[...new Set(STATE.investments.map(x=>x.tipo))];
+  const ordens=[
+    {v:"aplic_desc", l:"📅 Aplicação — mais recente"},
+    {v:"aplic_asc",  l:"📅 Aplicação — mais antiga"},
+    {v:"venc_asc",   l:"⏳ Vencimento — mais próximo"},
+    {v:"venc_desc",  l:"⏳ Vencimento — mais distante"},
+    {v:"valor_desc", l:"💰 Valor bruto — maior"},
+    {v:"valor_asc",  l:"💰 Valor bruto — menor"},
+  ];
   let h=`<div class="fbar">
     <input class="search" id="f-busca" placeholder="🔍 Buscar por nome, emissor, grupo..." value="${esc(f.busca)}">
     <select id="f-banco"><option value="">Todos os bancos</option>${BANCOS.map(b=>`<option ${f.banco===b?"selected":""}>${b}</option>`).join("")}</select>
     <select id="f-tipo"><option value="">Todos os tipos</option>${tipos.map(t=>`<option ${f.tipo===t?"selected":""}>${t}</option>`).join("")}</select>
+    <select id="f-ordem">${ordens.map(o=>`<option value="${o.v}" ${f.ordem===o.v?"selected":""}>${o.l}</option>`).join("")}</select>
     <div class="spacer"></div>
     <button class="btn primary" id="btn-novo">＋ Novo ativo</button>
   </div>`;
@@ -1081,9 +983,9 @@ function renderCarteira(){
   document.getElementById("f-busca").addEventListener("input",e=>{STATE.filtros.busca=e.target.value; renderCarteira();});
   document.getElementById("f-banco").addEventListener("change",e=>{STATE.filtros.banco=e.target.value; renderCarteira();});
   document.getElementById("f-tipo").addEventListener("change",e=>{STATE.filtros.tipo=e.target.value; renderCarteira();});
+  document.getElementById("f-ordem").addEventListener("change",e=>{STATE.filtros.ordem=e.target.value; renderCarteira();});
   document.getElementById("btn-novo").addEventListener("click",()=>abrirEdit(null));
   const sb=document.getElementById("f-busca"); if(f.busca){sb.focus(); sb.setSelectionRange(sb.value.length,sb.value.length);}
-  aplicarDataLabels();
 }
 
 function rangeTaxa(items){
@@ -1696,21 +1598,9 @@ function toast(msg,type="ok"){
   clearTimeout(toastT); toastT=setTimeout(()=>el.classList.remove("show"),3500);
 }
 
-function aplicarDataLabels(){
-  document.querySelectorAll('.tbl-wrap table').forEach(function(tbl){
-    var heads=[].map.call(tbl.querySelectorAll('thead th'),function(th){return th.textContent.replace(/\s+/g,' ').trim();});
-    [].forEach.call(tbl.querySelectorAll('tbody tr'),function(tr){
-      var cells=[].slice.call(tr.children);
-      var resumo=cells.some(function(td){return td.hasAttribute('colspan');})||tr.classList.contains('total-row')||tr.classList.contains('grp-sub');
-      if(resumo){tr.classList.add('row-resumo');return;}
-      cells.forEach(function(td,i){if(heads[i])td.setAttribute('data-label',heads[i]);});
-    });
-  });
-}
 function renderAll(){
   renderIdx();
   renderOverview(); renderCarteira(); renderConsolidado(); renderProventos(); renderProjecoes(); renderResgatados(); renderConfig();
-  aplicarDataLabels();
 }
 function setTab(tab){
   STATE.activeTab=tab;
