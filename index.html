@@ -243,17 +243,33 @@ tbody tr.total-row td{font-weight:700; color:var(--txt); border-top:2px solid va
 }
 
 /* ── METAS ── */
+.metas-banner{background:linear-gradient(135deg,rgba(52,211,153,0.07),rgba(90,169,230,0.05));border:1px solid var(--line);border-left:3px solid var(--emer);border-radius:var(--r);padding:18px 20px;margin-bottom:14px}
+.metas-banner-title{font-size:18px;font-weight:700;color:var(--txt);margin-bottom:6px}
+.metas-banner-desc{font-size:13px;color:var(--muted);line-height:1.55}
+.metas-kpis{grid-template-columns:repeat(3,1fr)}
+.kpi-meta{border-left:3px solid var(--gold)}
+.kpi-meta .val{color:var(--gold)}
+.metas-card{margin-bottom:14px}
 .metas-form{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:12px}
-.metas-presets{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:4px}
-.btn-preset{font-size:12px;padding:5px 12px;background:var(--ink2);border:1px solid var(--line);color:var(--muted);border-radius:var(--r-sm);cursor:pointer;transition:.2s}
-.btn-preset:hover{border-color:var(--emer);color:var(--emer)}
+.metas-presets-label{font-size:12px;font-weight:600;color:var(--muted);margin:4px 0 8px}
+.metas-presets-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.preset-card{padding:10px 14px;border:1px solid var(--line);border-radius:var(--r-sm);background:var(--ink2);cursor:pointer;text-align:left;transition:.15s;width:100%}
+.preset-card:hover{border-color:var(--emer);background:var(--panel)}
+.preset-xirr{border-left:2px solid var(--emer)}
+.preset-card-name{font-size:13px;font-weight:700;color:var(--txt);display:block;margin-bottom:3px}
+.preset-card-desc{font-size:10.5px;color:var(--dim);display:block}
+.metas-btns{display:flex;gap:9px;margin-top:14px}
 .metas-barra{height:30px;border-radius:6px;overflow:hidden;display:flex;margin:10px 0 4px;background:var(--ink2);border:1px solid var(--line)}
 .metas-seg{height:100%;transition:width .5s cubic-bezier(.4,0,.2,1)}
 .metas-barra-label{display:flex;gap:16px;font-size:12px;color:var(--muted);flex-wrap:wrap}
 .metas-barra-valores{font-size:12px;color:var(--muted);margin-top:6px}
 .metas-tempo{font-size:26px;font-weight:800;margin:6px 0 2px;line-height:1.2}
-.metas-data{font-size:13px;color:var(--muted)}
-@media(max-width:768px){.metas-form{grid-template-columns:1fr} #chart-metas{height:300px!important}}
+.metas-narrativa{border-top:1px solid var(--line);margin-top:12px;padding-top:12px;font-size:13px;color:var(--muted);display:flex;gap:8px;align-items:flex-start;line-height:1.5}
+.metas-insight{background:rgba(52,211,153,0.05);border:1px solid rgba(52,211,153,0.18);border-radius:var(--r);padding:13px 16px;margin-bottom:14px;font-size:13px;color:var(--muted);display:flex;gap:8px;align-items:flex-start;line-height:1.5}
+.metas-chart-card{padding:20px;position:relative}
+.metas-chart-wrap{height:360px}
+.metas-disclaimer{margin-top:14px}
+@media(max-width:768px){.metas-form{grid-template-columns:1fr}.metas-presets-grid{grid-template-columns:1fr}.metas-kpis{grid-template-columns:1fr 1fr}.metas-chart-wrap{height:300px}}
 </style>
 </head>
 <body>
@@ -1738,27 +1754,44 @@ function renderMetas(){
   const aporteMedio=calcAporteMedio();
   const META_DEF=1000000;
 
-  let h=`<div class="kpis" style="grid-template-columns:repeat(3,1fr)">
-    <div class="kpi bruto"><div class="lab">Patrimônio Atual</div><div class="val num">${BRL(t.br)}</div><div class="meta">${t.n} ativos · base da simulação</div></div>
-    <div class="kpi rent"><div class="lab">XIRR Atual</div><div class="val num">${xirr!==null?PCT(xirrPct,2)+' a.a.':'—'}</div><div class="meta">${xirr!==null?PCT(xirrPct/(STATE.indices.cdi||14.4)*100,1)+' do CDI':'sem dados suficientes'}</div></div>
-    <div class="kpi" style="border-left:3px solid var(--gold)"><div class="lab">Meta</div><div class="val num" style="color:var(--gold)">${BRL(META_DEF)}</div><div class="meta">editável abaixo</div></div>
+  let h=`<div class="metas-banner">
+    <div class="metas-banner-title">Quanto tempo falta para atingir sua meta? 🎯</div>
+    <div class="metas-banner-desc">Ajuste os parâmetros abaixo para simular cenários. O simulador usa o patrimônio atual da sua carteira como ponto de partida.</div>
   </div>`;
 
-  h+=`<div class="card" style="margin-bottom:14px">
+  h+=`<div class="kpis metas-kpis">
+    <div class="kpi bruto"><div class="lab">Patrimônio Atual</div><div class="val num">${BRL(t.br)}</div><div class="meta">${t.n} ativos · base da simulação</div></div>
+    <div class="kpi rent"><div class="lab">XIRR Atual</div><div class="val num">${xirr!==null?PCT(xirrPct,2)+' a.a.':'—'}</div><div class="meta">${xirr!==null?PCT(xirrPct/(STATE.indices.cdi||14.4)*100,1)+' do CDI':'sem dados suficientes'}</div></div>
+    <div class="kpi kpi-meta"><div class="lab">Meta</div><div class="val num">${BRL(META_DEF)}</div><div class="meta">editável abaixo</div></div>
+  </div>`;
+
+  h+=`<div class="card metas-card">
     <div class="card-h"><span class="ic">⚙</span>Parâmetros da simulação</div>
     <div class="metas-form">
-      <div class="field"><label>Meta (R$)</label><input id="mt-meta" class="num" type="number" value="${META_DEF}" min="1000" step="50000"></div>
-      <div class="field"><label>Aporte mensal (R$)</label><input id="mt-aporte" class="num" type="number" value="${aporteMedio}" min="0" step="500"></div>
-      <div class="field"><label>Taxa anual (%)</label><input id="mt-taxa" class="num" type="number" value="${xirrPct.toFixed(2)}" min="0.1" step="0.1"></div>
+      <div class="field"><label>Meta (R$)</label><input id="mt-meta" class="num" type="number" value="${META_DEF}" min="1000" step="50000" title="O valor final que você deseja acumular. Ex: R$1M para independência financeira."></div>
+      <div class="field"><label>Aporte mensal (R$)</label><input id="mt-aporte" class="num" type="number" value="${aporteMedio}" min="0" step="500" title="Quanto você planeja investir todo mês. Pré-preenchido com sua média histórica."></div>
+      <div class="field"><label>Taxa anual (%)</label><input id="mt-taxa" class="num" type="number" value="${xirrPct.toFixed(2)}" min="0.1" step="0.1" title="Taxa de rendimento anual estimada. Quanto maior, mais rápido — mas menos realista."></div>
     </div>
-    <div class="metas-presets">
-      <span style="font-size:12px;color:var(--muted);margin-right:4px">Presets:</span>
-      <button class="btn-preset" data-taxa="${cdiLiq.toFixed(2)}">CDI líq. ${PCT(cdiLiq,2)}</button>
-      <button class="btn-preset" data-taxa="13.00">Moderado 13%</button>
-      <button class="btn-preset" data-taxa="${xirrPct.toFixed(2)}">XIRR atual ${PCT(xirrPct,2)}</button>
-      <button class="btn-preset" data-taxa="16.50">Otimista 16,5%</button>
+    <div class="metas-presets-label">Cenários de taxa:</div>
+    <div class="metas-presets-grid">
+      <button class="preset-card" data-taxa="${cdiLiq.toFixed(2)}">
+        <span class="preset-card-name">🛡️ CDI Líquido ${PCT(cdiLiq,2)}</span>
+        <span class="preset-card-desc">Rendimento líquido estimado da carteira</span>
+      </button>
+      <button class="preset-card" data-taxa="13.00">
+        <span class="preset-card-name">⚖️ Moderado 13%</span>
+        <span class="preset-card-desc">Mix equilibrado de indexadores</span>
+      </button>
+      <button class="preset-card preset-xirr" data-taxa="${xirrPct.toFixed(2)}">
+        <span class="preset-card-name">📊 XIRR atual ${PCT(xirrPct,2)}</span>
+        <span class="preset-card-desc">Sua rentabilidade real calculada</span>
+      </button>
+      <button class="preset-card" data-taxa="16.50">
+        <span class="preset-card-name">🚀 Otimista 16,5%</span>
+        <span class="preset-card-desc">Cenário favorável com seleção ativa</span>
+      </button>
     </div>
-    <div style="display:flex;gap:9px;margin-top:14px">
+    <div class="metas-btns">
       <button class="btn primary" id="mt-simular">🎯 Simular</button>
       <button class="btn" id="mt-resetar">↺ Resetar</button>
     </div>
@@ -1767,9 +1800,10 @@ function renderMetas(){
   h+=`<div id="metas-resultado"></div>`;
   h+=`<div class="sec-h"><span class="bar"></span>Tabela de Cenários</div>`;
   h+=`<div id="metas-tabela"></div>`;
+  h+=`<div id="metas-insight-wrap"></div>`;
   h+=`<div class="sec-h"><span class="bar"></span>Projeção Patrimonial</div>`;
-  h+=`<div class="card" style="padding:20px;position:relative"><div style="height:360px"><canvas id="chart-metas"></canvas></div></div>`;
-  h+=`<p class="proj-note" style="margin-top:14px">Projeção simplificada. Assume reinvestimento automático à mesma taxa. Retorno real depende das taxas disponíveis no momento do reinvestimento.</p>`;
+  h+=`<div class="card metas-chart-card"><div class="metas-chart-wrap"><canvas id="chart-metas"></canvas></div></div>`;
+  h+=`<p class="proj-note metas-disclaimer">Projeção simplificada. Assume reinvestimento automático à mesma taxa. Retorno real depende das taxas disponíveis no momento do reinvestimento.</p>`;
 
   el.innerHTML=h;
   requestAnimationFrame(()=>inicializarMetas(t.br,xirrPct,cdiLiq,aporteMedio,META_DEF));
@@ -1797,7 +1831,7 @@ function inicializarMetas(patrimonioAtual,xirrPct,cdiLiq,aporteMedioDefault,meta
     elTaxa.value=xirrPct.toFixed(2);
     recalc();
   });
-  document.querySelectorAll(".btn-preset").forEach(btn=>{
+  document.querySelectorAll(".preset-card").forEach(btn=>{
     btn.addEventListener("click",()=>{elTaxa.value=btn.dataset.taxa;recalc();});
   });
   recalc();
@@ -1821,6 +1855,14 @@ function recalcularMetas(patrimonioAtual,aporteMensal,taxaAnual,meta,cdiLiq,xirr
   }
 
   const c=res.composicao;
+  let narrativa;
+  if(!res.atingiu){
+    narrativa=`Meta não atingida em 30 anos. Aumente o aporte ou busque uma taxa maior.`;
+  }else if(res.meses===0){
+    narrativa=`Seu patrimônio já ultrapassou a meta. Parabéns!`;
+  }else{
+    narrativa=`Com ${BRL(aporteMensal)}/mês a ${taxaAnual.toFixed(1)}% a.a., você atinge ${BRL(meta)} em ${MES[res.dataAlvo.getMonth()]}/${res.dataAlvo.getFullYear()}. Desse total, ${BRL(c.juros.valor)} (${PCT(c.juros.pct,1)}) vêm de juros compostos trabalhando por você.`;
+  }
   const resultHTML=`
   <div class="card" style="margin-bottom:14px">
     <div class="card-h"><span class="ic">🎯</span>Resultado para meta ${BRL(meta)}</div>
@@ -1841,6 +1883,7 @@ function recalcularMetas(patrimonioAtual,aporteMensal,taxaAnual,meta,cdiLiq,xirr
     <div class="metas-barra-valores">
       ${BRL(c.patrimonioInicial.valor)} + ${BRL(c.novosAportes.valor)} + ${BRL(c.juros.valor)} = <b>${BRL(res.saldoFinal)}</b>
     </div>
+    <div class="metas-narrativa"><span>💡</span><span>${narrativa}</span></div>
   </div>`;
   document.getElementById("metas-resultado").innerHTML=resultHTML;
 
@@ -1869,6 +1912,24 @@ function recalcularMetas(patrimonioAtual,aporteMensal,taxaAnual,meta,cdiLiq,xirr
   tbl+=`</tbody></table></div></div>`;
   document.getElementById("metas-tabela").innerHTML=tbl;
 
+  // Insight de aceleração
+  const aportesSorted=[5000,7500,10000,12000,15000];
+  const apIdx=aportesSorted.findIndex(a=>a>aporteMensal);
+  let insightHTML="";
+  if(apIdx>=0){
+    const proxAporte=aportesSorted[apIdx];
+    const resProx=simularMeta(patrimonioAtual,proxAporte,taxaAnual,meta);
+    if(res.atingiu&&resProx.atingiu){
+      const diffMeses=res.meses-resProx.meses;
+      if(diffMeses>0){
+        const diffA=Math.floor(diffMeses/12),diffM=diffMeses%12;
+        const diffStr=[(diffA>0?diffA+"a":null),(diffM>0?diffM+"m":null)].filter(Boolean).join(" ");
+        insightHTML=`<div class="metas-insight"><span>💡</span><span>Aumentando o aporte de ${BRL(aporteMensal)} para ${BRL(proxAporte)}/mês, você chega lá <b>${diffStr}</b> mais rápido.</span></div>`;
+      }
+    }
+  }
+  document.getElementById("metas-insight-wrap").innerHTML=insightHTML;
+
   renderChartMetas(res.pontos,meta);
 }
 
@@ -1892,12 +1953,18 @@ function renderChartMetas(pontos,meta){
   gradA.addColorStop(0,"rgba(90,169,230,0.15)");
   gradA.addColorStop(1,"rgba(90,169,230,0.01)");
 
+  // Marcador no cruzamento com a meta
+  const cruzIdx=pontos.findIndex(p=>p.saldo>=meta);
+  const cruzLabel=cruzIdx>=0?labels[cruzIdx]:null;
+  const ptRadii=pontos.map((_,i)=>i===cruzIdx?7:0);
+  const ptColors=pontos.map((_,i)=>i===cruzIdx?"#f5b53f":"#34d399");
+
   chartMetas=new Chart(ctx,{
     type:"line",
     data:{
       labels,
       datasets:[
-        {label:"Patrimônio projetado",data:pontos.map(p=>Math.round(p.saldo)),borderColor:"#34d399",backgroundColor:grad,fill:true,tension:0.3,borderWidth:2.5,pointRadius:0,pointHoverRadius:5},
+        {label:"Patrimônio projetado",data:pontos.map(p=>Math.round(p.saldo)),borderColor:"#34d399",backgroundColor:grad,fill:true,tension:0.3,borderWidth:2.5,pointRadius:ptRadii,pointHoverRadius:5,pointBackgroundColor:ptColors},
         {label:"Capital aportado",data:pontos.map(p=>Math.round(p.aportado)),borderColor:"#5aa9e6",backgroundColor:gradA,fill:true,tension:0.1,borderWidth:2,borderDash:[6,3],pointRadius:0,pointHoverRadius:4}
       ]
     },
@@ -1925,7 +1992,20 @@ function renderChartMetas(pontos,meta){
                 font:{family:"'Manrope',sans-serif",size:11,weight:"600"},
                 padding:{x:8,y:4}
               }
-            }
+            },
+            ...(cruzLabel?{
+              metaPonto:{
+                type:"point",xValue:cruzLabel,yValue:meta,
+                backgroundColor:"#f5b53f",borderColor:"#0a0e14",borderWidth:2,radius:7
+              },
+              metaLabel:{
+                type:"label",xValue:cruzLabel,yValue:meta,yAdjust:-22,
+                content:[`🎯 Meta atingida! (${cruzLabel})`],
+                color:"#0a0e14",backgroundColor:"#f5b53f",
+                font:{family:"'Manrope',sans-serif",size:11,weight:"600"},
+                padding:{x:8,y:4},borderRadius:4
+              }
+            }:{})
           }
         }
       },
