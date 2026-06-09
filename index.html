@@ -560,6 +560,27 @@ function projVenc(inv){
   return projetarVenc(inv).bruto;
 }
 
+function projetarBrutoEm(inv, mesRefISO) {
+  const vencISO = inv.vencimento;
+  if (!vencISO || mesRefISO >= vencISO) return 0;
+  if (mesRefISO <= HOJE_ISO) {
+    return parseFloat(inv.valorBruto) || parseFloat(inv.valorInicial) || 0;
+  }
+  const ix = STATE.indices;
+  const cdi = ix.cdi || 14.4, ipca = ix.ipca || 4.39;
+  const taxa = parseFloat(inv.taxa) || 0;
+  const VP = parseFloat(inv.valorBruto) || parseFloat(inv.valorInicial) || 0;
+  const du = diasUteisB3(HOJE_ISO, mesRefISO);
+  const dc = dCorridos(HOJE_ISO, mesRefISO);
+  if (du <= 0) return VP;
+  switch (inv.modoTaxa) {
+    case "pre":       return _projPrefixado(VP, taxa, du);
+    case "cdi_pct":   return _projPctCDI(VP, taxa, du, cdi);
+    case "cdi_mais":  return _projCDIMais(VP, taxa, du, cdi);
+    case "ipca_mais": return _projIPCAMais(VP, taxa, du, dc, ipca);
+    default:          return VP;
+  }
+}
 
 function taxaAnual(inv){
   const t=(parseFloat(inv.taxa)||0)/100, ix=STATE.indices;
@@ -1387,31 +1408,67 @@ function gerarDadosEvolucao(){
   const ultVenc=vencs.length?vencs[vencs.length-1].substring(0,7):HOJE_ISO.substring(0,7);
   const mesFim=ultVenc>"2032-12"?"2032-12":ultVenc;
   const hojeMes=HOJE_ISO.substring(0,7);
+
+  // Totais históricos fixos para meses futuros
+  const cuponsBase=(STATE.proventos||[]).filter(p=>p.pago)
+    .reduce((s,p)=>s+(parseFloat(p.valorPago)||parseFloat(p.valor)||0),0);
+  const resgBase=R.reduce((s,r)=>s+(parseFloat(r.valorRecebido)||0),0);
+
   const pontos=[];
   let cur=primeiroMes;
   while(cur<=mesFim){
     const fim=ultimoDiaMes(cur);
     const ehHoje=cur===hojeMes;
+    const ehPassado=cur<=hojeMes;
+
     let capital=0;
     todos.forEach(inv=>{
       if(inv.dataAplicacao && inv.dataAplicacao<=fim) capital+=parseFloat(inv.valorInicial)||0;
     });
-    let patrimonio=0;
+
+    let investido=0, retornado=0;
+
     if(ehHoje){
-      patrimonio=L.reduce((s,inv)=>{
+      L.forEach(inv=>{
         const vb=parseFloat(inv.valorBruto)||0;
-        return s+(vb>0?vb:(parseFloat(inv.valorInicial)||0));
-      },0);
-    }else{
-      L.forEach(inv=>{ patrimonio+=estimarValorEm(inv,fim); });
+        investido+=vb>0?vb:(parseFloat(inv.valorInicial)||0);
+      });
+      const cuponsAte=(STATE.proventos||[]).filter(p=>p.pago&&p.data&&p.data<=fim)
+        .reduce((s,p)=>s+(parseFloat(p.valorPago)||parseFloat(p.valor)||0),0);
+      const resgAte=R.filter(r=>r.dataResgate&&r.dataResgate<=fim)
+        .reduce((s,r)=>s+(parseFloat(r.valorRecebido)||0),0);
+      retornado=cuponsAte+resgAte;
+    } else if(ehPassado){
+      L.forEach(inv=>{ investido+=estimarValorEm(inv,fim); });
+      const cuponsAte=(STATE.proventos||[]).filter(p=>p.pago&&p.data&&p.data<=fim)
+        .reduce((s,p)=>s+(parseFloat(p.valorPago)||parseFloat(p.valor)||0),0);
+      const resgAte=R.filter(r=>r.dataResgate&&r.dataResgate<=fim)
+        .reduce((s,r)=>s+(parseFloat(r.valorRecebido)||0),0);
+      retornado=cuponsAte+resgAte;
+    } else {
+      // Meses futuros: ativos ainda ativos projetados; vencidos somam líquido
+      retornado=cuponsBase+resgBase;
+      for(const inv of L){
+        if(!inv.vencimento) continue;
+        if(fim>=inv.vencimento){
+          const proj=projetarVenc(inv);
+          retornado+=proj.liquido;
+        } else {
+          investido+=projetarBrutoEm(inv,fim);
+        }
+      }
     }
-    const cuponsAte=(STATE.proventos||[]).filter(p=>p.pago&&p.data&&p.data<=fim)
-      .reduce((s,p)=>s+(parseFloat(p.valorPago)||parseFloat(p.valor)||0),0);
-    const resgAte=R.filter(r=>r.dataResgate&&r.dataResgate<=fim)
-      .reduce((s,r)=>s+(parseFloat(r.valorRecebido)||0),0);
-    const tw=patrimonio+cuponsAte+resgAte;
-    pontos.push({mes:cur,fim,capital:Math.round(capital*100)/100,patrimonio:Math.round(tw*100)/100,
-      rendimento:Math.round((tw-capital)*100)/100,ehHoje,ehPassado:cur<=hojeMes});
+
+    const patrimonio=investido+retornado;
+    pontos.push({
+      mes:cur, fim,
+      capital:Math.round(capital*100)/100,
+      investido:Math.round(investido*100)/100,
+      retornado:Math.round(retornado*100)/100,
+      patrimonio:Math.round(patrimonio*100)/100,
+      rendimento:Math.round((patrimonio-capital)*100)/100,
+      ehHoje, ehPassado
+    });
     cur=proximoMes(cur);
   }
   return pontos;
@@ -1449,7 +1506,7 @@ function renderEvolucao(){
   </div>`;
 
   h+=`<div class="sec-h"><span class="bar"></span>Evolução Patrimonial</div>`;
-  h+=`<div class="proj-note">📊 <b>Passado</b>: capital investido real + patrimônio estimado (CDI ${PCT(STATE.indices.cdi||14.4,2)}, IPCA ${PCT(STATE.indices.ipca||4.39,2)} constantes). <b>Futuro</b>: projeção até o último vencimento. Não considera reinvestimento de capital vencido.</div>`;
+  h+=`<div class="proj-note">📊 <b>Passado</b>: estimativa com CDI ${PCT(STATE.indices.cdi||14.4,2)} e IPCA ${PCT(STATE.indices.ipca||4.39,2)} constantes. <b>Futuro</b>: Capital Investido (ativos ativos projetados) + Capital Retornado (líquido acumulado dos vencimentos). Não considera reinvestimento do capital vencido.</div>`;
   h+=`<div class="card" style="padding:20px;position:relative"><div style="height:360px"><canvas id="chart-evolucao"></canvas></div></div>`;
 
   // Projeção final
@@ -1473,25 +1530,29 @@ function renderChartEvolucao(dados){
   const ctx=canvas.getContext("2d");
   const MES_ABR=["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"];
   const labels=dados.map(p=>{const[y,m]=p.mes.split("-");return MES_ABR[parseInt(m)-1]+"/"+y.substring(2);});
-  const capitalData=dados.map(p=>p.capital);
   const patrimonioData=dados.map(p=>p.patrimonio);
+  const investidoData=dados.map(p=>p.investido);
+  const retornadoData=dados.map(p=>p.retornado);
   const hojeIdx=dados.findIndex(p=>p.ehHoje);
 
-  // Gradient for patrimonio
   const grad=ctx.createLinearGradient(0,0,0,360);
   grad.addColorStop(0,"rgba(52,211,153,0.18)");
   grad.addColorStop(1,"rgba(52,211,153,0.01)");
   const gradCap=ctx.createLinearGradient(0,0,0,360);
-  gradCap.addColorStop(0,"rgba(90,169,230,0.12)");
+  gradCap.addColorStop(0,"rgba(90,169,230,0.15)");
   gradCap.addColorStop(1,"rgba(90,169,230,0.01)");
+  const gradRet=ctx.createLinearGradient(0,0,0,360);
+  gradRet.addColorStop(0,"rgba(212,175,106,0.18)");
+  gradRet.addColorStop(1,"rgba(212,175,106,0.01)");
 
   chartEvolucao=new Chart(ctx,{
     type:"line",
     data:{
-      labels:labels,
+      labels,
       datasets:[
-        {label:"Patrimônio Estimado",data:patrimonioData,borderColor:"#34d399",backgroundColor:grad,fill:true,tension:0.3,borderWidth:2.5,pointRadius:0,pointHoverRadius:5,pointHoverBackgroundColor:"#34d399"},
-        {label:"Capital Investido",data:capitalData,borderColor:"#5aa9e6",backgroundColor:gradCap,fill:true,tension:0.1,borderWidth:2,pointRadius:0,pointHoverRadius:5,pointHoverBackgroundColor:"#5aa9e6",borderDash:[6,3]}
+        {label:"Patrimônio Total",data:patrimonioData,borderColor:"#34d399",backgroundColor:grad,fill:true,tension:0.3,borderWidth:2.5,pointRadius:0,pointHoverRadius:5,pointHoverBackgroundColor:"#34d399"},
+        {label:"Capital Investido",data:investidoData,borderColor:"#5aa9e6",backgroundColor:gradCap,fill:true,tension:0.1,borderWidth:2,pointRadius:0,pointHoverRadius:5,pointHoverBackgroundColor:"#5aa9e6",borderDash:[6,3]},
+        {label:"Capital Retornado",data:retornadoData,borderColor:"#d4af6a",backgroundColor:gradRet,fill:true,tension:0.2,borderWidth:2,pointRadius:0,pointHoverRadius:5,pointHoverBackgroundColor:"#d4af6a"}
       ]
     },
     options:{
@@ -1508,19 +1569,20 @@ function renderChartEvolucao(dados){
           callbacks:{
             label:function(c){return " "+c.dataset.label+":  "+BRL(c.parsed.y);},
             afterBody:function(items){
-              if(items.length>=2){
-                const pat=items[0].parsed.y, cap=items[1].parsed.y;
-                const rend=pat-cap;
-                return ["","  Rendimento:  "+BRL(rend)+" ("+PCT(cap>0?rend/cap*100:0,1)+")"];
-              }
-              return [];
+              if(!items.length) return [];
+              const idx=items[0].dataIndex;
+              const ponto=dados[idx];
+              if(!ponto) return [];
+              const rend=ponto.patrimonio-ponto.capital;
+              const pct=ponto.capital>0?rend/ponto.capital*100:0;
+              return ["","  Rendimento s/ capital:  "+BRL(rend)+" ("+PCT(pct,1)+")"];
             }
           }
         }
       },
       scales:{
         x:{ticks:{color:"#5d6878",font:{family:"'Manrope',sans-serif",size:10},maxRotation:45,autoSkip:true,maxTicksLimit:18},grid:{color:"rgba(34,45,61,0.4)"}},
-        y:{ticks:{color:"#5d6878",font:{family:"'JetBrains Mono',monospace",size:11},callback:function(v){return v>=1000?"R$"+(v/1000).toFixed(0)+"k":"R$"+v;}},grid:{color:"rgba(34,45,61,0.25)"}}
+        y:{stacked:false,ticks:{color:"#5d6878",font:{family:"'JetBrains Mono',monospace",size:11},callback:function(v){return v>=1000?"R$"+(v/1000).toFixed(0)+"k":"R$"+v;}},grid:{color:"rgba(34,45,61,0.25)"}}
       }
     },
     plugins:[{
@@ -1563,13 +1625,14 @@ function renderTabelaAnual(dados){
   dados.forEach(p=>{const a=p.mes.substring(0,4);if(anos[a])anos[a].patrimonio=p.patrimonio;});
 
   const anoHoje=HOJE_ISO.substring(0,4);
+  const anosOrd=Object.keys(anos).sort();
   let h=`<div class="tbl-wrap"><div class="tbl-scroll"><table>
     <thead><tr><th>Ano</th><th class="r">Aportes</th><th class="c">Vencimentos</th><th class="r">Cupons</th><th class="r">Patrimônio (dez)</th><th class="r">Rendimento</th></tr></thead><tbody>`;
-  const anosOrd=Object.keys(anos).sort();
-  anosOrd.forEach(ano=>{
+  anosOrd.forEach((ano,i)=>{
     const a=anos[ano];
     const isHoje=ano===anoHoje;
-    const rend=a.patrimonio-a.aportes;
+    const patrimonioAnterior=i>0?anos[anosOrd[i-1]].patrimonio:0;
+    const rend=a.patrimonio-patrimonioAnterior-a.aportes;
     h+=`<tr${isHoje?' style="font-weight:700;background:rgba(52,211,153,.05)"':''}>
       <td>${ano}${isHoje?" ← atual":""}</td>
       <td class="r num">${a.aportes>0?BRL(a.aportes):"—"}</td>
