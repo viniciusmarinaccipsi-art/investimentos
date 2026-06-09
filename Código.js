@@ -679,7 +679,8 @@ function inferirIndexadorRd(raw) {
 function inferirIndexadorTesouro(nome) {
   var n = (nome || "").toUpperCase();
   if (n.indexOf("IPCA") >= 0) return "IPCA+";
-  if (n.indexOf("SELIC") >= 0) return "CDI";
+  if (n.indexOf("RENDA+") >= 0 || n.indexOf("EDUCA+") >= 0) return "IPCA+";
+  if (n.indexOf("SELIC") >= 0 || n.indexOf("RESERVA") >= 0) return "CDI";
   return "Prefixado";
 }
 
@@ -781,9 +782,17 @@ function parsearCardsHTML(html, tipo) {
       else if (label.indexOf("investimento mínimo") >= 0) raw.aporteMinimo = valor;
     }
     var mTaxa = raw.nome.match(/([\d]+[,.]?[\d]*)\s*%\s*(CDI|a\.a\.|IPCA)/i);
-    raw.taxaBruta = mTaxa
-      ? mTaxa[1].replace(",", ".") + "% " + mTaxa[2].toUpperCase()
-      : (raw.taxaLiqAnual || "");
+    var mCdiPlus = raw.nome.match(/CDI\s*\+\s*([\d]+[,.]?[\d]*)%?/i);
+    var mIpcaPlus = raw.nome.match(/IPCA\s*\+\s*([\d]+[,.]?[\d]*)%?/i);
+    if (mTaxa) {
+      raw.taxaBruta = mTaxa[1].replace(",", ".") + "% " + mTaxa[2].toUpperCase();
+    } else if (mCdiPlus) {
+      raw.taxaBruta = "CDI + " + mCdiPlus[1].replace(",", ".") + "%";
+    } else if (mIpcaPlus) {
+      raw.taxaBruta = "IPCA + " + mIpcaPlus[1].replace(",", ".") + "%";
+    } else {
+      raw.taxaBruta = raw.taxaLiqAnual || "";
+    }
     ativos.push(normalizarAtivoRd(raw, tipo));
   }
   return ativos;
