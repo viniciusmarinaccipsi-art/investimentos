@@ -100,7 +100,7 @@
 ### Abas da planilha
 `Investimentos` · `TitulosResgatados` · `Proventos` · `Aportes` · `Indices`
 
-### Abas do frontend (8 total)
+### Abas do frontend (9 total)
 | Aba | Descrição |
 |---|---|
 | **Visão Geral** | KPIs (XIRR, patrimônio, rendimento), donuts SVG por instituição/indexador/liquidez/isenção, card FGC |
@@ -110,6 +110,7 @@
 | **Projeções** | Projeção individual de cada ativo até o vencimento com IR detalhado por evento de cupom |
 | **Resgatados** | Leitura dos ativos já resgatados (2 RDBs Nubank: R$2.920,52 + R$168,26) |
 | **Evolução** | Gráfico Chart.js com 3 linhas (Patrimônio Total verde, Capital Investido azul tracejado, Capital Retornado dourado) + KPIs (XIRR 15,43% a.a., 107,1% CDI) + tabela Resumo por Ano 2024–2032 |
+| **Metas** | Simulador de metas financeiras: `simularMeta()`, presets CDI líq./Moderado/XIRR/Otimista com subtítulos pedagógicos, tabela 5×4 cenários, gráfico Chart.js com marcador 🎯, insight de aceleração, frase narrativa dinâmica |
 | **Configurações** | URL do Apps Script, token, índices manuais |
 
 ### Funções-chave do frontend
@@ -118,6 +119,10 @@
 - `xirrCarteira()` — XIRR Newton-Raphson sobre todos os fluxos (aportes + valorBruto atual)
 - `gerarDadosEvolucao()` — mês a mês: separa `investido` (ativos ativos) e `retornado` (líquido acumulado dos vencidos)
 - `resgatarAtivo(p)` — backend: move ativo de Investimentos → TitulosResgatados com 4 campos extras
+- `simularMeta(patrimonioInicial, aporte, taxa, meta)` — juros compostos mês a mês, retorna tempo/composição/pontos para o gráfico
+- `calcCdiLiquido()` — CDI líquido ponderado pelo % de ativos isentos da carteira (LCI/LCA/CRI/CRA/isentaIR)
+- `calcAporteMedio()` — média mensal de aportes desde jan/2024, arredondada ao R$500 mais próximo
+- `buildTaxaLabel(taxa, modoTaxa, indexador)` — helper único para rótulo correto dos 4 indexadores (Prefixado/CDI/CDI+/IPCA+)
 
 ---
 
@@ -175,10 +180,12 @@ git status              # arquivos modificados
 
 ## 10. PENDÊNCIAS DO PROJETO
 
-- [x] Remove duplicate `taxaLabel` line ~650 in frontend code (index.html) — extraído helper `buildTaxaLabel()` com suporte correto a IPCA+/CDI+
 - [ ] Permanent PATH fix for Claude Code: `[Environment]::SetEnvironmentVariable('PATH', $env:PATH + ';C:\Users\cardi\.local\bin', 'User')`
 
 ### Concluído em 08/06/2026
+- [x] **Aba Metas** — simulador com cenários, gráfico, presets pedagógicos, insight de aceleração, frase narrativa dinâmica
+- [x] **Melhorias UX Metas** — banner introdutório, tooltips nativos, presets com subtítulos, narrativa dinâmica, insight de aceleração, marcador 🎯 no gráfico (commit 0788754)
+- [x] **Refatoração buildTaxaLabel()** — helper único para 4 indexadores (Prefixado/CDI/CDI+/IPCA+), eliminou duplicação lógica
 - [x] **Novos ativos registrados**: CDB C6 Exclusivo Pré 6a (R$10k, 16% a.a.), CDB C6 Exclusivo IPCA+ 4a (R$10k, IPCA+9,10%), CRA Minerva E272 S1 (R$2.036,62, 105% CDI)
 - [x] **Feature TitulosResgatados** — backend `resgatarAtivo()` + modal de resgate no frontend; aba Resgatados só-leitura
 - [x] **2 RDBs Nubank registrados como resgatados** — Nu Financeira R$2.920,52 e R$168,26
