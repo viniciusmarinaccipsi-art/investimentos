@@ -573,6 +573,100 @@ function temCupom(inv){
   return (STATE.proventos||[]).some(p=>p.codigo && p.codigo===inv.codigo);
 }
 // projVenc() antigo removido — substituído por projetarVenc() B3 acima
+
+// ════════════════════════════════════════════════════════════
+// XIRR — Taxa Interna de Retorno com datas (Newton-Raphson)
+// Padrão Excel/Google Sheets. Fluxos: aportes (neg) + cupons
+// recebidos (pos) + valor bruto atual hoje (pos).
+// ════════════════════════════════════════════════════════════
+function calcularXIRR(fluxos, guess){
+  // fluxos = [{ data: Date, valor: Number }]
+  // valor negativo = saída (aporte), positivo = entrada (cupom, posição atual)
+  if(!fluxos || fluxos.length < 2) return null;
+  const d0 = fluxos[0].data;
+  const frac = d => (d - d0) / (365.25 * 86400000); // anos desde primeiro fluxo
+
+  function npv(rate){
+    return fluxos.reduce((s, f) => s + f.valor / Math.pow(1 + rate, frac(f.data)), 0);
+  }
+  function dnpv(rate){
+    return fluxos.reduce((s, f) => {
+      const t = frac(f.data);
+      return s - t * f.valor / Math.pow(1 + rate, t + 1);
+    }, 0);
+  }
+
+  let r = guess || 0.1;
+  for(let i = 0; i < 200; i++){
+    const v = npv(r);
+    const dv = dnpv(r);
+    if(Math.abs(dv) < 1e-14) break;
+    const rNew = r - v / dv;
+    if(Math.abs(rNew - r) < 1e-9) return rNew;
+    r = rNew;
+    if(r < -0.99) r = -0.99; // clamp para evitar divergência
+  }
+  return Math.abs(npv(r)) < 1 ? r : null; // retorna null se não convergiu
+}
+
+// Monta fluxos da carteira e calcula XIRR
+// Prioriza aba Aportes se tiver dados; fallback para dataAplicacao+valorInicial
+function xirrCarteira(){
+  const L = STATE.investments;
+  if(!L.length) return null;
+
+  const fluxos = [];
+
+  // 1. Aportes (saídas de caixa = negativos)
+  L.forEach(inv => {
+    const ap = parseFloat(inv.valorInicial) || 0;
+    const dt = pDate(inv.dataAplicacao);
+    if(ap > 0 && dt) fluxos.push({ data: dt, valor: -ap });
+
+    // Se o ativo tem aportes parciais na aba Aportes, usa eles também
+    if(inv.aportes && inv.aportes.length > 0){
+      inv.aportes.forEach(a => {
+        const v = parseFloat(a.valor) || 0;
+        const d = pDate(a.data);
+        if(v > 0 && d) fluxos.push({ data: d, valor: -v });
+      });
+    }
+  });
+
+  // 2. Cupons já recebidos (entradas intermediárias = positivos)
+  (STATE.proventos || []).forEach(p => {
+    if(p.pago){
+      const v = parseFloat(p.valorPago) || parseFloat(p.valor) || 0;
+      const d = pDate(p.dataPago) || pDate(p.data);
+      if(v > 0 && d) fluxos.push({ data: d, valor: v });
+    }
+  });
+
+  // 3. Resgates já realizados (entradas = positivos)
+  (STATE.resgatados || []).forEach(r => {
+    const v = parseFloat(r.valorRecebido) || 0;
+    const d = pDate(r.dataResgate);
+    if(v > 0 && d) fluxos.push({ data: d, valor: v });
+  });
+
+  // 4. Valor bruto atual de toda a carteira (entrada hoje = positivo)
+  const totalBruto = L.reduce((s, inv) => {
+    const vb = parseFloat(inv.valorBruto) || 0;
+    return s + (vb > 0 ? vb : (parseFloat(inv.valorInicial) || 0));
+  }, 0);
+  if(totalBruto > 0) fluxos.push({ data: HOJE, valor: totalBruto });
+
+  // Ordena por data
+  fluxos.sort((a, b) => a.data - b.data);
+
+  // Precisa ter pelo menos 1 negativo e 1 positivo
+  const temNeg = fluxos.some(f => f.valor < 0);
+  const temPos = fluxos.some(f => f.valor > 0);
+  if(!temNeg || !temPos) return null;
+
+  return calcularXIRR(fluxos, 0.12);
+}
+
 function statusOf(inv){
   const dv=days(HOJE_ISO,inv.vencimento);
   const da=days(inv.dataAplicacao,HOJE_ISO);
@@ -806,6 +900,22 @@ function renderOverview(){
     <div class="kpi liq"><div class="lab">Valor Líquido</div><div class="val num">${BRL(t.liq)}</div><div class="meta">IR estimado ${BRL(t.ir)}</div></div>
     <div class="kpi rent"><div class="lab">Rentabilidade Bruta</div><div class="val num">+${PCT(t.ap>0?t.rend/t.ap*100:0,2)}</div><div class="meta">sobre o capital aplicado</div></div>
   </div>`;
+
+  // XIRR
+  const xirr = xirrCarteira();
+  if(xirr !== null){
+    const xirrPct = xirr * 100;
+    const cdiAA = STATE.indices.cdi || 14.4;
+    const ipcaAA = STATE.indices.ipca || 4.39;
+    const vsCDI = cdiAA > 0 ? (xirrPct / cdiAA * 100) : 0;
+    const vsIPCA = xirrPct - ipcaAA;
+    h+=`<div class="subline" style="background:linear-gradient(90deg,rgba(52,211,153,.08),var(--panel));border-color:var(--emer-d)">
+      <div class="s"><span class="ic">📊</span><b style="color:var(--emer);font-size:16px">${PCT(xirrPct,2)} a.a.</b> <span style="color:var(--dim);margin-left:4px">XIRR (TIR real da carteira)</span></div>
+      <div class="s"><span class="ic">📈</span><b>${PCT(vsCDI,1)} do CDI</b></div>
+      <div class="s"><span class="ic">🛡️</span><b>IPCA + ${PCT(vsIPCA,2)}</b></div>
+      <div class="s" style="color:var(--dim);font-size:11px">Newton-Raphson · fluxos reais com datas</div>
+    </div>`;
+  }
 
   const porBanco=agrupar(L,"banco");
   const maxBanco=Math.max(...BANCOS.map(b=>porBanco[b]?totais(porBanco[b]).br:0));
