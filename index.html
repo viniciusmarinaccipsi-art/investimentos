@@ -1633,13 +1633,19 @@ function renderTabelaAnual(dados){
     const isHoje=ano===anoHoje;
     const patrimonioAnterior=i>0?anos[anosOrd[i-1]].patrimonio:0;
     const rend=a.patrimonio-patrimonioAnterior-a.aportes;
+    // IR realizado no vencimento pode ser maior que os juros dos meses restantes do ano.
+    // Nesse caso, clampa em 0 e exibe nota — o rendimento real do ativo foi positivo
+    // ao longo de toda a sua vigência; o "custo" do IR não pertence só a este ano.
+    const rendIRVenc=rend<0&&a.nVenc>0;
+    const rendExib=rendIRVenc?0:rend;
+    const rendNota=rendIRVenc?` <span style="color:var(--muted);font-size:10px;cursor:help" title="IR realizado no vencimento supera os juros do período (${BRL(Math.abs(rend))}). O custo está distribuído ao longo de toda a vigência do ativo.">(IR > juros)</span>`:"";
     h+=`<tr${isHoje?' style="font-weight:700;background:rgba(52,211,153,.05)"':''}>
       <td>${ano}${isHoje?" ← atual":""}</td>
       <td class="r num">${a.aportes>0?BRL(a.aportes):"—"}</td>
       <td class="c">${a.nVenc>0?a.nVenc+" · "+BRL(a.vencVal):"—"}</td>
       <td class="r num">${a.cupons>0?BRL(a.cupons):"—"}</td>
       <td class="r num" style="font-weight:600">${BRL(a.patrimonio)}</td>
-      <td class="r num ${rend>=0?"pos":"neg"}">${rend>=0?"+":""}${BRL(rend)}</td>
+      <td class="r num pos">+${BRL(rendExib)}${rendNota}</td>
     </tr>`;
   });
   h+=`</tbody></table></div></div>`;
