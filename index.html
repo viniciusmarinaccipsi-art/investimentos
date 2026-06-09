@@ -502,6 +502,7 @@ function projetarVenc(inv){
       isento: ISENTOS.includes(inv.tipo) || inv.isentaIR===true,
       isentoPorLei12431: inv.isentaIR===true,
       cuponsPagos, cuponsPrev, cuponsTotal, temCupomCadastrado,
+      irDetalheCupons: [],
       rendAcumulado: VP-VI, rendFuturo: 0,
       aliquotaIR: 0
     };
@@ -526,28 +527,48 @@ function projetarVenc(inv){
   const isentoPorLei12431 = inv.isentaIR===true;
   const isento = isentoPorTipo || isentoPorLei12431;
 
-  // IR sobre rendimento desde aplicação inicial (regressivo Lei 11.033)
-  // OBS: pra ativos com cupom tributável, o IR real é retido EM CADA cupom,
-  // mas usamos aproximação simples (IR sobre rendimento total) — vide nota.
   const dcTotal = dCorridos(inv.dataAplicacao, inv.vencimento);
-  const rendimentoTotal = brutoTeorico - VI;
   let ir = 0;
-  if(!isento && rendimentoTotal>0){
-    ir = rendimentoTotal * aliquotaIR(dcTotal);
+  let irDetalheCupons = [];
+
+  if(!isento){
+    if(temCupomCadastrado && !isentoPorTipo && !isentoPorLei12431){
+      let irCuponsTotal = 0;
+      cuponsLista.forEach(cupom => {
+        const valorCupom = parseFloat(cupom.pago ? (cupom.valorPago || cupom.valor) : cupom.valor) || 0;
+        if(valorCupom <= 0 || !cupom.data) return;
+        const dcCupom = dCorridos(inv.dataAplicacao, cupom.data);
+        const aliqCupom = aliquotaIR(dcCupom);
+        const irCupom = valorCupom * aliqCupom;
+        irCuponsTotal += irCupom;
+        irDetalheCupons.push({
+          data: cupom.data, valor: valorCupom,
+          diasCorr: dcCupom, aliquota: aliqCupom, irRetido: irCupom,
+          pago: !!cupom.pago
+        });
+      });
+      const rendResidual = brutoTeorico - VI - cuponsTotal;
+      const irPrincipal = rendResidual > 0 ? rendResidual * aliquotaIR(dcTotal) : 0;
+      ir = irCuponsTotal + irPrincipal;
+    } else {
+      const rendimentoTotal = brutoTeorico - VI;
+      if(rendimentoTotal > 0){
+        ir = rendimentoTotal * aliquotaIR(dcTotal);
+      }
+    }
   }
 
   return {
-    bruto,                          // descontado os cupons
-    brutoTeorico,                   // curva natural (inclui juros que viraram cupom)
-    ir,
+    bruto, brutoTeorico, ir,
     liquido: bruto - ir,
     du, dc,
     dcTotalAteVenc: dcTotal,
     aliquotaIR: isento ? 0 : aliquotaIR(dcTotal),
     isento, isentoPorTipo, isentoPorLei12431,
     cuponsPagos, cuponsPrev, cuponsTotal, temCupomCadastrado,
-    rendAcumulado: VP - VI,         // o que já rendeu até hoje
-    rendFuturo: bruto - VP,         // o que ainda vai render (no principal)
+    irDetalheCupons,
+    rendAcumulado: VP - VI,
+    rendFuturo: bruto - VP,
     vencido: false
   };
 }
