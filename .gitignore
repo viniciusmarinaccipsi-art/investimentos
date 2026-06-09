@@ -6,3 +6,7 @@
 !index.html
 !GUIA_PROJETO_CARTEIRA.md
 !Código.js
+
+# Exceção: Cloud Function relay (Meelion)
+!cloud_function/
+!cloud_function/main.py

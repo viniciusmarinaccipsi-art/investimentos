@@ -1,5 +1,5 @@
 ﻿// ============================================================
-// INVESTIMENTOS — Google Apps Script Backend  •  v3.3.2
+// INVESTIMENTOS — Google Apps Script Backend  •  v3.4.0
 // ------------------------------------------------------------
 // A PLANILHA É A FONTE ÚNICA DE VERDADE. O app é leitor + editor pontual.
 //
@@ -117,7 +117,7 @@ function rotear(e) {
     if (!acao) return { ok: false, erro: "Parâmetro 'acao' obrigatório." };
 
     // ── Ações de LEITURA (sem token) ──
-    if (acao === "ping")          return { ok: true, msg: "Apps Script v3.3.2 ativo!", versao: "3.3.0" };
+    if (acao === "ping")          return { ok: true, msg: "Apps Script v3.4.0 ativo!", versao: "3.4.0" };
     if (acao === "listar")        return listarTudo();
     if (acao === "buscarIndices") return buscarIndices();
     if (acao === "listarRadar")   return listarRadar();
@@ -717,6 +717,21 @@ function calcPrazoAnos(vencISO) {
   return (venc - new Date()) / (365.25 * 24 * 60 * 60 * 1000);
 }
 
+function inferirTipoDoNome(nome) {
+  var n = (nome || "").toUpperCase();
+  if (n.indexOf("LCI") >= 0) return "LCI";
+  if (n.indexOf("LCA") >= 0) return "LCA";
+  if (n.indexOf("CRI") >= 0) return "CRI";
+  if (n.indexOf("CRA") >= 0) return "CRA";
+  if (n.indexOf("DEBENTURE") >= 0 || n.indexOf("DEB ") >= 0 || n.indexOf("DEBÊNTURE") >= 0) return "DEBÊNTURE";
+  if (n.indexOf("LF ") >= 0 || n.indexOf("LETRA FINANCEIRA") >= 0) return "LF";
+  if (n.indexOf("CCB") >= 0) return "CCB";
+  if (n.indexOf("NOTA DE CRÉDITO") >= 0 || n.indexOf("NOTA DE CREDITO") >= 0) return "NC";
+  if (n.indexOf("CDB") >= 0) return "CDB";
+  if (n.indexOf("FUNDO") >= 0) return "FUNDO";
+  return "OUTRO";
+}
+
 function normalizarAtivoRd(raw, tipoFromQuery) {
   return {
     data:         new Date().toISOString().substring(0, 10),
@@ -775,38 +790,114 @@ function parsearCardsHTML(html, tipo) {
 }
 
 function buscarMeelion() {
-  var buscas = [
-    { params: "investment_type=cdb&financial_index=cdi&sort=rate_value%20desc",        tipo: "CDB",       maxPag: 3 },
-    { params: "investment_type=cdb&financial_index=pre-fixado&sort=rate_value%20desc", tipo: "CDB",       maxPag: 2 },
-    { params: "investment_type=cdb&financial_index=ipca&sort=rate_value%20desc",       tipo: "CDB",       maxPag: 2 },
-    { params: "investment_type=cdb&financial_index=cdi-mais&sort=rate_value%20desc",   tipo: "CDB",       maxPag: 2 },
-    { params: "investment_type=lci&sort=rate_value%20desc",                            tipo: "LCI",       maxPag: 2 },
-    { params: "investment_type=lca&sort=rate_value%20desc",                            tipo: "LCA",       maxPag: 2 },
-    { params: "investment_type=cri&sort=rate_value%20desc",                            tipo: "CRI",       maxPag: 1 },
-    { params: "investment_type=cra&sort=rate_value%20desc",                            tipo: "CRA",       maxPag: 1 },
-    { params: "investment_type=debenture-incentivada&sort=rate_value%20desc",          tipo: "DEBENTURE", maxPag: 1 }
-  ];
-  var options = {
-    muteHttpExceptions: true,
-    headers: { "User-Agent": "Mozilla/5.0 (compatible; GoogleAppsScript)" }
-  };
+  var props = PropertiesService.getScriptProperties();
+  var relayUrl = RELAY_URL;
+  var relayToken = RELAY_TOKEN_PROP;
+  var meelionAuth = props.getProperty("MEELION_AUTH") || "";
+  var phpSessId  = props.getProperty("MEELION_PHPSESSID") || "";
+
+  var cookieStr = "";
+  if (meelionAuth && phpSessId) {
+    cookieStr = "meelion_auth=" + meelionAuth + "; PHPSESSID=" + phpSessId;
+  }
+
   var todos = [];
-  buscas.forEach(function(b) {
-    for (var pag = 1; pag <= b.maxPag; pag++) {
-      var meelionUrl = "https://www.meelion.com/renda-fixa/comparar-investimentos/?" + b.params + "&page=" + pag;
-      var relayUrl = RELAY_URL + "?token=" + encodeURIComponent(RELAY_TOKEN_PROP) + "&url=" + encodeURIComponent(meelionUrl);
-      try {
-        var resp = UrlFetchApp.fetch(relayUrl, { muteHttpExceptions: true });
-        if (resp.getResponseCode() !== 200) { Logger.log("Meelion " + resp.getResponseCode() + " — " + b.tipo + " p" + pag); break; }
-        var ativos = parsearCardsHTML(resp.getContentText(), b.tipo);
-        Logger.log("Meelion " + b.tipo + " p" + pag + ": " + ativos.length + " ativos");
-        todos = todos.concat(ativos);
-        if (ativos.length < 12) break;
-        Utilities.sleep(500);
-      } catch(e) { Logger.log("Erro Meelion (" + b.tipo + " p" + pag + "): " + e.message); break; }
+
+  // === FONTE 1: Comparador PRO (paginado, ~12 por página) ===
+  var urlComparador = "https://www.meelion.com/renda-fixa/comparar-investimentos/rentabilidade-1-10/"
+    + "ccb-ou-cdb-ou-cra-ou-cri-ou-debenture-ou-debenture-incentivada-ou-fundo-de-investimento-ou-lca-ou-lci-ou-lf-ou-nota-de-credito/"
+    + "prazo-2-a-3-anos-ou-3-a-4-anos-ou-acima-4-anos/"
+    + "cdi-ou-cdi-mais-ou-ipca-ou-pre-fixado/"
+    + "seguranca-equilibrada-ou-reduzida/"
+    + "banco-btg-pactual-ou-banco-inter-ou-c6-bank-ou-mercado-pago-ou-nubank-ou-rico-investimentos-ou-xp-investimentos/"
+    + "?amount=5000.00";
+
+  var maxPaginas = 17;
+  var cookieExpirou = false;
+
+  for (var pag = 1; pag <= maxPaginas; pag++) {
+    var pageUrl = urlComparador + "&page=" + pag;
+    var fetchUrl = relayUrl + "?token=" + encodeURIComponent(relayToken)
+      + "&url=" + encodeURIComponent(pageUrl)
+      + (cookieStr && !cookieExpirou ? "&cookie=" + encodeURIComponent(cookieStr) : "");
+
+    try {
+      var resp = UrlFetchApp.fetch(fetchUrl, { muteHttpExceptions: true });
+      if (resp.getResponseCode() !== 200) {
+        Logger.log("Relay erro " + resp.getResponseCode() + " — comparador p" + pag);
+        break;
+      }
+      var html = resp.getContentText();
+      var ativos = parsearCardsHTML(html, "MISTO");
+
+      // Fallback: se p1 retornou 0 ativos com cookie → cookie expirou → refaz sem cookie
+      if (ativos.length === 0 && cookieStr && !cookieExpirou && pag === 1) {
+        Logger.log("⚠️ Cookie possivelmente expirado. Tentando sem cookie...");
+        cookieExpirou = true;
+        var fetchUrlSemCookie = relayUrl + "?token=" + encodeURIComponent(relayToken)
+          + "&url=" + encodeURIComponent(pageUrl);
+        var resp2 = UrlFetchApp.fetch(fetchUrlSemCookie, { muteHttpExceptions: true });
+        if (resp2.getResponseCode() === 200) {
+          ativos = parsearCardsHTML(resp2.getContentText(), "MISTO");
+        }
+      }
+
+      // Pós-processamento: corrigir tipo (o Comparador retorna tipos misturados) e fonte
+      ativos.forEach(function(a) {
+        a.tipo = inferirTipoDoNome(a.nome);
+        a.fonte = "Comparador";
+      });
+
+      Logger.log("Comparador p" + pag + ": " + ativos.length + " ativos" + (cookieExpirou ? " (deslogado)" : " (PRO)"));
+      todos = todos.concat(ativos);
+
+      if (ativos.length < 12) break; // Última página
+      Utilities.sleep(800);
+    } catch(e) {
+      Logger.log("Erro comparador p" + pag + ": " + e.message);
+      break;
+    }
+  }
+
+  // === FONTE 2: Maiores Rentabilidades (top 15 por instituição) ===
+  var urlMaiores = "https://www.meelion.com/maiores-rentabilidades-hoje/resultado/"
+    + "?result=1&investment=R%24+5.000%2C00&maturity_date=4&num_results=15&security_level=Low"
+    + "&institutions%5B%5D=&institutions%5B%5D=9&institutions%5B%5D=7&institutions%5B%5D=8"
+    + "&institutions%5B%5D=11&institutions%5B%5D=16&institutions%5B%5D=14";
+
+  var fetchUrlMaiores = relayUrl + "?token=" + encodeURIComponent(relayToken)
+    + "&url=" + encodeURIComponent(urlMaiores)
+    + (cookieStr && !cookieExpirou ? "&cookie=" + encodeURIComponent(cookieStr) : "");
+
+  try {
+    var resp3 = UrlFetchApp.fetch(fetchUrlMaiores, { muteHttpExceptions: true });
+    if (resp3.getResponseCode() === 200) {
+      var ativosMaiores = parsearCardsHTML(resp3.getContentText(), "MISTO");
+      // Pós-processamento: corrigir tipo e fonte
+      ativosMaiores.forEach(function(a) {
+        a.tipo = inferirTipoDoNome(a.nome);
+        a.fonte = "Maiores Rent.";
+      });
+      Logger.log("Maiores Rentabilidades: " + ativosMaiores.length + " ativos");
+      todos = todos.concat(ativosMaiores);
+    }
+  } catch(e) {
+    Logger.log("Erro maiores rentabilidades: " + e.message);
+  }
+
+  // Deduplicar por nome+vencimento
+  var vistos = {};
+  var unicos = [];
+  todos.forEach(function(a) {
+    var chave = (a.nome || "") + "|" + (a.vencimento || "");
+    if (!vistos[chave]) {
+      vistos[chave] = true;
+      unicos.push(a);
     }
   });
-  return todos;
+
+  Logger.log("Total Meelion (após dedup): " + unicos.length + " ativos" + (cookieExpirou ? " ⚠️ modo deslogado" : " ✅ modo PRO"));
+  return unicos;
 }
 
 function buscarTesouro() {
@@ -894,47 +985,67 @@ function enviarEmailRadar(ativos) {
   var tesouro   = ativos.filter(function(a) { return a.fonte === "Tesouro Direto"; });
   var hoje = new Date();
   var dataStr = hoje.toLocaleDateString("pt-BR") + " " + hoje.toLocaleTimeString("pt-BR").substring(0, 5);
+
   var corpo = '<div style="font-family:Arial,sans-serif;background:#0d1b2a;color:#e9edf3;padding:20px;max-width:720px">';
   corpo += '<h2 style="color:#f5c518;margin:0 0 4px">📡 Radar Renda Fixa — ' + dataStr + '</h2>';
   corpo += '<p style="color:#8b97a8;margin:0 0 20px">' + destaques.length + ' destaque(s) de ' + ativos.length + ' ativos escaneados</p>';
+
   if (destaques.length > 0) {
     corpo += '<h3 style="color:#34d399;padding-bottom:6px;border-bottom:1px solid #222d3d">🔥 Destaques</h3>';
     var grupos = {};
     destaques.forEach(function(a) { (grupos[a.indexador] = grupos[a.indexador] || []).push(a); });
+
     Object.keys(grupos).forEach(function(idx) {
       corpo += '<h4 style="color:#5aa9e6;margin-bottom:6px">' + idx + '</h4>';
       corpo += '<table style="width:100%;border-collapse:collapse">';
-      corpo += '<tr style="background:#172030"><th style="padding:5px 8px;text-align:left;font-size:11px">Nome / Emissor</th><th style="font-size:11px;padding:5px 8px">Taxa</th><th style="font-size:11px;padding:5px 8px">Venc.</th><th style="font-size:11px;padding:5px 8px">Mín.</th><th style="font-size:11px;padding:5px 8px">FGC</th></tr>';
+      corpo += '<tr style="background:#172030">'
+        + '<th style="padding:5px 8px;text-align:left;font-size:11px">Nome / Emissor</th>'
+        + '<th style="font-size:11px;padding:5px 8px">Taxa Bruta</th>'
+        + '<th style="font-size:11px;padding:5px 8px">Líq. a.a.</th>'
+        + '<th style="font-size:11px;padding:5px 8px">Venc.</th>'
+        + '<th style="font-size:11px;padding:5px 8px">Mín.</th>'
+        + '</tr>';
+
       grupos[idx].forEach(function(a) {
-        corpo += '<tr>' +
-          '<td style="padding:5px 8px;border-bottom:1px solid #1a2535;font-size:12px"><b>' + a.nome + '</b><br><span style="color:#5d6878;font-size:10px">' + (a.distribuidor || "") + '</span></td>' +
-          '<td style="padding:5px 8px;border-bottom:1px solid #1a2535;font-size:12px;color:#f5c518;font-weight:bold">' + (a.taxaBruta || a.taxaLiqAnual || "—") + '</td>' +
-          '<td style="padding:5px 8px;border-bottom:1px solid #1a2535;font-size:12px">' + (a.vencimento || "—") + '</td>' +
-          '<td style="padding:5px 8px;border-bottom:1px solid #1a2535;font-size:12px">' + (a.aporteMinimo > 0 ? "R$ " + Number(a.aporteMinimo).toLocaleString("pt-BR") : "—") + '</td>' +
-          '<td style="padding:5px 8px;border-bottom:1px solid #1a2535;font-size:12px">' + (a.fgc || "—") + '</td>' +
-        '</tr>';
+        corpo += '<tr>'
+          + '<td style="padding:5px 8px;border-bottom:1px solid #1a2535;font-size:12px"><b>' + a.nome + '</b><br>'
+          + '<span style="color:#5d6878;font-size:10px">' + (a.distribuidor || "") + ' | ' + (a.fgc || "") + '</span></td>'
+          + '<td style="padding:5px 8px;border-bottom:1px solid #1a2535;font-size:12px;color:#f5c518;font-weight:bold">' + (a.taxaBruta || "—") + '</td>'
+          + '<td style="padding:5px 8px;border-bottom:1px solid #1a2535;font-size:12px;color:#34d399">' + (a.taxaLiqAnual || "—")
+          + (a.vsCDI ? '<br><span style="font-size:9px;color:#8b97a8">' + a.vsCDI + '</span>' : '') + '</td>'
+          + '<td style="padding:5px 8px;border-bottom:1px solid #1a2535;font-size:12px">' + (a.vencimento || "—") + '</td>'
+          + '<td style="padding:5px 8px;border-bottom:1px solid #1a2535;font-size:12px">' + (a.aporteMinimo > 0 ? "R$ " + Number(a.aporteMinimo).toLocaleString("pt-BR") : "—") + '</td>'
+          + '</tr>';
       });
       corpo += '</table><br>';
     });
   } else {
     corpo += '<p style="color:#8b97a8">Nenhum ativo atendeu aos thresholds hoje.</p>';
   }
+
   if (tesouro.length > 0) {
     corpo += '<h3 style="color:#5aa9e6;padding-bottom:6px;border-bottom:1px solid #222d3d;margin-top:20px">📊 Tesouro Direto</h3>';
     corpo += '<table style="width:100%;border-collapse:collapse">';
-    corpo += '<tr style="background:#172030"><th style="padding:5px 8px;text-align:left;font-size:11px">Título</th><th style="font-size:11px;padding:5px 8px">Indexador</th><th style="font-size:11px;padding:5px 8px">Taxa Bruta</th><th style="font-size:11px;padding:5px 8px">Venc.</th></tr>';
+    corpo += '<tr style="background:#172030">'
+      + '<th style="padding:5px 8px;text-align:left;font-size:11px">Título</th>'
+      + '<th style="font-size:11px;padding:5px 8px">Indexador</th>'
+      + '<th style="font-size:11px;padding:5px 8px">Taxa Bruta</th>'
+      + '<th style="font-size:11px;padding:5px 8px">Venc.</th>'
+      + '</tr>';
     tesouro.forEach(function(a) {
-      corpo += '<tr>' +
-        '<td style="padding:5px 8px;border-bottom:1px solid #1a2535;font-size:12px">' + a.nome + '</td>' +
-        '<td style="padding:5px 8px;border-bottom:1px solid #1a2535;font-size:12px">' + a.indexador + '</td>' +
-        '<td style="padding:5px 8px;border-bottom:1px solid #1a2535;font-size:12px;color:#f5c518">' + (a.taxaBruta || "—") + '</td>' +
-        '<td style="padding:5px 8px;border-bottom:1px solid #1a2535;font-size:12px">' + (a.vencimento || "—") + '</td>' +
-      '</tr>';
+      corpo += '<tr>'
+        + '<td style="padding:5px 8px;border-bottom:1px solid #1a2535;font-size:12px">' + a.nome + '</td>'
+        + '<td style="padding:5px 8px;border-bottom:1px solid #1a2535;font-size:12px">' + a.indexador + '</td>'
+        + '<td style="padding:5px 8px;border-bottom:1px solid #1a2535;font-size:12px;color:#f5c518">' + (a.taxaBruta || "—") + '</td>'
+        + '<td style="padding:5px 8px;border-bottom:1px solid #1a2535;font-size:12px">' + (a.vencimento || "—") + '</td>'
+        + '</tr>';
     });
     corpo += '</table>';
   }
-  corpo += '<p style="color:#5d6878;font-size:10px;margin-top:20px;border-top:1px solid #1a2535;padding-top:10px">Radar automático · Apps Script v3.3.2 · Thresholds: CDI diária ≥' + THRESHOLDS.cdi_liq_diaria + '% · CDI prazo ≥' + THRESHOLDS.cdi_prazo_1ano + '% · IPCA+ ≥' + THRESHOLDS.ipca_mais + '% · Pré ≥' + THRESHOLDS.prefixado + '%</p>';
+
+  corpo += '<p style="color:#5d6878;font-size:10px;margin-top:20px;border-top:1px solid #1a2535;padding-top:10px">Radar automático · Apps Script v3.4.0 · Thresholds: CDI diária ≥' + THRESHOLDS.cdi_liq_diaria + '% · CDI prazo ≥' + THRESHOLDS.cdi_prazo_1ano + '% · CDI+ ≥' + THRESHOLDS.cdi_mais + '% · IPCA+ ≥' + THRESHOLDS.ipca_mais + '% · Pré ≥' + THRESHOLDS.prefixado + '%</p>';
   corpo += '</div>';
+
   MailApp.sendEmail({
     to: EMAIL_DESTINO,
     subject: "📡 Radar RF — " + destaques.length + " destaque(s) · " + hoje.toLocaleDateString("pt-BR"),
@@ -1015,5 +1126,25 @@ function deletarLinhasPorColuna(aba, coluna, valor) {
 }
 
 function setRelayToken() { PropertiesService.getScriptProperties().setProperty("RELAY_TOKEN", "radar_mln_2026_xK9p"); return { ok: true, msg: "RELAY_TOKEN salvo." }; }
+
+/**
+ * Utilitário — rodar UMA VEZ no editor do Apps Script para salvar cookies PRO.
+ * O PHPSESSID expira em horas. Renovar quando o radar voltar a trazer poucos ativos
+ * (sinal de que o cookie expirou e caiu em modo deslogado).
+ *
+ * Para renovar:
+ *   1. Login no meelion.com
+ *   2. DevTools (F12) → Application → Cookies → meelion.com
+ *   3. Copiar valor de "meelion_auth" e "PHPSESSID"
+ *   4. Atualizar os valores abaixo
+ *   5. Rodar esta função 1 vez no editor do Apps Script
+ */
+function salvarCookiesMeelion() {
+  var props = PropertiesService.getScriptProperties();
+  // ⚠️ SUBSTITUIR pelos cookies frescos antes de rodar
+  props.setProperty("MEELION_AUTH",      "COLAR_AQUI_O_VALOR_DE_meelion_auth");
+  props.setProperty("MEELION_PHPSESSID", "COLAR_AQUI_O_VALOR_DE_PHPSESSID");
+  Logger.log("✅ Cookies Meelion PRO salvos no PropertiesService.");
+}
 
 
