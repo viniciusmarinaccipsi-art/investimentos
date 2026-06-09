@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400&family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
 :root{
   --ink:#0a0e14; --ink2:#0e131c; --panel:#131a25; --panel2:#172030;
@@ -260,6 +261,7 @@ tbody tr.total-row td{font-weight:700; color:var(--txt); border-top:2px solid va
       <button data-tab="proventos"><span class="ic">◷</span>Proventos</button>
       <button data-tab="projecoes"><span class="ic">↗</span>Projeções</button>
       <button data-tab="resgatados"><span class="ic">$</span>Resgatados</button>
+      <button data-tab="evolucao"><span class="ic">📈</span>Evolução</button>
       <button data-tab="config"><span class="ic">⚙</span>Configurações</button>
     </nav>
   </div>
@@ -273,6 +275,7 @@ tbody tr.total-row td{font-weight:700; color:var(--txt); border-top:2px solid va
     <section id="panel-proventos" class="panel"></section>
     <section id="panel-projecoes" class="panel"></section>
     <section id="panel-resgatados" class="panel"></section>
+    <section id="panel-evolucao" class="panel"></section>
     <section id="panel-config" class="panel"></section>
     <div class="foot">
       <b>Carteira — Renda Fixa</b> · Planilha como fonte de verdade · Calendário vivo · Valores ref. 29/05/2026
@@ -502,7 +505,6 @@ function projetarVenc(inv){
       isento: ISENTOS.includes(inv.tipo) || inv.isentaIR===true,
       isentoPorLei12431: inv.isentaIR===true,
       cuponsPagos, cuponsPrev, cuponsTotal, temCupomCadastrado,
-      irDetalheCupons: [],
       rendAcumulado: VP-VI, rendFuturo: 0,
       aliquotaIR: 0
     };
@@ -527,48 +529,28 @@ function projetarVenc(inv){
   const isentoPorLei12431 = inv.isentaIR===true;
   const isento = isentoPorTipo || isentoPorLei12431;
 
+  // IR sobre rendimento desde aplicação inicial (regressivo Lei 11.033)
+  // OBS: pra ativos com cupom tributável, o IR real é retido EM CADA cupom,
+  // mas usamos aproximação simples (IR sobre rendimento total) — vide nota.
   const dcTotal = dCorridos(inv.dataAplicacao, inv.vencimento);
+  const rendimentoTotal = brutoTeorico - VI;
   let ir = 0;
-  let irDetalheCupons = [];
-
-  if(!isento){
-    if(temCupomCadastrado && !isentoPorTipo && !isentoPorLei12431){
-      let irCuponsTotal = 0;
-      cuponsLista.forEach(cupom => {
-        const valorCupom = parseFloat(cupom.pago ? (cupom.valorPago || cupom.valor) : cupom.valor) || 0;
-        if(valorCupom <= 0 || !cupom.data) return;
-        const dcCupom = dCorridos(inv.dataAplicacao, cupom.data);
-        const aliqCupom = aliquotaIR(dcCupom);
-        const irCupom = valorCupom * aliqCupom;
-        irCuponsTotal += irCupom;
-        irDetalheCupons.push({
-          data: cupom.data, valor: valorCupom,
-          diasCorr: dcCupom, aliquota: aliqCupom, irRetido: irCupom,
-          pago: !!cupom.pago
-        });
-      });
-      const rendResidual = brutoTeorico - VI - cuponsTotal;
-      const irPrincipal = rendResidual > 0 ? rendResidual * aliquotaIR(dcTotal) : 0;
-      ir = irCuponsTotal + irPrincipal;
-    } else {
-      const rendimentoTotal = brutoTeorico - VI;
-      if(rendimentoTotal > 0){
-        ir = rendimentoTotal * aliquotaIR(dcTotal);
-      }
-    }
+  if(!isento && rendimentoTotal>0){
+    ir = rendimentoTotal * aliquotaIR(dcTotal);
   }
 
   return {
-    bruto, brutoTeorico, ir,
+    bruto,                          // descontado os cupons
+    brutoTeorico,                   // curva natural (inclui juros que viraram cupom)
+    ir,
     liquido: bruto - ir,
     du, dc,
     dcTotalAteVenc: dcTotal,
     aliquotaIR: isento ? 0 : aliquotaIR(dcTotal),
     isento, isentoPorTipo, isentoPorLei12431,
     cuponsPagos, cuponsPrev, cuponsTotal, temCupomCadastrado,
-    irDetalheCupons,
-    rendAcumulado: VP - VI,
-    rendFuturo: bruto - VP,
+    rendAcumulado: VP - VI,         // o que já rendeu até hoje
+    rendFuturo: bruto - VP,         // o que ainda vai render (no principal)
     vencido: false
   };
 }
@@ -1363,6 +1345,244 @@ function renderResgatados(){
   el.innerHTML = h;
 }
 
+// ════════════════════════════════════════════════════════════
+//  RENDER EVOLUÇÃO — Crescimento patrimonial ao longo do tempo
+//  Gráfico de área (Chart.js) + KPIs + tabela anual
+// ════════════════════════════════════════════════════════════
+function estimarValorEm(inv, dataISO){
+  const dtAplic = inv.dataAplicacao;
+  if(!dtAplic || !dataISO || dataISO < dtAplic) return 0;
+  if(dataISO >= inv.vencimento) return 0;
+  const du = diasUteisB3(dtAplic, dataISO);
+  const dc = dCorridos(dtAplic, dataISO);
+  const VP = parseFloat(inv.valorInicial)||0;
+  const taxa = parseFloat(inv.taxa)||0;
+  const cdi = STATE.indices.cdi||14.4, ipca = STATE.indices.ipca||4.39;
+  if(du<=0) return VP;
+  switch(inv.modoTaxa){
+    case "pre":       return _projPrefixado(VP, taxa, du);
+    case "cdi_pct":   return _projPctCDI(VP, taxa, du, cdi);
+    case "cdi_mais":  return _projCDIMais(VP, taxa, du, cdi);
+    case "ipca_mais": return _projIPCAMais(VP, taxa, du, dc, ipca);
+    default:          return VP;
+  }
+}
+function ultimoDiaMes(ms){
+  const[y,m]=ms.split("-").map(Number);
+  const d=new Date(y,m,0);
+  return y+"-"+String(m).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+}
+function proximoMes(ms){
+  const[y,m]=ms.split("-").map(Number);
+  return m===12?(y+1)+"-01":y+"-"+String(m+1).padStart(2,"0");
+}
+function gerarDadosEvolucao(){
+  const L=STATE.investments, R=STATE.resgatados||[];
+  if(!L.length && !R.length) return null;
+  const todos=L.concat(R);
+  const datasAp=todos.map(x=>x.dataAplicacao).filter(Boolean).sort();
+  if(!datasAp.length) return null;
+  const primeiroMes=datasAp[0].substring(0,7);
+  const vencs=L.map(x=>x.vencimento).filter(Boolean).sort();
+  const ultVenc=vencs.length?vencs[vencs.length-1].substring(0,7):HOJE_ISO.substring(0,7);
+  const mesFim=ultVenc>"2032-12"?"2032-12":ultVenc;
+  const hojeMes=HOJE_ISO.substring(0,7);
+  const pontos=[];
+  let cur=primeiroMes;
+  while(cur<=mesFim){
+    const fim=ultimoDiaMes(cur);
+    const ehHoje=cur===hojeMes;
+    let capital=0;
+    todos.forEach(inv=>{
+      if(inv.dataAplicacao && inv.dataAplicacao<=fim) capital+=parseFloat(inv.valorInicial)||0;
+    });
+    let patrimonio=0;
+    if(ehHoje){
+      patrimonio=L.reduce((s,inv)=>{
+        const vb=parseFloat(inv.valorBruto)||0;
+        return s+(vb>0?vb:(parseFloat(inv.valorInicial)||0));
+      },0);
+    }else{
+      L.forEach(inv=>{ patrimonio+=estimarValorEm(inv,fim); });
+    }
+    const cuponsAte=(STATE.proventos||[]).filter(p=>p.pago&&p.data&&p.data<=fim)
+      .reduce((s,p)=>s+(parseFloat(p.valorPago)||parseFloat(p.valor)||0),0);
+    const resgAte=R.filter(r=>r.dataResgate&&r.dataResgate<=fim)
+      .reduce((s,r)=>s+(parseFloat(r.valorRecebido)||0),0);
+    const tw=patrimonio+cuponsAte+resgAte;
+    pontos.push({mes:cur,fim,capital:Math.round(capital*100)/100,patrimonio:Math.round(tw*100)/100,
+      rendimento:Math.round((tw-capital)*100)/100,ehHoje,ehPassado:cur<=hojeMes});
+    cur=proximoMes(cur);
+  }
+  return pontos;
+}
+
+let chartEvolucao=null;
+function renderEvolucao(){
+  const el=document.getElementById("panel-evolucao");
+  const L=STATE.investments;
+  if(!L.length){el.innerHTML=`<div class="empty"><div class="ic">📈</div>Sem dados.</div>`;return;}
+  const dados=gerarDadosEvolucao();
+  if(!dados||!dados.length){el.innerHTML=`<div class="empty"><div class="ic">📈</div>Dados insuficientes.</div>`;return;}
+
+  const t=totais(L);
+  const xirr=xirrCarteira();
+  const xirrPct=xirr!==null?xirr*100:0;
+  const cuponsRec=(STATE.proventos||[]).filter(p=>p.pago).reduce((s,p)=>s+(parseFloat(p.valorPago)||parseFloat(p.valor)||0),0);
+  const resgRec=(STATE.resgatados||[]).reduce((s,r)=>s+(parseFloat(r.valorRecebido)||0),0);
+  const vencFut=L.map(x=>x.vencimento).filter(v=>v&&v>HOJE_ISO).sort();
+  const proxVenc=vencFut.length?vencFut[0]:null;
+  const nProxVenc=proxVenc?L.filter(x=>x.vencimento&&x.vencimento.substring(0,7)===proxVenc.substring(0,7)).length:0;
+  const ultimoPonto=dados[dados.length-1];
+
+  let h=`<div class="kpis" style="grid-template-columns:repeat(3,1fr)">
+    <div class="kpi bruto"><div class="lab">Patrimônio Atual</div><div class="val num">${BRL(t.br)}</div><div class="meta">${t.n} ativos · ${BANCOS.filter(b=>L.some(x=>x.banco===b)).length} instituições</div></div>
+    <div class="kpi aplic"><div class="lab">Capital Investido</div><div class="val num">${BRL(t.ap)}</div><div class="meta">aportes acumulados desde ${fDate(dados[0].fim)}</div></div>
+    <div class="kpi rent"><div class="lab">XIRR (TIR real)</div><div class="val num">${xirr!==null?PCT(xirrPct,2)+" a.a.":"—"}</div><div class="meta">${xirr!==null?PCT(xirrPct/(STATE.indices.cdi||14.4)*100,1)+" do CDI":""}</div></div>
+  </div>`;
+
+  h+=`<div class="subline">
+    <div class="s"><span class="ic">💰</span>Rendimento bruto: <b class="pos">${BRL(t.rend)}</b></div>
+    <div class="s"><span class="ic">◷</span>Cupons recebidos: <b>${BRL(cuponsRec)}</b></div>
+    <div class="s"><span class="ic">$</span>Resgates: <b>${BRL(resgRec)}</b></div>
+    ${proxVenc?`<div class="s"><span class="ic">⏳</span>Próx. venc.: <b>${fDate(proxVenc)}</b> (${nProxVenc})</div>`:""}
+  </div>`;
+
+  h+=`<div class="sec-h"><span class="bar"></span>Evolução Patrimonial</div>`;
+  h+=`<div class="proj-note">📊 <b>Passado</b>: capital investido real + patrimônio estimado (CDI ${PCT(STATE.indices.cdi||14.4,2)}, IPCA ${PCT(STATE.indices.ipca||4.39,2)} constantes). <b>Futuro</b>: projeção até o último vencimento. Não considera reinvestimento de capital vencido.</div>`;
+  h+=`<div class="card" style="padding:20px;position:relative"><div style="height:360px"><canvas id="chart-evolucao"></canvas></div></div>`;
+
+  // Projeção final
+  if(ultimoPonto){
+    h+=`<div class="subline" style="margin-top:14px;border-color:var(--gold)">
+      <div class="s"><span class="ic">🎯</span>Patrimônio projetado em <b>${ultimoPonto.mes.split("-")[1]}/${ultimoPonto.mes.split("-")[0]}</b>: <b style="color:var(--gold)">${BRL(ultimoPonto.patrimonio)}</b></div>
+      <div class="s"><span class="ic">📈</span>Rendimento projetado: <b class="pos">${BRL(ultimoPonto.rendimento)}</b></div>
+    </div>`;
+  }
+
+  h+=`<div class="sec-h" style="margin-top:24px"><span class="bar"></span>Resumo por Ano</div>`;
+  h+=renderTabelaAnual(dados);
+  el.innerHTML=h;
+  requestAnimationFrame(()=>renderChartEvolucao(dados));
+}
+
+function renderChartEvolucao(dados){
+  const canvas=document.getElementById("chart-evolucao");
+  if(!canvas) return;
+  if(chartEvolucao){chartEvolucao.destroy();chartEvolucao=null;}
+  const ctx=canvas.getContext("2d");
+  const MES_ABR=["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"];
+  const labels=dados.map(p=>{const[y,m]=p.mes.split("-");return MES_ABR[parseInt(m)-1]+"/"+y.substring(2);});
+  const capitalData=dados.map(p=>p.capital);
+  const patrimonioData=dados.map(p=>p.patrimonio);
+  const hojeIdx=dados.findIndex(p=>p.ehHoje);
+
+  // Gradient for patrimonio
+  const grad=ctx.createLinearGradient(0,0,0,360);
+  grad.addColorStop(0,"rgba(52,211,153,0.18)");
+  grad.addColorStop(1,"rgba(52,211,153,0.01)");
+  const gradCap=ctx.createLinearGradient(0,0,0,360);
+  gradCap.addColorStop(0,"rgba(90,169,230,0.12)");
+  gradCap.addColorStop(1,"rgba(90,169,230,0.01)");
+
+  chartEvolucao=new Chart(ctx,{
+    type:"line",
+    data:{
+      labels:labels,
+      datasets:[
+        {label:"Patrimônio Estimado",data:patrimonioData,borderColor:"#34d399",backgroundColor:grad,fill:true,tension:0.3,borderWidth:2.5,pointRadius:0,pointHoverRadius:5,pointHoverBackgroundColor:"#34d399"},
+        {label:"Capital Investido",data:capitalData,borderColor:"#5aa9e6",backgroundColor:gradCap,fill:true,tension:0.1,borderWidth:2,pointRadius:0,pointHoverRadius:5,pointHoverBackgroundColor:"#5aa9e6",borderDash:[6,3]}
+      ]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      interaction:{mode:"index",intersect:false},
+      plugins:{
+        legend:{labels:{color:"#8b97a8",font:{family:"'Manrope',sans-serif",size:12},usePointStyle:true,pointStyle:"rectRounded",padding:16}},
+        tooltip:{
+          backgroundColor:"#131a25",borderColor:"#222d3d",borderWidth:1,
+          titleColor:"#e9edf3",bodyColor:"#8b97a8",
+          titleFont:{family:"'Manrope',sans-serif",weight:"600"},
+          bodyFont:{family:"'JetBrains Mono',monospace",size:12},
+          padding:12,cornerRadius:8,
+          callbacks:{
+            label:function(c){return " "+c.dataset.label+":  "+BRL(c.parsed.y);},
+            afterBody:function(items){
+              if(items.length>=2){
+                const pat=items[0].parsed.y, cap=items[1].parsed.y;
+                const rend=pat-cap;
+                return ["","  Rendimento:  "+BRL(rend)+" ("+PCT(cap>0?rend/cap*100:0,1)+")"];
+              }
+              return [];
+            }
+          }
+        }
+      },
+      scales:{
+        x:{ticks:{color:"#5d6878",font:{family:"'Manrope',sans-serif",size:10},maxRotation:45,autoSkip:true,maxTicksLimit:18},grid:{color:"rgba(34,45,61,0.4)"}},
+        y:{ticks:{color:"#5d6878",font:{family:"'JetBrains Mono',monospace",size:11},callback:function(v){return v>=1000?"R$"+(v/1000).toFixed(0)+"k":"R$"+v;}},grid:{color:"rgba(34,45,61,0.25)"}}
+      }
+    },
+    plugins:[{
+      id:"todayLine",
+      afterDraw:function(chart){
+        if(hojeIdx<0) return;
+        const meta=chart.getDatasetMeta(0);
+        if(!meta.data[hojeIdx]) return;
+        const x=meta.data[hojeIdx].x;
+        const yAxis=chart.scales.y;
+        const ctx2=chart.ctx;
+        ctx2.save();
+        ctx2.beginPath();
+        ctx2.setLineDash([6,4]);
+        ctx2.strokeStyle="rgba(245,181,63,0.55)";
+        ctx2.lineWidth=1.5;
+        ctx2.moveTo(x,yAxis.top);
+        ctx2.lineTo(x,yAxis.bottom);
+        ctx2.stroke();
+        ctx2.setLineDash([]);
+        ctx2.fillStyle="#f5b53f";
+        ctx2.font="600 11px 'Manrope',sans-serif";
+        ctx2.textAlign="center";
+        ctx2.fillText("Hoje",x,yAxis.top-6);
+        ctx2.restore();
+      }
+    }]
+  });
+}
+
+function renderTabelaAnual(dados){
+  const L=STATE.investments, R=STATE.resgatados||[], P=STATE.proventos||[];
+  const todos=L.concat(R);
+  const anos={};
+  dados.forEach(p=>{const a=p.mes.substring(0,4);if(!anos[a])anos[a]={aportes:0,vencVal:0,nVenc:0,cupons:0,patrimonio:0};});
+  todos.forEach(inv=>{if(!inv.dataAplicacao)return;const a=inv.dataAplicacao.substring(0,4);if(anos[a])anos[a].aportes+=parseFloat(inv.valorInicial)||0;});
+  L.forEach(inv=>{if(!inv.vencimento)return;const a=inv.vencimento.substring(0,4);if(anos[a]){anos[a].nVenc++;anos[a].vencVal+=parseFloat(inv.valorInicial)||0;}});
+  R.forEach(r=>{if(!r.dataResgate)return;const a=r.dataResgate.substring(0,4);if(anos[a]){anos[a].nVenc++;anos[a].vencVal+=parseFloat(r.valorRecebido)||0;}});
+  P.forEach(p=>{if(!p.data)return;const a=p.data.substring(0,4);const v=p.pago?(parseFloat(p.valorPago)||parseFloat(p.valor)||0):(parseFloat(p.valor)||0);if(anos[a])anos[a].cupons+=v;});
+  dados.forEach(p=>{const a=p.mes.substring(0,4);if(anos[a])anos[a].patrimonio=p.patrimonio;});
+
+  const anoHoje=HOJE_ISO.substring(0,4);
+  let h=`<div class="tbl-wrap"><div class="tbl-scroll"><table>
+    <thead><tr><th>Ano</th><th class="r">Aportes</th><th class="c">Vencimentos</th><th class="r">Cupons</th><th class="r">Patrimônio (dez)</th><th class="r">Rendimento</th></tr></thead><tbody>`;
+  const anosOrd=Object.keys(anos).sort();
+  anosOrd.forEach(ano=>{
+    const a=anos[ano];
+    const isHoje=ano===anoHoje;
+    const rend=a.patrimonio-a.aportes;
+    h+=`<tr${isHoje?' style="font-weight:700;background:rgba(52,211,153,.05)"':''}>
+      <td>${ano}${isHoje?" ← atual":""}</td>
+      <td class="r num">${a.aportes>0?BRL(a.aportes):"—"}</td>
+      <td class="c">${a.nVenc>0?a.nVenc+" · "+BRL(a.vencVal):"—"}</td>
+      <td class="r num">${a.cupons>0?BRL(a.cupons):"—"}</td>
+      <td class="r num" style="font-weight:600">${BRL(a.patrimonio)}</td>
+      <td class="r num ${rend>=0?"pos":"neg"}">${rend>=0?"+":""}${BRL(rend)}</td>
+    </tr>`;
+  });
+  h+=`</tbody></table></div></div>`;
+  return h;
+}
+
 function renderConfig(){
   const el=document.getElementById("panel-config");
   const ix=STATE.indices;
@@ -1731,7 +1951,7 @@ function toast(msg,type="ok"){
 
 function renderAll(){
   renderIdx();
-  renderOverview(); renderCarteira(); renderConsolidado(); renderProventos(); renderProjecoes(); renderResgatados(); renderConfig();
+  renderOverview(); renderCarteira(); renderConsolidado(); renderProventos(); renderProjecoes(); renderResgatados(); renderEvolucao(); renderConfig();
 }
 function setTab(tab){
   STATE.activeTab=tab;
