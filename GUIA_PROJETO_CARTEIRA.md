@@ -1,5 +1,5 @@
 # GUIA DE REFERÊNCIA — Projeto Carteira de Investimentos
-> Versão: 02/06/2026 (atualizado) | Salve este arquivo e cole nas instruções do projeto no Claude
+> Versão: 08/06/2026 | Salve este arquivo e cole nas instruções do projeto no Claude
 
 ---
 
@@ -86,11 +86,11 @@
 
 ### Arquitetura
 - **Planilha** (fonte de verdade): ID `1Cf4S59nzrWpNZIWyqHs9CAcu6o2at8nQpKOr68huj44`
-- **Backend** Apps Script v3.2.2 — deploy @14 ativo (ping reporta "3.2.2")
+- **Backend** Apps Script v3.2.3 — deploy @15 ativo (ping reporta "3.2.3")
 - **Frontend** GitHub Pages: `https://viniciusmarinaccipsi-art.github.io/investimentos/`
 - **Repo Git**: `https://github.com/viniciusmarinaccipsi-art/investimentos`
 - **Pasta local**: `G:\Meu Drive\Investimentos\`
-- **APP_VERSION atual**: `4.2` (commit 1570fd6)
+- **APP_VERSION atual**: `4.5` (commit 710e910)
 
 ### IDs importantes
 - **Script ID Apps Script**: `1OIgyQTvp0MvJD_Ug5dXOAQHEfKtPh7_YNWxRTGM6KKGCfCvIoIb4xH3O`
@@ -99,6 +99,25 @@
 
 ### Abas da planilha
 `Investimentos` · `TitulosResgatados` · `Proventos` · `Aportes` · `Indices`
+
+### Abas do frontend (8 total)
+| Aba | Descrição |
+|---|---|
+| **Visão Geral** | KPIs (XIRR, patrimônio, rendimento), donuts SVG por instituição/indexador/liquidez/isenção, card FGC |
+| **Carteira** | Tabela de ativos ativos com ordenação por 6 critérios (data aplicação ↑↓, vencimento ↑↓, valor bruto ↑↓) |
+| **Consolidado** | Visão agregada por grupo/tipo |
+| **Proventos** | Cupons e proventos previstos e pagos |
+| **Projeções** | Projeção individual de cada ativo até o vencimento com IR detalhado por evento de cupom |
+| **Resgatados** | Leitura dos ativos já resgatados (2 RDBs Nubank: R$2.920,52 + R$168,26) |
+| **Evolução** | Gráfico Chart.js com 3 linhas (Patrimônio Total verde, Capital Investido azul tracejado, Capital Retornado dourado) + KPIs (XIRR 15,43% a.a., 107,1% CDI) + tabela Resumo por Ano 2024–2032 |
+| **Configurações** | URL do Apps Script, token, índices manuais |
+
+### Funções-chave do frontend
+- `projetarVenc(inv)` — retorna bruto/IR/líquido/cupons/isenção até o vencimento
+- `projetarBrutoEm(inv, mesRefISO)` — projeta o valor de mercado do ativo em qualquer mês futuro (usado na aba Evolução)
+- `xirrCarteira()` — XIRR Newton-Raphson sobre todos os fluxos (aportes + valorBruto atual)
+- `gerarDadosEvolucao()` — mês a mês: separa `investido` (ativos ativos) e `retornado` (líquido acumulado dos vencidos)
+- `resgatarAtivo(p)` — backend: move ativo de Investimentos → TitulosResgatados com 4 campos extras
 
 ---
 
@@ -156,8 +175,20 @@ git status              # arquivos modificados
 
 ## 10. PENDÊNCIAS DO PROJETO
 
-- [ ] Registrar RDB Nubank resgatados (R$3.090,17 em 30/05/2026) na aba TitulosResgatados — perguntar: proporcional ou valores exatos do extrato
-- [ ] Reescrever instruções do projeto no Claude (remover dados obsoletos)
+- [ ] Remove duplicate `taxaLabel` line ~650 in frontend code (index.html)
+- [ ] Permanent PATH fix for Claude Code: `[Environment]::SetEnvironmentVariable('PATH', $env:PATH + ';C:\Users\cardi\.local\bin', 'User')`
+
+### Concluído em 08/06/2026
+- [x] **Novos ativos registrados**: CDB C6 Exclusivo Pré 6a (R$10k, 16% a.a.), CDB C6 Exclusivo IPCA+ 4a (R$10k, IPCA+9,10%), CRA Minerva E272 S1 (R$2.036,62, 105% CDI)
+- [x] **Feature TitulosResgatados** — backend `resgatarAtivo()` + modal de resgate no frontend; aba Resgatados só-leitura
+- [x] **2 RDBs Nubank registrados como resgatados** — Nu Financeira R$2.920,52 e R$168,26
+- [x] **Aba Evolução** — gráfico patrimonial Chart.js 3 datasets (não empilhados), KPIs XIRR, tabela Resumo por Ano 2024–2032, função `projetarBrutoEm()`
+- [x] **Fix projeção futura** — vencimentos não causam mais queda no patrimônio: `patrimônio = investido + retornado` (líquido acumulado dos vencidos)
+- [x] **Fix IR por evento de cupom** (Lei 11.033/2004) — alíquota regressiva individual por cupom em `projetarVenc()`
+- [x] **Fix rendimento negativo por IR no último ano** — clamp em R$0 com nota `(IR > juros)` e tooltip explicativo
+- [x] **Ordenação na aba Carteira** — select com 6 opções (data aplicação ↑↓, vencimento ↑↓, valor bruto ↑↓)
+- [x] **XIRR (TIR real)** — Newton-Raphson no KPI da Visão Geral
+- [x] **Backend v3.2.3** — sanitização JSONP callback + LockService nas 8 funções de escrita (deploy @15)
 
 ### Concluído em 02/06/2026
 - [x] Fix leitura dos índices da planilha (deploy @14, confirmado: CDI 14,40% carregando)
@@ -168,28 +199,42 @@ git status              # arquivos modificados
 - [x] Playwright instalado
 - [x] ping sincronizado pra reportar v3.2.2 (deploy @14)
 - [x] **v4.2 — Visão Geral reformulada** (commit 1570fd6):
-  - `barRow` corrigida: largura da barra agora usa `val/tot` (% do total) em vez de `val/max` — o maior item não aparece mais 100% cheio com rótulo menor
-  - Gráficos de Instituição, Indexador, Liquidez e Isenção de IR convertidos de barras/split para **donuts SVG** com legenda inline
-  - Por Tipo de Produto mantém barras (agora proporcionais ao total)
-  - Cores dos bancos atualizadas: C6 Bank = amarelo `#f5c518`, Inter Invest = laranja `#f5853f`, Neon = azul claro `#5aa9e6` (Nubank manteve roxo)
-  - Novo CSS `.donut-wrap / .dn-*` adicionado; responsivo abaixo de 980px
+  - `barRow` corrigida: largura da barra agora usa `val/tot` (% do total) em vez de `val/max`
+  - Gráficos de Instituição, Indexador, Liquidez e Isenção de IR convertidos para **donuts SVG**
+  - Cores dos bancos: C6=amarelo `#f5c518`, Inter=laranja `#f5853f`, Neon=azul `#5aa9e6`, Nubank=roxo
+
+### Concluído em 03/06/2026
+- [x] **v4.2 (ajustes donuts)** (commits 95c7a3b):
+  - `fmtCompact()`: texto central dos donuts em formato compacto (`"R$ 54,7 mil"`)
+  - Paleta coesa nos donuts não-banco: CDI=teal `#2dd4bf`, Prefixado=rosa `#fb7185`, IPCA+=cinza `#94a3b8`, Travado=cinza, Isentos=verde, Tributáveis=rosa
+  - Anel do donut: `stroke-width` 20→16 (mais fino); fonte central 14→12.5px
+- [x] **v4.3 — Card FGC + responsividade mobile** (commit c33bb97):
+  - Novo card "Cobertura FGC" na Visão Geral: donut Coberto(verde)/Fora(rosa) + barras por emissor agrupadas por conglomerado (Banco C6 + C6 Consignado = "Grupo C6") + bloco "Fora do FGC por tipo" + nota explicativa
+  - Regra: FGC cobre CDB/RDB/LCI/LCA; CRI/CRA/Debênture ficam fora; teto R$ 250k por CPF por conglomerado
+  - Responsividade mobile completa: nav rolável em 1 linha, KPIs sem cortar, tabelas viram cards empilhados com rótulo (`data-label`) em cada célula abaixo de 768px; KPIs 1 coluna abaixo de 430px
+  - Função `aplicarDataLabels()` adicionada; chamada em `renderAll()` e no fim de `renderCarteira()`
+- [x] **v4.4 — Layout FGC sem vazio** (commit fb282b3):
+  - Card FGC deixou de usar `grid2` (que gerava espaço vazio abaixo do donut curto) e virou um card único de largura total
+  - Internamente: `.fgc-wrap` (flex row) com `.fgc-left` (donut 220px + legenda) e `.fgc-right` (emissores + nota)
+  - No mobile ≤768px o layout dobra para coluna única (`flex-direction: column`)
 
 ---
 
 ## 11. PRÓXIMOS PASSOS (roadmap)
 
 ### Curto prazo (próxima sessão)
-1. **Registrar RDB Nubank resgatados** — R$3.090,17 recebidos em 30/05/2026, dois ativos (inv_0080 aplic. R$2.600 e inv_0081 aplic. R$150, ambos 100% CDI Liq.Diária Nu Financeira). Decidir: distribuir o total proporcionalmente OU usar os valores exatos do extrato Nubank por ativo. Registrar na aba TitulosResgatados.
-2. **Reescrever as instruções do projeto no Claude** — tirar dados obsoletos (token literal, estado financeiro congelado, números de commit antigos) e deixar só arquitetura estável + como trabalhar.
+1. [x] **Registrar RDB Nubank resgatados** — concluído em 08/06/2026 (R$2.920,52 + R$168,26 na aba Resgatados)
+2. [x] **Reescrever as instruções do projeto no Claude** — concluído em 08/06/2026 (este guia)
 
 ### Médio prazo (evolução)
 3. **Versionar o Código.js no Git** — agora que o token está no PropertiesService, o backend pode ir pro Git com segurança. Hoje só o index.html e o guia são versionados. Isso cria backup do backend e histórico de mudanças.
-4. **Git tags pra versões estáveis** — marcar releases com `git tag v4.2-stable` (versão atual) pra ter pontos de retorno claros.
+4. **Git tags pra versões estáveis** — marcar releases com `git tag v4.5-stable` (versão atual) pra ter pontos de retorno claros.
 5. **Automatizar verificação com Playwright** — script que abre o app, clica "Atualizar do BCB" e confirma os 4 índices automaticamente, sem verificação manual.
+6. **Daily radar automation** — monitoramento automatizado de ofertas de renda fixa via Meelion ou Apps Script (BTG, Inter, XP, C6, Nubank) para capturar oportunidades acima da meta de taxa.
+7. **Feature Aportes** — a aba Aportes existe na planilha mas não tem interface no app: registrar aportes adicionais a um mesmo ativo ao longo do tempo.
 
 ### Longo prazo (opcional)
-6. **GitHub Action pra backup diário** — exportar a planilha automaticamente todo dia via Apps Script.
-7. **Feature Aportes** — a aba Aportes existe na planilha mas ainda não tem interface no app.
+8. **GitHub Action pra backup diário** — exportar a planilha automaticamente todo dia via Apps Script.
 
 ---
 
