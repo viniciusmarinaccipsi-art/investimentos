@@ -1,5 +1,5 @@
-// ============================================================
-// INVESTIMENTOS — Google Apps Script Backend  •  v3.3.0
+﻿// ============================================================
+// INVESTIMENTOS — Google Apps Script Backend  •  v3.3.1
 // ------------------------------------------------------------
 // A PLANILHA É A FONTE ÚNICA DE VERDADE. O app é leitor + editor pontual.
 //
@@ -88,6 +88,9 @@ const CAMPOS_DATA_RES  = ["dataAplicacao", "vencimento", "dataReferencia", "data
 const CAMPOS_DATA_PROV = ["data", "dataPago"];
 const CAMPOS_NUM       = ["taxa", "valorInicial", "valorBruto", "ir"];
 
+const RELAY_URL = "https://meelion-relay-mlqhnhvrlq-rj.a.run.app";
+const RELAY_TOKEN_PROP = PropertiesService.getScriptProperties().getProperty("RELAY_TOKEN") || "";
+
 const SERIES_BCB = { cdi: 4389, selic: 1178, ipca: 13522, igpm: 189 };
 
 // ── ENTRY POINTS ─────────────────────────────────────────────
@@ -114,7 +117,7 @@ function rotear(e) {
     if (!acao) return { ok: false, erro: "Parâmetro 'acao' obrigatório." };
 
     // ── Ações de LEITURA (sem token) ──
-    if (acao === "ping")          return { ok: true, msg: "Apps Script v3.3.0 ativo!", versao: "3.3.0" };
+    if (acao === "ping")          return { ok: true, msg: "Apps Script v3.3.1 ativo!", versao: "3.3.0" };
     if (acao === "listar")        return listarTudo();
     if (acao === "buscarIndices") return buscarIndices();
     if (acao === "listarRadar")   return listarRadar();
@@ -929,7 +932,7 @@ function enviarEmailRadar(ativos) {
     });
     corpo += '</table>';
   }
-  corpo += '<p style="color:#5d6878;font-size:10px;margin-top:20px;border-top:1px solid #1a2535;padding-top:10px">Radar automático · Apps Script v3.3.0 · Thresholds: CDI diária ≥' + THRESHOLDS.cdi_liq_diaria + '% · CDI prazo ≥' + THRESHOLDS.cdi_prazo_1ano + '% · IPCA+ ≥' + THRESHOLDS.ipca_mais + '% · Pré ≥' + THRESHOLDS.prefixado + '%</p>';
+  corpo += '<p style="color:#5d6878;font-size:10px;margin-top:20px;border-top:1px solid #1a2535;padding-top:10px">Radar automático · Apps Script v3.3.1 · Thresholds: CDI diária ≥' + THRESHOLDS.cdi_liq_diaria + '% · CDI prazo ≥' + THRESHOLDS.cdi_prazo_1ano + '% · IPCA+ ≥' + THRESHOLDS.ipca_mais + '% · Pré ≥' + THRESHOLDS.prefixado + '%</p>';
   corpo += '</div>';
   MailApp.sendEmail({
     to: EMAIL_DESTINO,
@@ -1009,3 +1012,6 @@ function deletarLinhasPorColuna(aba, coluna, valor) {
     if (String(dados[i][colIdx]) === String(valor)) aba.deleteRow(i + 1);
   }
 }
+
+function setRelayToken() { PropertiesService.getScriptProperties().setProperty("RELAY_TOKEN", "radar_mln_2026_xK9p"); return { ok: true, msg: "RELAY_TOKEN salvo." }; }
+
