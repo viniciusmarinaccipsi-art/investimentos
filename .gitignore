@@ -1,0 +1,8 @@
+# Ignorar TUDO por padrão
+*
+
+# Exceção: arquivos versionados
+!.gitignore
+!index.html
+!GUIA_PROJETO_CARTEIRA.md
+!Código.js
