@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400&family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@2.2.1/dist/chartjs-plugin-annotation.min.js"></script>
 <style>
 :root{
   --ink:#0a0e14; --ink2:#0e131c; --panel:#131a25; --panel2:#172030;
@@ -240,6 +241,19 @@ tbody tr.total-row td{font-weight:700; color:var(--txt); border-top:2px solid va
   .bar-row{grid-template-columns:100px 1fr}
   .bar-row .vl{grid-column:2; text-align:left}
 }
+
+/* ── METAS ── */
+.metas-form{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:12px}
+.metas-presets{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:4px}
+.btn-preset{font-size:12px;padding:5px 12px;background:var(--ink2);border:1px solid var(--line);color:var(--muted);border-radius:var(--r-sm);cursor:pointer;transition:.2s}
+.btn-preset:hover{border-color:var(--emer);color:var(--emer)}
+.metas-barra{height:30px;border-radius:6px;overflow:hidden;display:flex;margin:10px 0 4px;background:var(--ink2);border:1px solid var(--line)}
+.metas-seg{height:100%;transition:width .5s cubic-bezier(.4,0,.2,1)}
+.metas-barra-label{display:flex;gap:16px;font-size:12px;color:var(--muted);flex-wrap:wrap}
+.metas-barra-valores{font-size:12px;color:var(--muted);margin-top:6px}
+.metas-tempo{font-size:26px;font-weight:800;margin:6px 0 2px;line-height:1.2}
+.metas-data{font-size:13px;color:var(--muted)}
+@media(max-width:768px){.metas-form{grid-template-columns:1fr} #chart-metas{height:300px!important}}
 </style>
 </head>
 <body>
@@ -262,6 +276,7 @@ tbody tr.total-row td{font-weight:700; color:var(--txt); border-top:2px solid va
       <button data-tab="projecoes"><span class="ic">↗</span>Projeções</button>
       <button data-tab="resgatados"><span class="ic">$</span>Resgatados</button>
       <button data-tab="evolucao"><span class="ic">📈</span>Evolução</button>
+      <button data-tab="metas"><span class="ic">🎯</span>Metas</button>
       <button data-tab="config"><span class="ic">⚙</span>Configurações</button>
     </nav>
   </div>
@@ -276,6 +291,7 @@ tbody tr.total-row td{font-weight:700; color:var(--txt); border-top:2px solid va
     <section id="panel-projecoes" class="panel"></section>
     <section id="panel-resgatados" class="panel"></section>
     <section id="panel-evolucao" class="panel"></section>
+    <section id="panel-metas" class="panel"></section>
     <section id="panel-config" class="panel"></section>
     <div class="foot">
       <b>Carteira — Renda Fixa</b> · Planilha como fonte de verdade · Calendário vivo · Valores ref. 29/05/2026
@@ -1483,6 +1499,8 @@ function gerarDadosEvolucao(){
 }
 
 let chartEvolucao=null;
+let chartMetas=null;
+let _metasDebounce=null;
 function renderEvolucao(){
   const el=document.getElementById("panel-evolucao");
   const L=STATE.investments;
@@ -1658,6 +1676,265 @@ function renderTabelaAnual(dados){
   });
   h+=`</tbody></table></div></div>`;
   return h;
+}
+
+// ════════════════════════════════════════════════════════════
+//  RENDER METAS — Simulador de metas financeiras
+// ════════════════════════════════════════════════════════════
+function simularMeta(patrimonioInicial, aporteMensal, taxaAnual, meta){
+  const taxaMensal=Math.pow(1+taxaAnual/100,1/12)-1;
+  let saldo=patrimonioInicial, totalAportado=patrimonioInicial, meses=0;
+  const maxMeses=360;
+  const pontos=[{mes:0,saldo,aportado:totalAportado,rendimento:0}];
+  while(saldo<meta&&meses<maxMeses){
+    saldo=saldo*(1+taxaMensal)+aporteMensal;
+    totalAportado+=aporteMensal;
+    meses++;
+    if(meses<=120||meses%3===0) pontos.push({mes:meses,saldo,aportado:totalAportado,rendimento:saldo-totalAportado});
+  }
+  const anos=Math.floor(meses/12), mesesRest=meses%12;
+  const dataAlvo=new Date(); dataAlvo.setMonth(dataAlvo.getMonth()+meses);
+  return{
+    atingiu:saldo>=meta, meses, anos, mesesRest, dataAlvo,
+    saldoFinal:saldo, totalAportado,
+    composicao:{
+      patrimonioInicial:{valor:patrimonioInicial,pct:patrimonioInicial/saldo*100},
+      novosAportes:{valor:aporteMensal*meses,pct:(aporteMensal*meses)/saldo*100},
+      juros:{valor:saldo-totalAportado,pct:(saldo-totalAportado)/saldo*100}
+    },
+    pontos
+  };
+}
+
+function calcCdiLiquido(){
+  const cdi=STATE.indices.cdi||14.4;
+  let totalBruto=0,totalIsento=0;
+  for(const inv of STATE.investments){
+    const vb=parseFloat(inv.valorBruto)||parseFloat(inv.valorInicial)||0;
+    totalBruto+=vb;
+    const tipo=(inv.tipo||'').toUpperCase();
+    if(['LCI','LCA','CRI','CRA'].includes(tipo)||inv.isentaIR===true) totalIsento+=vb;
+  }
+  const pctIsentos=totalBruto>0?(totalIsento/totalBruto)*100:0;
+  return cdi*(1-0.15*(1-pctIsentos/100));
+}
+
+function calcAporteMedio(){
+  const totalAplicado=totais(STATE.investments).ap;
+  const inicio=new Date(2024,0,1);
+  const meses=Math.max(1,(new Date()-inicio)/(30.44*24*60*60*1000));
+  return Math.round((totalAplicado/meses)/500)*500;
+}
+
+function renderMetas(){
+  const el=document.getElementById("panel-metas");
+  const L=STATE.investments;
+  if(!L.length){el.innerHTML=`<div class="empty"><div class="ic">🎯</div>Carregue os dados primeiro.</div>`;return;}
+
+  const t=totais(L);
+  const xirr=xirrCarteira();
+  const xirrPct=xirr!==null?xirr*100:(STATE.indices.cdi||14.4);
+  const cdiLiq=calcCdiLiquido();
+  const aporteMedio=calcAporteMedio();
+  const META_DEF=1000000;
+
+  let h=`<div class="kpis" style="grid-template-columns:repeat(3,1fr)">
+    <div class="kpi bruto"><div class="lab">Patrimônio Atual</div><div class="val num">${BRL(t.br)}</div><div class="meta">${t.n} ativos · base da simulação</div></div>
+    <div class="kpi rent"><div class="lab">XIRR Atual</div><div class="val num">${xirr!==null?PCT(xirrPct,2)+' a.a.':'—'}</div><div class="meta">${xirr!==null?PCT(xirrPct/(STATE.indices.cdi||14.4)*100,1)+' do CDI':'sem dados suficientes'}</div></div>
+    <div class="kpi" style="border-left:3px solid var(--gold)"><div class="lab">Meta</div><div class="val num" style="color:var(--gold)">${BRL(META_DEF)}</div><div class="meta">editável abaixo</div></div>
+  </div>`;
+
+  h+=`<div class="card" style="margin-bottom:14px">
+    <div class="card-h"><span class="ic">⚙</span>Parâmetros da simulação</div>
+    <div class="metas-form">
+      <div class="field"><label>Meta (R$)</label><input id="mt-meta" class="num" type="number" value="${META_DEF}" min="1000" step="50000"></div>
+      <div class="field"><label>Aporte mensal (R$)</label><input id="mt-aporte" class="num" type="number" value="${aporteMedio}" min="0" step="500"></div>
+      <div class="field"><label>Taxa anual (%)</label><input id="mt-taxa" class="num" type="number" value="${xirrPct.toFixed(2)}" min="0.1" step="0.1"></div>
+    </div>
+    <div class="metas-presets">
+      <span style="font-size:12px;color:var(--muted);margin-right:4px">Presets:</span>
+      <button class="btn-preset" data-taxa="${cdiLiq.toFixed(2)}">CDI líq. ${PCT(cdiLiq,2)}</button>
+      <button class="btn-preset" data-taxa="13.00">Moderado 13%</button>
+      <button class="btn-preset" data-taxa="${xirrPct.toFixed(2)}">XIRR atual ${PCT(xirrPct,2)}</button>
+      <button class="btn-preset" data-taxa="16.50">Otimista 16,5%</button>
+    </div>
+    <div style="display:flex;gap:9px;margin-top:14px">
+      <button class="btn primary" id="mt-simular">🎯 Simular</button>
+      <button class="btn" id="mt-resetar">↺ Resetar</button>
+    </div>
+  </div>`;
+
+  h+=`<div id="metas-resultado"></div>`;
+  h+=`<div class="sec-h"><span class="bar"></span>Tabela de Cenários</div>`;
+  h+=`<div id="metas-tabela"></div>`;
+  h+=`<div class="sec-h"><span class="bar"></span>Projeção Patrimonial</div>`;
+  h+=`<div class="card" style="padding:20px;position:relative"><div style="height:360px"><canvas id="chart-metas"></canvas></div></div>`;
+  h+=`<p class="proj-note" style="margin-top:14px">Projeção simplificada. Assume reinvestimento automático à mesma taxa. Retorno real depende das taxas disponíveis no momento do reinvestimento.</p>`;
+
+  el.innerHTML=h;
+  requestAnimationFrame(()=>inicializarMetas(t.br,xirrPct,cdiLiq,aporteMedio,META_DEF));
+}
+
+function inicializarMetas(patrimonioAtual,xirrPct,cdiLiq,aporteMedioDefault,metaDefault){
+  const elMeta=document.getElementById("mt-meta");
+  const elAporte=document.getElementById("mt-aporte");
+  const elTaxa=document.getElementById("mt-taxa");
+  if(!elMeta) return;
+
+  function recalc(){
+    const meta=parseFloat(elMeta.value)||metaDefault;
+    const aporte=parseFloat(elAporte.value)||0;
+    const taxa=parseFloat(elTaxa.value)||xirrPct;
+    recalcularMetas(patrimonioAtual,aporte,taxa,meta,cdiLiq,xirrPct);
+  }
+  function debounced(){clearTimeout(_metasDebounce);_metasDebounce=setTimeout(recalc,300);}
+
+  [elMeta,elAporte,elTaxa].forEach(el=>el&&el.addEventListener("input",debounced));
+  document.getElementById("mt-simular").addEventListener("click",recalc);
+  document.getElementById("mt-resetar").addEventListener("click",()=>{
+    elMeta.value=metaDefault;
+    elAporte.value=aporteMedioDefault;
+    elTaxa.value=xirrPct.toFixed(2);
+    recalc();
+  });
+  document.querySelectorAll(".btn-preset").forEach(btn=>{
+    btn.addEventListener("click",()=>{elTaxa.value=btn.dataset.taxa;recalc();});
+  });
+  recalc();
+}
+
+function recalcularMetas(patrimonioAtual,aporteMensal,taxaAnual,meta,cdiLiq,xirrPct){
+  const res=simularMeta(patrimonioAtual,aporteMensal,taxaAnual,meta);
+  const MES=["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"];
+
+  // Tempo e data
+  let tempoStr,corTempo;
+  if(!res.atingiu){
+    tempoStr="Meta não atingida em 30 anos";corTempo="var(--red)";
+  }else if(res.meses===0){
+    tempoStr="Meta já atingida!";corTempo="var(--emer)";
+  }else{
+    const pa=res.anos>0?`${res.anos} ano${res.anos>1?'s':''}`:null;
+    const pm=res.mesesRest>0?`${res.mesesRest} mês${res.mesesRest>1?'es':''}`:null;
+    tempoStr=[pa,pm].filter(Boolean).join(" e ")+` (${MES[res.dataAlvo.getMonth()]}/${res.dataAlvo.getFullYear()})`;
+    corTempo="var(--emer)";
+  }
+
+  const c=res.composicao;
+  const resultHTML=`
+  <div class="card" style="margin-bottom:14px">
+    <div class="card-h"><span class="ic">🎯</span>Resultado para meta ${BRL(meta)}</div>
+    <div style="text-align:center;padding:14px 0 18px">
+      <div style="font-size:13px;color:var(--muted);margin-bottom:8px">Tempo estimado</div>
+      <div class="metas-tempo" style="color:${corTempo}">${tempoStr}</div>
+    </div>
+    <div class="metas-barra-label">
+      <span style="color:#34d399">■ Patrimônio hoje ${PCT(c.patrimonioInicial.pct,1)}</span>
+      <span style="color:#5aa9e6">■ Novos aportes ${PCT(c.novosAportes.pct,1)}</span>
+      <span style="color:#d4af6a">■ Juros compostos ${PCT(c.juros.pct,1)}</span>
+    </div>
+    <div class="metas-barra">
+      <div class="metas-seg" style="width:${Math.max(0,c.patrimonioInicial.pct).toFixed(1)}%;background:#34d399" title="${BRL(c.patrimonioInicial.valor)}"></div>
+      <div class="metas-seg" style="width:${Math.max(0,c.novosAportes.pct).toFixed(1)}%;background:#5aa9e6" title="${BRL(c.novosAportes.valor)}"></div>
+      <div class="metas-seg" style="width:${Math.max(0,c.juros.pct).toFixed(1)}%;background:#d4af6a" title="${BRL(c.juros.valor)}"></div>
+    </div>
+    <div class="metas-barra-valores">
+      ${BRL(c.patrimonioInicial.valor)} + ${BRL(c.novosAportes.valor)} + ${BRL(c.juros.valor)} = <b>${BRL(res.saldoFinal)}</b>
+    </div>
+  </div>`;
+  document.getElementById("metas-resultado").innerHTML=resultHTML;
+
+  // Tabela de cenários
+  const aportes=[5000,7500,10000,12000,15000];
+  const taxas=[
+    {label:`CDI líq. ${PCT(cdiLiq,1)}`,val:cdiLiq},
+    {label:"Mod. 13%",val:13},
+    {label:`XIRR ${PCT(xirrPct,1)}`,val:xirrPct},
+    {label:"Otim. 16,5%",val:16.5}
+  ];
+  let tbl=`<div class="tbl-wrap" style="margin-bottom:14px"><div class="tbl-scroll"><table>
+    <thead><tr><th>Aporte/mês</th>${taxas.map(tx=>`<th class="c">${tx.label}</th>`).join("")}</tr></thead><tbody>`;
+  for(const ap of aportes){
+    tbl+=`<tr><td style="font-weight:600">${BRL(ap)}</td>`;
+    for(const tx of taxas){
+      const r=simularMeta(patrimonioAtual,ap,tx.val,meta);
+      const ativo=Math.abs(ap-aporteMensal)<250&&Math.abs(tx.val-taxaAnual)<0.5;
+      const cell=r.atingiu
+        ?(r.anos>0?r.anos+"a":"")+((r.anos>0&&r.mesesRest>0)?" ":"")+((r.mesesRest>0)?r.mesesRest+"m":"")
+        :">30a";
+      tbl+=`<td class="c num" style="${ativo?"border:2px solid var(--emer);background:rgba(52,211,153,0.1);font-weight:700":""}">${cell||"0m"}</td>`;
+    }
+    tbl+=`</tr>`;
+  }
+  tbl+=`</tbody></table></div></div>`;
+  document.getElementById("metas-tabela").innerHTML=tbl;
+
+  renderChartMetas(res.pontos,meta);
+}
+
+function renderChartMetas(pontos,meta){
+  const canvas=document.getElementById("chart-metas");
+  if(!canvas) return;
+  if(chartMetas){chartMetas.destroy();chartMetas=null;}
+  const ctx=canvas.getContext("2d");
+
+  const labels=pontos.map(p=>{
+    if(p.mes===0) return "Hoje";
+    if(p.mes%12===0) return (p.mes/12)+"a";
+    if(p.mes%6===0) return Math.floor(p.mes/12)+"a "+(p.mes%12)+"m";
+    return p.mes+"m";
+  });
+
+  const grad=ctx.createLinearGradient(0,0,0,360);
+  grad.addColorStop(0,"rgba(52,211,153,0.2)");
+  grad.addColorStop(1,"rgba(52,211,153,0.01)");
+  const gradA=ctx.createLinearGradient(0,0,0,360);
+  gradA.addColorStop(0,"rgba(90,169,230,0.15)");
+  gradA.addColorStop(1,"rgba(90,169,230,0.01)");
+
+  chartMetas=new Chart(ctx,{
+    type:"line",
+    data:{
+      labels,
+      datasets:[
+        {label:"Patrimônio projetado",data:pontos.map(p=>Math.round(p.saldo)),borderColor:"#34d399",backgroundColor:grad,fill:true,tension:0.3,borderWidth:2.5,pointRadius:0,pointHoverRadius:5},
+        {label:"Capital aportado",data:pontos.map(p=>Math.round(p.aportado)),borderColor:"#5aa9e6",backgroundColor:gradA,fill:true,tension:0.1,borderWidth:2,borderDash:[6,3],pointRadius:0,pointHoverRadius:4}
+      ]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      interaction:{mode:"index",intersect:false},
+      plugins:{
+        legend:{labels:{color:"#8b97a8",font:{family:"'Manrope',sans-serif",size:12},usePointStyle:true,pointStyle:"rectRounded",padding:16}},
+        tooltip:{
+          backgroundColor:"#131a25",borderColor:"#222d3d",borderWidth:1,
+          titleColor:"#e9edf3",bodyColor:"#8b97a8",
+          titleFont:{family:"'Manrope',sans-serif",weight:"600"},
+          bodyFont:{family:"'JetBrains Mono',monospace",size:12},
+          padding:12,cornerRadius:8,
+          callbacks:{label:c=>` ${c.dataset.label}:  ${BRL(c.parsed.y)}`}
+        },
+        annotation:{
+          annotations:{
+            metaLine:{
+              type:"line",yMin:meta,yMax:meta,
+              borderColor:"rgba(245,181,63,0.75)",borderWidth:2,borderDash:[8,4],
+              label:{
+                display:true,content:`🎯 Meta ${BRL(meta)}`,position:"end",
+                color:"#f5b53f",backgroundColor:"rgba(19,26,37,0.85)",
+                font:{family:"'Manrope',sans-serif",size:11,weight:"600"},
+                padding:{x:8,y:4}
+              }
+            }
+          }
+        }
+      },
+      scales:{
+        x:{ticks:{color:"#5d6878",font:{family:"'Manrope',sans-serif",size:10},maxRotation:0,autoSkip:true,maxTicksLimit:12},grid:{color:"rgba(34,45,61,0.4)"}},
+        y:{ticks:{color:"#5d6878",font:{family:"'JetBrains Mono',monospace",size:11},callback:v=>v>=1e6?"R$"+(v/1e6).toFixed(1)+"M":v>=1000?"R$"+(v/1000).toFixed(0)+"k":"R$"+v},grid:{color:"rgba(34,45,61,0.25)"}}
+      }
+    }
+  });
 }
 
 function renderConfig(){
@@ -2025,7 +2302,7 @@ function toast(msg,type="ok"){
 
 function renderAll(){
   renderIdx();
-  renderOverview(); renderCarteira(); renderConsolidado(); renderProventos(); renderProjecoes(); renderResgatados(); renderEvolucao(); renderConfig();
+  renderOverview(); renderCarteira(); renderConsolidado(); renderProventos(); renderProjecoes(); renderResgatados(); renderEvolucao(); renderMetas(); renderConfig();
 }
 function setTab(tab){
   STATE.activeTab=tab;
