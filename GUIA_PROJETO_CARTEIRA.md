@@ -175,7 +175,7 @@ git status              # arquivos modificados
 
 ## 10. PENDÊNCIAS DO PROJETO
 
-- [ ] Remove duplicate `taxaLabel` line ~650 in frontend code (index.html)
+- [x] Remove duplicate `taxaLabel` line ~650 in frontend code (index.html) — extraído helper `buildTaxaLabel()` com suporte correto a IPCA+/CDI+
 - [ ] Permanent PATH fix for Claude Code: `[Environment]::SetEnvironmentVariable('PATH', $env:PATH + ';C:\Users\cardi\.local\bin', 'User')`
 
 ### Concluído em 08/06/2026

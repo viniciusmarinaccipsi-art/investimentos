@@ -756,6 +756,14 @@ async function pingScript(){
   }catch(e){ toast("Falha na conexão ("+e.message+")","err"); }
 }
 
+function buildTaxaLabel(taxa, modoTaxa, indexador){
+  const t=String(taxa).replace(".",",");
+  if(modoTaxa==="ipca_mais"||indexador==="IPCA+") return t+"% IPCA+";
+  if(modoTaxa==="cdi_mais" ||indexador==="CDI+")  return t+"% CDI+";
+  if(modoTaxa==="pre"      ||indexador==="Prefixado") return t+"%";
+  return t+"% CDI";
+}
+
 function normalizeFromSheet(inv){
   const o=Object.assign({},inv);
   ["taxa","valorInicial","valorBruto","ir"].forEach(k=>{o[k]=parseFloat(o[k])||0;});
@@ -768,11 +776,11 @@ function normalizeFromSheet(inv){
       o.taxaLabel=(v%1===0?v.toFixed(0):v.toFixed(2)).replace(".",",")+"%"+" a.a.";
     }
   }
-  if(!o.taxaLabel) o.taxaLabel=String(o.taxa).replace(".",",")+(o.indexador==="Prefixado"?"%":"% CDI");
   if(!o.modoTaxa){
     const L=(o.taxaLabel||"").toUpperCase();
     o.modoTaxa=L.includes("IPCA+")?"ipca_mais":L.includes("CDI+")?"cdi_mais":(L.includes("CDI")||o.indexador==="CDI")?"cdi_pct":"pre";
   }
+  if(!o.taxaLabel) o.taxaLabel=buildTaxaLabel(o.taxa, o.modoTaxa, o.indexador);
   if(!o.liquidez) o.liquidez="No venc.";
   if(!o.banco)    o.banco = o.instituicao || "—";
   if(!o.emissor)  o.emissor = "—";
@@ -1804,10 +1812,7 @@ async function salvarModal(){
   else if(lab.includes("CDI") || o.indexador==="CDI") o.modoTaxa="cdi_pct";
   else                                                o.modoTaxa="pre";
 
-  if(!o.taxaLabel){
-    o.taxaLabel = o.modoTaxa==="pre" ? `${String(o.taxa).replace(".",",")}%`
-                                     : `${String(o.taxa).replace(".",",")}% CDI`;
-  }
+  if(!o.taxaLabel) o.taxaLabel=buildTaxaLabel(o.taxa, o.modoTaxa, o.indexador);
   if(!o.codigo) o.codigo="—";
   if(!o.grupo)  o.grupo=o.nome;
   o.dataReferencia = inv_isFoto(o) ? DATA_REF : hojeISO();
