@@ -1,5 +1,5 @@
 ﻿// ============================================================
-// INVESTIMENTOS — Google Apps Script Backend  •  v3.3.1
+// INVESTIMENTOS — Google Apps Script Backend  •  v3.3.2
 // ------------------------------------------------------------
 // A PLANILHA É A FONTE ÚNICA DE VERDADE. O app é leitor + editor pontual.
 //
@@ -117,7 +117,7 @@ function rotear(e) {
     if (!acao) return { ok: false, erro: "Parâmetro 'acao' obrigatório." };
 
     // ── Ações de LEITURA (sem token) ──
-    if (acao === "ping")          return { ok: true, msg: "Apps Script v3.3.1 ativo!", versao: "3.3.0" };
+    if (acao === "ping")          return { ok: true, msg: "Apps Script v3.3.2 ativo!", versao: "3.3.0" };
     if (acao === "listar")        return listarTudo();
     if (acao === "buscarIndices") return buscarIndices();
     if (acao === "listarRadar")   return listarRadar();
@@ -793,9 +793,10 @@ function buscarMeelion() {
   var todos = [];
   buscas.forEach(function(b) {
     for (var pag = 1; pag <= b.maxPag; pag++) {
-      var url = "https://www.meelion.com/renda-fixa/comparar-investimentos/?" + b.params + "&page=" + pag;
+      var meelionUrl = "https://www.meelion.com/renda-fixa/comparar-investimentos/?" + b.params + "&page=" + pag;
+      var relayUrl = RELAY_URL + "?token=" + encodeURIComponent(RELAY_TOKEN_PROP) + "&url=" + encodeURIComponent(meelionUrl);
       try {
-        var resp = UrlFetchApp.fetch(url, options);
+        var resp = UrlFetchApp.fetch(relayUrl, { muteHttpExceptions: true });
         if (resp.getResponseCode() !== 200) { Logger.log("Meelion " + resp.getResponseCode() + " — " + b.tipo + " p" + pag); break; }
         var ativos = parsearCardsHTML(resp.getContentText(), b.tipo);
         Logger.log("Meelion " + b.tipo + " p" + pag + ": " + ativos.length + " ativos");
@@ -932,7 +933,7 @@ function enviarEmailRadar(ativos) {
     });
     corpo += '</table>';
   }
-  corpo += '<p style="color:#5d6878;font-size:10px;margin-top:20px;border-top:1px solid #1a2535;padding-top:10px">Radar automático · Apps Script v3.3.1 · Thresholds: CDI diária ≥' + THRESHOLDS.cdi_liq_diaria + '% · CDI prazo ≥' + THRESHOLDS.cdi_prazo_1ano + '% · IPCA+ ≥' + THRESHOLDS.ipca_mais + '% · Pré ≥' + THRESHOLDS.prefixado + '%</p>';
+  corpo += '<p style="color:#5d6878;font-size:10px;margin-top:20px;border-top:1px solid #1a2535;padding-top:10px">Radar automático · Apps Script v3.3.2 · Thresholds: CDI diária ≥' + THRESHOLDS.cdi_liq_diaria + '% · CDI prazo ≥' + THRESHOLDS.cdi_prazo_1ano + '% · IPCA+ ≥' + THRESHOLDS.ipca_mais + '% · Pré ≥' + THRESHOLDS.prefixado + '%</p>';
   corpo += '</div>';
   MailApp.sendEmail({
     to: EMAIL_DESTINO,
@@ -1014,4 +1015,5 @@ function deletarLinhasPorColuna(aba, coluna, valor) {
 }
 
 function setRelayToken() { PropertiesService.getScriptProperties().setProperty("RELAY_TOKEN", "radar_mln_2026_xK9p"); return { ok: true, msg: "RELAY_TOKEN salvo." }; }
+
 
