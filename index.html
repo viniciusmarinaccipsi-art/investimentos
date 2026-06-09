@@ -293,6 +293,7 @@ tbody tr.total-row td{font-weight:700; color:var(--txt); border-top:2px solid va
       <button data-tab="resgatados"><span class="ic">$</span>Resgatados</button>
       <button data-tab="evolucao"><span class="ic">📈</span>Evolução</button>
       <button data-tab="metas"><span class="ic">🎯</span>Metas</button>
+      <button data-tab="radar"><span class="ic">📡</span>Radar</button>
       <button data-tab="config"><span class="ic">⚙</span>Configurações</button>
     </nav>
   </div>
@@ -308,6 +309,7 @@ tbody tr.total-row td{font-weight:700; color:var(--txt); border-top:2px solid va
     <section id="panel-resgatados" class="panel"></section>
     <section id="panel-evolucao" class="panel"></section>
     <section id="panel-metas" class="panel"></section>
+    <section id="panel-radar" class="panel"></section>
     <section id="panel-config" class="panel"></section>
     <div class="foot">
       <b>Carteira — Renda Fixa</b> · Planilha como fonte de verdade · Calendário vivo · Valores ref. 29/05/2026
@@ -336,7 +338,7 @@ tbody tr.total-row td{font-weight:700; color:var(--txt); border-top:2px solid va
 // Planilha = fonte única. localStorage = só cache de leitura.
 // CRUD pontual via JSONP. Sem SEED, sem operação destrutiva.
 // ════════════════════════════════════════════════════════════
-const APP_VERSION = "4.1";
+const APP_VERSION = "4.6";
 const LS_KEY      = "vmc_carteira_v3";
 const ISENTOS     = ["LCI","LCA","CRI","CRA"];
 const DATA_REF    = "2026-05-29"; // foto dos valores bruto/IR
@@ -353,6 +355,7 @@ const STATE = {
   investments: [],
   resgatados:  [],
   proventos:   [],
+  radar:       [],
   indices:     { cdi:0, selic:0, ipca:0, igpm:0, lastUpdate:null },
   scriptUrl:   "",
   token:       "",
@@ -363,6 +366,11 @@ const STATE = {
   resgateId:   null,        // id do ativo em processo de resgate
   activeTab:   "overview",
   filtros:     { banco:"", tipo:"", busca:"" }
+};
+
+const RADAR_TH = {
+  cdi_liq_diaria: 102, cdi_prazo_1ano: 115,
+  cdi_mais: 2.0, ipca_mais: 9.0, prefixado: 15.0, aporte_max: 10000
 };
 
 // ── LOCAL STORAGE (só cache) ───────────────────────────────
@@ -771,7 +779,7 @@ function jsonpGet(params, timeoutMs){
 
 // Wrapper que injeta o token em ações de escrita
 function api(acao, params){
-  const ACOES_LEITURA = ["ping","listar","buscarIndices"];
+  const ACOES_LEITURA = ["ping","listar","buscarIndices","listarRadar"];
   const p = Object.assign({acao}, params||{});
   if(!ACOES_LEITURA.includes(acao)){
     if(!STATE.token) return Promise.reject(new Error("Token não configurado"));
@@ -832,6 +840,12 @@ async function carregarDaPlanilha(silencioso){
       STATE.investments = d.investimentos.map(normalizeFromSheet);
       STATE.resgatados  = Array.isArray(d.resgatados) ? d.resgatados.map(normalizeFromSheet) : [];
       STATE.proventos   = Array.isArray(d.proventos) ? d.proventos : [];
+      STATE.radar       = Array.isArray(d.radar) ? d.radar.map(function(r){
+        const o=Object.assign({},r);
+        o.aporteMinimo=parseFloat(o.aporteMinimo)||0;
+        o.destaque=(o.destaque===true||String(o.destaque).toLowerCase()==="true");
+        return o;
+      }) : [];
       if(d.indices) STATE.indices = Object.assign({}, STATE.indices, d.indices);
       STATE.fonte       = "planilha";
       STATE.ultimaCarga = new Date().toISOString();
@@ -2017,6 +2031,140 @@ function renderChartMetas(pontos,meta){
   });
 }
 
+// ════════════════════════════════════════════════════════════
+//  RENDER RADAR — Monitor diário de ofertas de renda fixa
+// ════════════════════════════════════════════════════════════
+function extrairNumeroRdFront(str){
+  if(!str) return 0;
+  const m=String(str).match(/([\d]+[,.]?[\d]*)/);
+  return m?parseFloat(m[1].replace(",",".")):0;
+}
+
+async function executarRadar(){
+  if(!STATE.token){toast("Configure o token primeiro","err");return;}
+  const btn=document.getElementById("btn-radar-run");
+  if(btn){btn.disabled=true;btn.textContent="⏳ Executando...";}
+  try{
+    const d=await api("executarRadar");
+    if(d&&d.ok){
+      toast(`Radar concluído: ${d.total} ativos, ${d.destaques} destaques`,"ok");
+      await carregarDaPlanilha(true);
+      renderRadar();
+    }else{
+      toast("Erro: "+(d&&d.erro||"resposta inesperada"),"err");
+    }
+  }catch(e){
+    toast("Falha: "+e.message,"err");
+  }finally{
+    const b=document.getElementById("btn-radar-run");
+    if(b){b.disabled=false;b.textContent="🔄 Atualizar Radar";}
+  }
+}
+
+function renderRadar(){
+  const el=document.getElementById("panel-radar");
+  const dados=STATE.radar||[];
+
+  if(!dados.length){
+    el.innerHTML=`<div class="empty"><div class="ic">📡</div>
+      <p>Nenhum dado de radar disponível.</p>
+      <p class="mini" style="color:var(--muted)">Execute via Apps Script (radarDiario) ou clique em Atualizar abaixo.</p>
+      ${STATE.token?`<button class="btn primary" id="btn-radar-run" style="margin-top:12px">🔄 Atualizar Radar</button>`:''}
+    </div>`;
+    if(STATE.token){const b=document.getElementById("btn-radar-run");if(b)b.addEventListener("click",executarRadar);}
+    return;
+  }
+
+  const destaques=dados.filter(r=>r.destaque);
+  const datas=dados.map(r=>r.data).filter(Boolean).sort();
+  const ultimaAtu=datas.length?fDate(datas[datas.length-1]):"—";
+  const tipos=[...new Set(dados.map(r=>r.tipo))].filter(Boolean).sort();
+  const idxs=[...new Set(dados.map(r=>r.indexador))].filter(Boolean).sort();
+
+  let h=`<div class="kpis" style="grid-template-columns:repeat(3,1fr)">
+    <div class="kpi" style="border-left:3px solid var(--gold)">
+      <div class="lab">🔥 Destaques</div>
+      <div class="val num" style="color:var(--gold)">${destaques.length}</div>
+      <div class="meta">acima dos thresholds</div>
+    </div>
+    <div class="kpi">
+      <div class="lab">Ativos Escaneados</div>
+      <div class="val num">${dados.length}</div>
+      <div class="meta">Meelion + Tesouro Direto</div>
+    </div>
+    <div class="kpi">
+      <div class="lab">Última Atualização</div>
+      <div class="val" style="font-size:16px">${ultimaAtu}</div>
+      <div class="meta">${STATE.token?`<button class="btn" id="btn-radar-run" style="font-size:11px;padding:3px 10px;margin-top:2px">🔄 Atualizar</button>`:"configure o token"}</div>
+    </div>
+  </div>`;
+
+  h+=`<div class="subline">
+    <div class="s"><span class="ic">▤</span><label style="margin-right:4px">Tipo:</label>
+      <select id="rd-tipo" style="background:var(--ink2);border:1px solid var(--line);color:var(--txt);border-radius:var(--r-sm);padding:2px 6px;font-size:12px">
+        <option value="">Todos</option>${tipos.map(t=>`<option value="${esc(t)}">${esc(t)}</option>`).join("")}
+      </select></div>
+    <div class="s"><span class="ic">◆</span><label style="margin-right:4px">Indexador:</label>
+      <select id="rd-idx" style="background:var(--ink2);border:1px solid var(--line);color:var(--txt);border-radius:var(--r-sm);padding:2px 6px;font-size:12px">
+        <option value="">Todos</option>${idxs.map(i=>`<option value="${esc(i)}">${esc(i)}</option>`).join("")}
+      </select></div>
+    <div class="s"><label><input type="checkbox" id="rd-dest"> Só destaques 🔥</label></div>
+  </div>`;
+
+  h+=`<div id="radar-tabela-wrap"></div>`;
+  h+=`<p class="proj-note" style="margin-top:12px">Thresholds: CDI diária ≥${RADAR_TH.cdi_liq_diaria}% · CDI prazo ≥${RADAR_TH.cdi_prazo_1ano}% · CDI+ ≥${RADAR_TH.cdi_mais}% · IPCA+ ≥${RADAR_TH.ipca_mais}% · Pré ≥${RADAR_TH.prefixado}% · Aporte ≤ R$${RADAR_TH.aporte_max.toLocaleString("pt-BR")}</p>`;
+
+  el.innerHTML=h;
+  if(STATE.token){const b=document.getElementById("btn-radar-run");if(b)b.addEventListener("click",executarRadar);}
+
+  function renderTbl(){
+    const tf=document.getElementById("rd-tipo").value;
+    const xi=document.getElementById("rd-idx").value;
+    const df=document.getElementById("rd-dest").checked;
+    const filtrado=dados
+      .filter(r=>!tf||r.tipo===tf)
+      .filter(r=>!xi||r.indexador===xi)
+      .filter(r=>!df||r.destaque)
+      .sort((a,b)=>(extrairNumeroRdFront(b.taxaBruta)||0)-(extrairNumeroRdFront(a.taxaBruta)||0));
+
+    let t=`<div class="tbl-wrap"><div class="tbl-scroll"><table>
+      <thead><tr>
+        <th>Nome</th><th class="c">Tipo</th><th class="c">Indexador</th>
+        <th class="r">Taxa</th><th class="c mini">Vencimento</th>
+        <th class="r mini">Aporte Mín.</th><th class="c mini">Distribuidor</th>
+        <th class="c mini">FGC</th><th class="c mini">IR</th>
+      </tr></thead><tbody>`;
+    if(!filtrado.length){
+      t+=`<tr><td colspan="9" style="text-align:center;color:var(--muted);padding:20px">Nenhum ativo com os filtros selecionados.</td></tr>`;
+    }else{
+      filtrado.forEach(r=>{
+        const badge=r.destaque?' 🔥':'';
+        const destStyle=r.destaque?'background:rgba(245,197,24,0.04)':'';
+        const taxaStyle=r.destaque?'color:var(--gold);font-weight:700':'';
+        t+=`<tr${destStyle?` style="${destStyle}"`:''}>`+
+          `<td data-label="Nome"><b>${esc(r.nome)}${badge}</b><br><span class="mini">${esc(r.emissor||'')}</span></td>`+
+          `<td class="c" data-label="Tipo"><span class="tag">${esc(r.tipo)}</span></td>`+
+          `<td class="c mini" data-label="Indexador">${esc(r.indexador)}</td>`+
+          `<td class="r num" data-label="Taxa" style="${taxaStyle}">${esc(r.taxaBruta||r.taxaLiqAnual||'—')}</td>`+
+          `<td class="c mini num" data-label="Vencimento">${fDate(r.vencimento)||'—'}</td>`+
+          `<td class="r mini num" data-label="Aporte Mín.">${r.aporteMinimo>0?'R$ '+r.aporteMinimo.toLocaleString('pt-BR'):'—'}</td>`+
+          `<td class="c mini" data-label="Distribuidor">${esc(r.distribuidor||'—')}</td>`+
+          `<td class="c mini" data-label="FGC">${esc(r.fgc||'—')}</td>`+
+          `<td class="c mini" data-label="IR">${esc(r.ir||'—')}</td>`+
+        `</tr>`;
+      });
+    }
+    t+=`</tbody></table></div></div>`;
+    document.getElementById("radar-tabela-wrap").innerHTML=t;
+    if(typeof aplicarDataLabels==="function") aplicarDataLabels();
+  }
+
+  document.getElementById("rd-tipo").addEventListener("change",renderTbl);
+  document.getElementById("rd-idx").addEventListener("change",renderTbl);
+  document.getElementById("rd-dest").addEventListener("change",renderTbl);
+  renderTbl();
+}
+
 function renderConfig(){
   const el=document.getElementById("panel-config");
   const ix=STATE.indices;
@@ -2382,7 +2530,7 @@ function toast(msg,type="ok"){
 
 function renderAll(){
   renderIdx();
-  renderOverview(); renderCarteira(); renderConsolidado(); renderProventos(); renderProjecoes(); renderResgatados(); renderEvolucao(); renderMetas(); renderConfig();
+  renderOverview(); renderCarteira(); renderConsolidado(); renderProventos(); renderProjecoes(); renderResgatados(); renderEvolucao(); renderMetas(); renderRadar(); renderConfig();
 }
 function setTab(tab){
   STATE.activeTab=tab;
