@@ -2041,17 +2041,17 @@ function extrairNumeroRdFront(str){
 }
 
 async function executarRadar(){
-  if(!STATE.token){toast("Configure o token primeiro","err");return;}
   const btn=document.getElementById("btn-radar-run");
-  if(btn){btn.disabled=true;btn.textContent="⏳ Executando...";}
+  if(btn){btn.disabled=true;btn.textContent="⏳ Carregando...";}
   try{
-    const d=await api("executarRadar");
-    if(d&&d.ok){
-      toast(`Radar concluído: ${d.total} ativos, ${d.destaques} destaques`,"ok");
-      await carregarDaPlanilha(true);
+    const ok=await carregarDaPlanilha(true);
+    if(ok){
       renderRadar();
+      const total=(STATE.radar||[]).length;
+      const destaques=(STATE.radar||[]).filter(a=>a.destaque).length;
+      toast(`Radar: ${destaques} destaques de ${total} ativos`,"ok");
     }else{
-      toast("Erro: "+(d&&d.erro||"resposta inesperada"),"err");
+      toast("Falha ao carregar dados do radar","err");
     }
   }catch(e){
     toast("Falha: "+e.message,"err");

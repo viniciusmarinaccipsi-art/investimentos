@@ -992,9 +992,20 @@ function salvarRadar(ativos) {
     }
     if (ativos.length > 0) {
       var linhas = ativos.map(function(a) {
-        return HEADERS_RADAR.map(function(h) { return a[h] !== undefined ? a[h] : ""; });
+        return HEADERS_RADAR.map(function(h) {
+          var v = a[h] !== undefined ? a[h] : "";
+          // Forçar string em campos que o Sheets pode auto-converter
+          if (h === "taxaBruta" || h === "taxaLiqAnual" || h === "vsCDI" || h === "fgc") {
+            v = String(v);
+          }
+          return v;
+        });
       });
-      aba.getRange(aba.getLastRow() + 1, 1, linhas.length, HEADERS_RADAR.length).setValues(linhas);
+      var startRow = aba.getLastRow() + 1;
+      var range = aba.getRange(startRow, 1, linhas.length, HEADERS_RADAR.length);
+      // Formatar como texto ANTES de escrever (evita auto-conversão do Sheets)
+      range.setNumberFormat("@");
+      range.setValues(linhas);
     }
     return { ok: true, gravados: ativos.length };
   } finally { lock.releaseLock(); }
