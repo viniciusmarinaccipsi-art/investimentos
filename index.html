@@ -270,6 +270,27 @@ tbody tr.total-row td{font-weight:700; color:var(--txt); border-top:2px solid va
 .metas-chart-wrap{height:360px}
 .metas-disclaimer{margin-top:14px}
 @media(max-width:768px){.metas-form{grid-template-columns:1fr}.metas-presets-grid{grid-template-columns:1fr}.metas-kpis{grid-template-columns:1fr 1fr}.metas-chart-wrap{height:300px}}
+/* ── Calculadoras ── */
+.calc-subtabs{display:flex;gap:8px;margin:14px 0 18px;flex-wrap:wrap}
+.calc-subtab{padding:9px 18px;border:1px solid var(--line);border-radius:var(--r-sm);background:var(--panel);color:var(--muted);font-family:var(--ui);font-size:13px;font-weight:600;cursor:pointer;transition:all .15s}
+.calc-subtab:hover{border-color:var(--line2);color:var(--txt)}
+.calc-subtab.active{background:linear-gradient(160deg,rgba(52,211,153,.12),transparent);border-color:var(--emer-d);color:var(--emer)}
+.calc-pane{display:none}
+.calc-pane.active{display:block}
+.calc-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px;margin-bottom:16px}
+.calc-result-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin:16px 0}
+.calc-frase{padding:14px 18px;border:1px solid var(--emer-dd);border-radius:var(--r-sm);background:linear-gradient(160deg,rgba(52,211,153,.08),transparent);color:var(--txt);font-size:14px;margin-top:12px}
+.calc-frase b{color:var(--emer)}
+.ir-table{width:100%;border-collapse:collapse;font-size:13px}
+.ir-table th{text-align:left;padding:7px 12px;background:var(--panel2);color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.5px}
+.ir-table td{padding:8px 12px;border-bottom:1px solid var(--line);font-family:var(--mono)}
+.ir-table tr.ir-hit td{background:rgba(52,211,153,.1);color:var(--emer);font-weight:700}
+.ir-isentos{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.ir-badge{padding:4px 12px;border:1px solid var(--emer-dd);border-radius:20px;background:rgba(52,211,153,.08);color:var(--emer);font-size:11px;font-weight:700;font-family:var(--mono)}
+.calc-chart-wrap{position:relative;height:300px;margin-top:14px}
+.calc-slider-row{display:flex;align-items:center;gap:14px;margin:6px 0 2px}
+.calc-slider-row input[type=range]{flex:1;accent-color:var(--emer-d)}
+.calc-slider-val{font-family:var(--mono);color:var(--emer);font-weight:700;min-width:64px;text-align:right}
 </style>
 </head>
 <body>
@@ -294,6 +315,7 @@ tbody tr.total-row td{font-weight:700; color:var(--txt); border-top:2px solid va
       <button data-tab="evolucao"><span class="ic">📈</span>Evolução</button>
       <button data-tab="metas"><span class="ic">🎯</span>Metas</button>
       <button data-tab="radar"><span class="ic">📡</span>Radar</button>
+      <button data-tab="calculadoras"><span class="ic">🧮</span>Calculadoras</button>
       <button data-tab="config"><span class="ic">⚙</span>Configurações</button>
     </nav>
   </div>
@@ -310,6 +332,7 @@ tbody tr.total-row td{font-weight:700; color:var(--txt); border-top:2px solid va
     <section id="panel-evolucao" class="panel"></section>
     <section id="panel-metas" class="panel"></section>
     <section id="panel-radar" class="panel"></section>
+    <section id="panel-calculadoras" class="panel"></section>
     <section id="panel-config" class="panel"></section>
     <div class="foot">
       <b>Carteira — Renda Fixa</b> · Planilha como fonte de verdade · Calendário vivo · Valores ref. 29/05/2026
@@ -338,7 +361,7 @@ tbody tr.total-row td{font-weight:700; color:var(--txt); border-top:2px solid va
 // Planilha = fonte única. localStorage = só cache de leitura.
 // CRUD pontual via JSONP. Sem SEED, sem operação destrutiva.
 // ════════════════════════════════════════════════════════════
-const APP_VERSION = "4.6";
+const APP_VERSION = "4.7";
 const LS_KEY      = "vmc_carteira_v3";
 const ISENTOS     = ["LCI","LCA","CRI","CRA"];
 const DATA_REF    = "2026-05-29"; // foto dos valores bruto/IR
@@ -2528,9 +2551,300 @@ function toast(msg,type="ok"){
   clearTimeout(toastT); toastT=setTimeout(()=>el.classList.remove("show"),3500);
 }
 
+// ════════════════════════════════════════════════════════════
+// 🧮 CALCULADORAS — Gross Up · Projeção RF · Juros Compostos
+// Reutiliza: aliquotaIR, diasUteisB3, _projPrefixado, _projPctCDI,
+// _projCDIMais, _projIPCAMais, xirrCarteira, BRL, PCT, STATE.indices
+// ════════════════════════════════════════════════════════════
+let chartCalcProj=null, chartCalcJuros=null;
+
+function renderCalculadoras(){
+  const el=document.getElementById("panel-calculadoras");
+  if(!el) return;
+  const cdi=STATE.indices.cdi||14.4, ipca=STATE.indices.ipca||4.39;
+
+  let h=`<div class="sec-h"><span class="bar"></span>Calculadoras de Renda Fixa</div>`;
+  h+=`<p class="proj-note">🧮 Simule <b>antes</b> de investir. Fórmulas padrão B3/ANBIMA: capitalização <b>252 DU</b>, IR regressivo Lei 11.033/2004. Índices atuais: CDI ${PCT(cdi,2)} · IPCA ${PCT(ipca,2)}.</p>`;
+
+  // ── Tabela IR fixa ──
+  h+=`<div class="card" style="margin-bottom:18px">
+    <div class="card-h"><span class="ic">⚖</span>Tabela IR Regressiva <span class="mini" style="color:var(--dim);margin-left:8px">(a faixa destaca conforme o prazo digitado)</span></div>
+    <table class="ir-table" id="calc-ir-table">
+      <tr><th>Prazo do investimento</th><th>Alíquota IR</th></tr>
+      <tr data-ir="0"><td>Até 180 dias</td><td>22,5%</td></tr>
+      <tr data-ir="1"><td>De 181 a 360 dias</td><td>20,0%</td></tr>
+      <tr data-ir="2"><td>De 361 a 720 dias</td><td>17,5%</td></tr>
+      <tr data-ir="3"><td>Acima de 720 dias</td><td>15,0%</td></tr>
+    </table>
+    <div class="ir-isentos">
+      <span class="mini" style="color:var(--muted);align-self:center">Isentos de IR:</span>
+      <span class="ir-badge">LCI</span><span class="ir-badge">LCA</span><span class="ir-badge">CRI</span><span class="ir-badge">CRA</span><span class="ir-badge">DEB. INCENTIVADA</span>
+    </div>
+  </div>`;
+
+  // ── Sub-abas ──
+  h+=`<div class="calc-subtabs">
+    <button class="calc-subtab active" data-pane="grossup">⚖ Gross Up</button>
+    <button class="calc-subtab" data-pane="projrf">📈 Projeção RF</button>
+    <button class="calc-subtab" data-pane="juros">🪙 Juros Compostos</button>
+  </div>`;
+
+  // ── Pane 1: Gross Up ──
+  h+=`<div class="calc-pane active" id="calc-pane-grossup">
+    <div class="card">
+      <div class="card-h"><span class="ic">⚖</span>Gross Up — taxa isenta → bruta equivalente</div>
+      <p class="mini" style="color:var(--muted);margin-bottom:14px">LCI/LCA são isentas de IR. Esta calculadora converte a taxa isenta na <b>taxa bruta equivalente</b> que um CDB tributado precisaria pagar para empatar.</p>
+      <div class="calc-form">
+        <div class="field"><label>Tipo da taxa isenta</label>
+          <select id="gu-tipo">
+            <option value="cdi">% do CDI</option>
+            <option value="pre">Prefixada (% a.a.)</option>
+            <option value="ipca">IPCA+ (% a.a.)</option>
+          </select>
+        </div>
+        <div class="field"><label>Taxa (%)</label><input id="gu-taxa" class="num" type="number" value="90" step="0.5" min="0"></div>
+        <div class="field"><label>Prazo (dias corridos)</label><input id="gu-prazo" class="num" type="number" value="730" step="30" min="1"></div>
+      </div>
+      <div class="calc-result-grid" id="gu-result"></div>
+      <div class="calc-frase" id="gu-frase"></div>
+    </div>
+  </div>`;
+
+  // ── Pane 2: Projeção RF ──
+  h+=`<div class="calc-pane" id="calc-pane-projrf">
+    <div class="card">
+      <div class="card-h"><span class="ic">📈</span>Projeção de Renda Fixa</div>
+      <p class="mini" style="color:var(--muted);margin-bottom:14px">Capitalização diária 252 DU com índices atuais assumidos constantes. IR regressivo aplicado conforme o prazo.</p>
+      <div class="calc-form">
+        <div class="field"><label>Valor inicial (R$)</label><input id="pr-valor" class="num" type="number" value="10000" step="1000" min="1"></div>
+        <div class="field"><label>Indexador</label>
+          <select id="pr-idx">
+            <option value="cdi_pct">% do CDI</option>
+            <option value="cdi_mais">CDI + spread</option>
+            <option value="ipca_mais">IPCA + spread</option>
+            <option value="pre">Prefixado</option>
+          </select>
+        </div>
+        <div class="field"><label>Taxa (%)</label><input id="pr-taxa" class="num" type="number" value="110" step="0.5" min="0"></div>
+        <div class="field"><label>Tem IR?</label>
+          <select id="pr-ir"><option value="1">Sim (CDB/CRI trib.)</option><option value="0">Não (LCI/LCA/isento)</option></select>
+        </div>
+      </div>
+      <div class="calc-slider-row">
+        <label class="mini" style="color:var(--muted)">Prazo:</label>
+        <input type="range" id="pr-anos" min="1" max="8" step="1" value="3">
+        <span class="calc-slider-val" id="pr-anos-val">3 anos</span>
+      </div>
+      <div class="calc-result-grid" id="pr-result"></div>
+      <div class="calc-chart-wrap"><canvas id="chart-calc-proj"></canvas></div>
+    </div>
+  </div>`;
+
+  // ── Pane 3: Juros Compostos ──
+  const xirr=xirrCarteira();
+  const taxaSugerida=xirr!==null?(xirr*100).toFixed(2):(cdi*0.85).toFixed(2);
+  h+=`<div class="calc-pane" id="calc-pane-juros">
+    <div class="card">
+      <div class="card-h"><span class="ic">🪙</span>Juros Compostos com Aportes Mensais</div>
+      <p class="mini" style="color:var(--muted);margin-bottom:14px">Efeito bola de neve: capital inicial + aportes recorrentes. Taxa sugerida = ${xirr!==null?'seu XIRR real da carteira':'CDI líquido estimado'} (${taxaSugerida}% a.a.).</p>
+      <div class="calc-form">
+        <div class="field"><label>Capital inicial (R$)</label><input id="jc-capital" class="num" type="number" value="10000" step="1000" min="0"></div>
+        <div class="field"><label>Aporte mensal (R$)</label><input id="jc-aporte" class="num" type="number" value="1000" step="100" min="0"></div>
+        <div class="field"><label>Taxa anual (%)</label><input id="jc-taxa" class="num" type="number" value="${taxaSugerida}" step="0.1" min="0.1"></div>
+      </div>
+      <div class="calc-slider-row">
+        <label class="mini" style="color:var(--muted)">Período:</label>
+        <input type="range" id="jc-anos" min="1" max="30" step="1" value="10">
+        <span class="calc-slider-val" id="jc-anos-val">10 anos</span>
+      </div>
+      <div class="calc-result-grid" id="jc-result"></div>
+      <div class="calc-chart-wrap"><canvas id="chart-calc-juros"></canvas></div>
+    </div>
+  </div>`;
+
+  el.innerHTML=h;
+  requestAnimationFrame(inicializarCalculadoras);
+}
+
+function inicializarCalculadoras(){
+  // Sub-tabs
+  document.querySelectorAll(".calc-subtab").forEach(b=>{
+    b.addEventListener("click",()=>{
+      document.querySelectorAll(".calc-subtab").forEach(x=>x.classList.toggle("active",x===b));
+      document.querySelectorAll(".calc-pane").forEach(p=>p.classList.toggle("active",p.id==="calc-pane-"+b.dataset.pane));
+      if(b.dataset.pane==="projrf") calcProjRF();
+      if(b.dataset.pane==="juros") calcJuros();
+    });
+  });
+  // Listeners Gross Up
+  ["gu-tipo","gu-taxa","gu-prazo"].forEach(id=>{
+    const e=document.getElementById(id); if(e) e.addEventListener("input",calcGrossUp);
+  });
+  // Listeners Projeção
+  ["pr-valor","pr-idx","pr-taxa","pr-ir"].forEach(id=>{
+    const e=document.getElementById(id); if(e) e.addEventListener("input",calcProjRF);
+  });
+  const prAnos=document.getElementById("pr-anos");
+  if(prAnos) prAnos.addEventListener("input",()=>{
+    document.getElementById("pr-anos-val").textContent=prAnos.value+(prAnos.value==1?" ano":" anos");
+    calcProjRF();
+  });
+  // Listeners Juros
+  ["jc-capital","jc-aporte","jc-taxa"].forEach(id=>{
+    const e=document.getElementById(id); if(e) e.addEventListener("input",calcJuros);
+  });
+  const jcAnos=document.getElementById("jc-anos");
+  if(jcAnos) jcAnos.addEventListener("input",()=>{
+    document.getElementById("jc-anos-val").textContent=jcAnos.value+(jcAnos.value==1?" ano":" anos");
+    calcJuros();
+  });
+  calcGrossUp();
+}
+
+function destacarFaixaIR(dias){
+  const idx=dias<=180?0:dias<=360?1:dias<=720?2:3;
+  document.querySelectorAll("#calc-ir-table tr[data-ir]").forEach(tr=>{
+    tr.classList.toggle("ir-hit",tr.dataset.ir==String(idx));
+  });
+}
+
+// ── Calculadora 1: Gross Up ──
+function calcGrossUp(){
+  const tipo=document.getElementById("gu-tipo").value;
+  const taxa=parseFloat(document.getElementById("gu-taxa").value)||0;
+  const dias=parseInt(document.getElementById("gu-prazo").value)||1;
+  const ir=aliquotaIR(dias);
+  const cdi=STATE.indices.cdi||14.4, ipca=STATE.indices.ipca||4.39;
+  destacarFaixaIR(dias);
+
+  let brutaLabel="", brutaVal=0, pctCdiEquiv=0, liquidaAA=0;
+  if(tipo==="cdi"){
+    pctCdiEquiv=taxa/(1-ir);
+    brutaVal=pctCdiEquiv; brutaLabel=PCT(pctCdiEquiv,1)+" do CDI";
+    liquidaAA=cdi*taxa/100;
+  }else if(tipo==="pre"){
+    brutaVal=taxa/(1-ir); brutaLabel=PCT(brutaVal,2)+" a.a.";
+    pctCdiEquiv=brutaVal/cdi*100;
+    liquidaAA=taxa;
+  }else{ // ipca+
+    brutaVal=ipca+taxa/(1-ir); brutaLabel="IPCA + "+PCT(taxa/(1-ir),2)+" ≈ "+PCT(brutaVal,2)+" a.a.";
+    pctCdiEquiv=brutaVal/cdi*100;
+    liquidaAA=ipca+taxa;
+  }
+
+  document.getElementById("gu-result").innerHTML=`
+    <div class="kpi liq"><div class="lab">Taxa Bruta Equivalente</div><div class="val num" style="color:var(--emer)">${brutaLabel}</div><div class="meta">o que um CDB tributado precisa pagar</div></div>
+    <div class="kpi"><div class="lab">Alíquota IR (prazo ${dias}d)</div><div class="val num">${PCT(ir*100,1)}</div><div class="meta">tabela regressiva</div></div>
+    <div class="kpi"><div class="lab">Taxa Líquida (isenta)</div><div class="val num">${PCT(liquidaAA,2)} a.a.</div><div class="meta">rendimento real da LCI/LCA</div></div>`;
+  document.getElementById("gu-frase").innerHTML=
+    `💡 Para igualar esta aplicação isenta, um <b>CDB precisaria render ${PCT(pctCdiEquiv,1)} do CDI</b> (bruto) no mesmo prazo.`;
+}
+
+// ── Calculadora 2: Projeção RF ──
+function calcProjRF(){
+  const elV=document.getElementById("pr-valor"); if(!elV) return;
+  const VP=parseFloat(elV.value)||0;
+  const idx=document.getElementById("pr-idx").value;
+  const taxa=parseFloat(document.getElementById("pr-taxa").value)||0;
+  const temIR=document.getElementById("pr-ir").value==="1";
+  const anos=parseInt(document.getElementById("pr-anos").value)||1;
+  const cdi=STATE.indices.cdi||14.4, ipca=STATE.indices.ipca||4.39;
+
+  destacarFaixaIR(anos*365);
+
+  // Série mensal usando as fórmulas B3 existentes
+  const labels=[], serieBruto=[];
+  const totalMeses=anos*12;
+  for(let m=0;m<=totalMeses;m++){
+    const du=Math.round(m*21);      // ~21 DU/mês
+    const dc=Math.round(m*30.44);   // dias corridos
+    let bruto;
+    if(idx==="cdi_pct")      bruto=_projPctCDI(VP,taxa,du,cdi);
+    else if(idx==="cdi_mais")bruto=_projCDIMais(VP,taxa,du,cdi);
+    else if(idx==="ipca_mais")bruto=_projIPCAMais(VP,taxa,du,dc,ipca);
+    else                     bruto=_projPrefixado(VP,taxa,du);
+    serieBruto.push(bruto);
+    labels.push(m%12===0?(m/12)+"a":"");
+  }
+  const brutoFinal=serieBruto[serieBruto.length-1];
+  const rendimento=brutoFinal-VP;
+  const dcTotal=anos*365;
+  const irPct=temIR?aliquotaIR(dcTotal):0;
+  const irVal=rendimento*irPct;
+  const liquido=brutoFinal-irVal;
+  const rendLiqPct=VP>0?(liquido/VP-1)*100:0;
+
+  document.getElementById("pr-result").innerHTML=`
+    <div class="kpi bruto"><div class="lab">Valor Bruto</div><div class="val num">${BRL(brutoFinal)}</div><div class="meta">em ${anos} ano(s)</div></div>
+    <div class="kpi"><div class="lab">IR Estimado</div><div class="val num" style="color:var(--amber)">${temIR?BRL(irVal):"isento"}</div><div class="meta">${temIR?PCT(irPct*100,1)+" sobre o rendimento":"LCI/LCA/CRI/CRA"}</div></div>
+    <div class="kpi liq"><div class="lab">Valor Líquido</div><div class="val num" style="color:var(--emer)">${BRL(liquido)}</div><div class="meta">após impostos</div></div>
+    <div class="kpi rent"><div class="lab">Rendimento Líquido</div><div class="val num">${PCT(rendLiqPct,2)}</div><div class="meta">${BRL(liquido-VP)} de lucro</div></div>`;
+
+  // Gráfico
+  if(chartCalcProj){chartCalcProj.destroy();chartCalcProj=null;}
+  const ctx=document.getElementById("chart-calc-proj");
+  if(!ctx) return;
+  chartCalcProj=new Chart(ctx,{
+    type:"line",
+    data:{labels,datasets:[{
+      label:"Valor bruto projetado",data:serieBruto,
+      borderColor:"#34d399",backgroundColor:"rgba(52,211,153,.08)",
+      fill:true,tension:.3,pointRadius:0,borderWidth:2
+    }]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>BRL(c.parsed.y)}}},
+      scales:{
+        x:{grid:{color:"rgba(34,45,61,.5)"},ticks:{color:"#8b97a8",autoSkip:false,maxRotation:0,callback:(v,i)=>labels[i]||null}},
+        y:{grid:{color:"rgba(34,45,61,.5)"},ticks:{color:"#8b97a8",callback:v=>BRL(v)}}
+      }}
+  });
+}
+
+// ── Calculadora 3: Juros Compostos com Aportes ──
+function calcJuros(){
+  const elC=document.getElementById("jc-capital"); if(!elC) return;
+  const capital=parseFloat(elC.value)||0;
+  const aporte=parseFloat(document.getElementById("jc-aporte").value)||0;
+  const taxaAA=parseFloat(document.getElementById("jc-taxa").value)||0;
+  const anos=parseInt(document.getElementById("jc-anos").value)||1;
+  const taxaMes=Math.pow(1+taxaAA/100,1/12)-1;
+
+  const labels=[], serieInvestido=[], serieMontante=[];
+  let montante=capital, investido=capital;
+  serieInvestido.push(investido); serieMontante.push(montante); labels.push("0");
+  for(let m=1;m<=anos*12;m++){
+    montante=montante*(1+taxaMes)+aporte;
+    investido+=aporte;
+    if(m%12===0){labels.push((m/12)+"a");serieInvestido.push(investido);serieMontante.push(montante);}
+  }
+  const juros=montante-investido;
+
+  document.getElementById("jc-result").innerHTML=`
+    <div class="kpi liq"><div class="lab">Montante Final</div><div class="val num" style="color:var(--emer)">${BRL(montante)}</div><div class="meta">em ${anos} ano(s)</div></div>
+    <div class="kpi"><div class="lab">Total Investido</div><div class="val num">${BRL(investido)}</div><div class="meta">capital + aportes</div></div>
+    <div class="kpi rent"><div class="lab">Juros Acumulados</div><div class="val num" style="color:var(--blue)">${BRL(juros)}</div><div class="meta">${investido>0?PCT(juros/investido*100,1):"—"} sobre o investido</div></div>`;
+
+  if(chartCalcJuros){chartCalcJuros.destroy();chartCalcJuros=null;}
+  const ctx=document.getElementById("chart-calc-juros");
+  if(!ctx) return;
+  chartCalcJuros=new Chart(ctx,{
+    type:"line",
+    data:{labels,datasets:[
+      {label:"Total investido",data:serieInvestido,borderColor:"#5aa9e6",backgroundColor:"rgba(90,169,230,.15)",fill:true,tension:.25,pointRadius:0,borderWidth:2},
+      {label:"Montante (capital + juros)",data:serieMontante,borderColor:"#34d399",backgroundColor:"rgba(52,211,153,.12)",fill:true,tension:.25,pointRadius:0,borderWidth:2}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{labels:{color:"#8b97a8"}},tooltip:{callbacks:{label:c=>c.dataset.label+": "+BRL(c.parsed.y)}}},
+      scales:{
+        x:{grid:{color:"rgba(34,45,61,.5)"},ticks:{color:"#8b97a8"}},
+        y:{grid:{color:"rgba(34,45,61,.5)"},ticks:{color:"#8b97a8",callback:v=>BRL(v)}}
+      }}
+  });
+}
+
 function renderAll(){
   renderIdx();
-  renderOverview(); renderCarteira(); renderConsolidado(); renderProventos(); renderProjecoes(); renderResgatados(); renderEvolucao(); renderMetas(); renderRadar(); renderConfig();
+  renderOverview(); renderCarteira(); renderConsolidado(); renderProventos(); renderProjecoes(); renderResgatados(); renderEvolucao(); renderMetas(); renderRadar(); renderCalculadoras(); renderConfig();
 }
 function setTab(tab){
   STATE.activeTab=tab;
