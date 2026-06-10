@@ -298,7 +298,18 @@ function listarTudo() {
   });
 
   var radarOut = [];
-  try { radarOut = lerAba(ss, ABA_RADAR, HEADERS_RADAR); } catch(e) {}
+  try {
+    var abaR = ss.getSheetByName(ABA_RADAR);
+    if (abaR && abaR.getLastRow() > 1) {
+      var dadosR = abaR.getDataRange().getValues();
+      var cabR = dadosR[0].map(String);
+      radarOut = dadosR.slice(1).map(function(linha) {
+        var obj = {};
+        HEADERS_RADAR.forEach(function(h) { var idx = cabR.indexOf(h); obj[h] = idx >= 0 ? linha[idx] : ""; });
+        return obj;
+      });
+    }
+  } catch(e) {}
 
   return {
     ok: true,
@@ -1099,13 +1110,18 @@ function migrarParaV6() {
 function listarRadar() {
   var ss = SpreadsheetApp.openById(SHEET_ID);
   var aba = ss.getSheetByName(ABA_RADAR);
-  if (!aba) return { ok: true, radar: [] };
-  var dados = lerAba(ss, ABA_RADAR, HEADERS_RADAR);
-  var out = dados.map(function(r) {
-    var o = Object.assign({}, r);
-    o.aporteMinimo = parseFloat(o.aporteMinimo) || 0;
-    o.destaque = (o.destaque === true || String(o.destaque).toLowerCase() === "true" || o.destaque === 1 || o.destaque === "1" || o.destaque === "TRUE");
-    return o;
+  if (!aba || aba.getLastRow() <= 1) return { ok: true, radar: [] };
+  var dados = aba.getDataRange().getValues();
+  var cabecalho = dados[0].map(String);
+  var out = dados.slice(1).map(function(linha) {
+    var obj = {};
+    HEADERS_RADAR.forEach(function(h) {
+      var idx = cabecalho.indexOf(h);
+      obj[h] = idx >= 0 ? linha[idx] : "";
+    });
+    obj.aporteMinimo = parseFloat(obj.aporteMinimo) || 0;
+    obj.destaque = (obj.destaque === true || String(obj.destaque).toLowerCase() === "true" || obj.destaque === 1 || obj.destaque === "1" || obj.destaque === "TRUE");
+    return obj;
   });
   return { ok: true, radar: out };
 }
